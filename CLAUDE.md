@@ -46,7 +46,9 @@ TEST_DATABASE_URL="Host=localhost;Port=5434;Username=postgres;Database=postgres"
 dotnet test tests/Delivery.ContractTests --filter "FullyQualifiedName~Identity"
 dotnet ef migrations add <Nom> -p src/Delivery.Infrastructure -s src/Delivery.Api -o Persistence/Migrations
 dotnet run --project src/Delivery.Api    # http://localhost:5080/api
-node ../scripts/gen-inventory.mjs <speedy>/apps/api/src   # regénère l'inventaire (perd les coches)
+node ../scripts/gen-inventory.mjs <speedy>/apps/api/src   # regénère l'inventaire
+node ../scripts/check-inventory.mjs                       # coche les routes servies par les contrôleurs .NET
+scripts/ts/strip.sh <fichier.ts>                          # lecture ciblée de Speedy (sans commentaires ni imports)
 ```
 
 Postgres local de dev : `pg_ctl -D C:\Users\dell\pgdata-wimo -o "-p 5434" start`

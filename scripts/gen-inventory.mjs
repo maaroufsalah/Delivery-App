@@ -29,6 +29,13 @@ const MODULE_NAMES = {
 // Contrôleurs du dossier finance qui relèvent de la facturation (module 9).
 const BILLING = new Set(['invoices', 'invoices-pro', 'courier-statements', 'transfer-orders', 'cod-payouts']);
 
+// Routes rangées dans le module de leur métier plutôt que celui de leur contrôleur.
+const ROUTE_MODULE = [
+  [/^\/api\/public\/(company|logo|rates|mobile-config|cities)/, 3],
+  [/^\/api\/public\/track/, 5],
+  [/^\/api\/staff\/me\/alerts/, 6],
+];
+
 const VERBS = ['Get', 'Post', 'Put', 'Patch', 'Delete'];
 const rows = [];
 for (const file of files) {
@@ -64,6 +71,7 @@ for (const file of files) {
         const ret = sig.match(/\)\s*:\s*([^{]+)\{\s*$/)?.[1]?.trim() ?? '';
         let mod = MODULE_OF[folder] ?? 99;
         if (folder === 'finance' && BILLING.has(route.split('/')[2])) mod = 9;
+        for (const [pattern, target] of ROUTE_MODULE) if (pattern.test(route)) mod = target;
         rows.push({ mod, folder, file, verb, route, handler: method[1], perms, guards, isPublic, body, queryParams, ret, line: i + 1 });
       }
       pending = [];
