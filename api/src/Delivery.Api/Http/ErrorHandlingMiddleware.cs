@@ -106,6 +106,7 @@ public sealed class ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorH
 
     private async Task WriteAsync(HttpContext context, int status, ErrorBody body)
     {
+        context.Response.Clear();
         if (status == 429 && body.Details is not null)
         {
             var retry = JsonSerializer.SerializeToElement(body.Details, json.Value.SerializerOptions);
@@ -114,7 +115,6 @@ public sealed class ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorH
                 context.Response.Headers.RetryAfter = seconds.GetRawText();
             }
         }
-        context.Response.Clear();
         context.Response.StatusCode = status;
         context.Features.Get<IHttpResponseBodyFeature>()?.DisableBuffering();
         await context.Response.WriteAsJsonAsync(body, json.Value.SerializerOptions);

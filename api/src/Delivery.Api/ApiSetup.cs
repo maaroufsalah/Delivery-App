@@ -1,9 +1,12 @@
+using Delivery.Api.Auth;
 using Delivery.Api.Http;
+using Delivery.Application.Common.Interfaces;
 using Delivery.Application;
 using Delivery.Domain.Common;
 using Delivery.Infrastructure;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Formatting.Compact;
 
@@ -25,10 +28,20 @@ public static class ApiSetup
 
         builder.Services.AddApplication(builder.Configuration);
         builder.Services.AddInfrastructure(builder.Configuration);
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddScoped<ICurrentUser, CurrentUser>();
+        builder.Services.AddSingleton<PublicRateLimiter>();
+        builder.Services.AddScoped<AccessFilter>();
 
         builder.Services.ConfigureHttpJsonOptions(options => JsonDefaults.Apply(options.SerializerOptions));
         builder.Services
-            .AddControllers(options => options.Conventions.Add(new ApiRoutePrefixConvention("api")))
+            .AddControllers(options =>
+            {
+                options.Conventions.Add(new ApiRoutePrefixConvention("api"));
+                options.Filters.AddService<AccessFilter>();
+                // Un corps absent vaut `undefined` pour zod : le validator en décide.
+                options.AllowEmptyInputInBodyModelBinding = true;
+            })
             .AddJsonOptions(options => JsonDefaults.Apply(options.JsonSerializerOptions))
             .ConfigureApiBehaviorOptions(options => options.InvalidModelStateResponseFactory = InvalidModelState);
 
@@ -77,6 +90,15 @@ public static class ApiSetup
         return app;
     }
 
+    /// <summary>Migrations puis seed idempotent, si `MIGRATE_ON_STARTUP` vaut `true`.</summary>
+    public static async Task PrepareDatabaseAsync(this WebApplication app)
+    {
+        if (!string.Equals(app.Configuration["MIGRATE_ON_STARTUP"], "true", StringComparison.OrdinalIgnoreCase)) return;
+        using var scope = app.Services.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<Delivery.Infrastructure.Persistence.AppDbContext>().Database.MigrateAsync();
+        await scope.ServiceProvider.GetRequiredService<Delivery.Infrastructure.Persistence.Seed.DatabaseSeeder>().SeedAsync();
+    }
+
     /// <summary>
     /// Erreur de liaison : le 422 du `ZodValidationPipe`. Un corps JSON illisible
     /// remonte en revanche en 500 chez Speedy (l'erreur de body-parser n'est pas
@@ -88,14 +110,17 @@ public static class ApiSetup
             .Where(e => e.Value is { Errors.Count: > 0 })
             .SelectMany(e => e.Value!.Errors.Select(err => new { key = e.Key, err }))
             .ToList();
-        if (errors.Any(e => e.err.Exception is System.Text.Json.JsonException || e.key == "$" || e.key.StartsWith("$.", StringComparison.Ordinal)))
+        static bool IsTypeMismatch(string message) => message.Contains("could not be converted", StringComparison.Ordinal);
+        if (errors.Any(e => (e.key == "$" || e.key.StartsWith("$.", StringComparison.Ordinal) || e.err.Exception is System.Text.Json.JsonException)
+                            && !IsTypeMismatch(e.err.ErrorMessage + e.err.Exception?.Message)))
         {
             throw new InvalidOperationException("Corps JSON illisible.");
         }
+        // Type inattendu (nombre au lieu d'une chaîne…) : zod répond « invalid_type » en 422.
         var issues = errors.Select(e => new
         {
-            path = Delivery.Application.Common.Behaviors.ValidationPaths.ToPath(e.key),
-            message = string.IsNullOrEmpty(e.err.ErrorMessage) ? "Invalid input" : e.err.ErrorMessage,
+            path = Delivery.Application.Common.Behaviors.ValidationPaths.ToPath(e.key.StartsWith("$.", StringComparison.Ordinal) ? e.key[2..] : e.key),
+            message = "Invalid input",
         }).ToList();
         throw BusinessException.Validation("Saisie invalide.", new { issues });
     }

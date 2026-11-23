@@ -25,7 +25,11 @@ services:
       ASPNETCORE_URLS: http://+:5080
       ConnectionStrings__Default: Host=postgres;Port=5432;Database=wimo_delivery;Username=wimo;Password=wimo
       WEB_ORIGIN: http://localhost:3000
-      JWT_SECRET: ${JWT_SECRET:-dev-only-secret-change-me-dev-only-secret}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-dev-only-access-secret-change-me-0123456789}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-only-refresh-secret-change-me-0123456789}
+      MIGRATE_ON_STARTUP: 'true'
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@wimo.ma}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
       LUCKYPENNY_LICENSE_KEY: ${LUCKYPENNY_LICENSE_KEY:-}
       UPLOADS_DIR: /app/uploads
     ports:
