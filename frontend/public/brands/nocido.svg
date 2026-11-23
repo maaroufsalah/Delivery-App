@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Nocido">
+  <rect width="48" height="48" rx="11" fill="#0F172A"/>
+  <path d="M13 34V14l22 20V14" fill="none" stroke="#2563EB" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="35" cy="34" r="3.2" fill="#2563EB"/>
+</svg>

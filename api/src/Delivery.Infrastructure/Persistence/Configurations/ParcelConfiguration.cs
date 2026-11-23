@@ -1,0 +1,93 @@
+using Delivery.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace Delivery.Infrastructure.Persistence.Configurations;
+
+internal sealed class ParcelConfiguration : IEntityTypeConfiguration<Parcel>
+{
+    public void Configure(EntityTypeBuilder<Parcel> builder)
+    {
+        builder.ToTable("parcels");
+        builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).HasColumnName("id").IsRequired().ValueGeneratedNever();
+        builder.Property(e => e.Code).HasColumnName("code").IsRequired();
+        builder.Property(e => e.ExternalCode).HasColumnName("externalCode");
+        builder.Property(e => e.IdempotencyKey).HasColumnName("idempotencyKey").HasMaxLength(80);
+        builder.Property(e => e.ClientId).HasColumnName("clientId").IsRequired();
+        builder.Property(e => e.CourierId).HasColumnName("courierId");
+        builder.Property(e => e.AgencyId).HasColumnName("agencyId").IsRequired();
+        builder.Property(e => e.StatusId).HasColumnName("statusId").IsRequired();
+        builder.Property(e => e.StatusAt).HasColumnName("statusAt").HasColumnType("timestamptz(3)").IsRequired();
+        builder.Property(e => e.BillingState).HasColumnName("billingState").HasConversion<string>().IsRequired();
+        builder.Property(e => e.FinancialStatus).HasColumnName("financialStatus").HasConversion<string>().IsRequired();
+        builder.Property(e => e.OriginCityId).HasColumnName("originCityId").IsRequired();
+        builder.Property(e => e.DestinationCityId).HasColumnName("destinationCityId").IsRequired();
+        builder.Property(e => e.DestinationDistrictId).HasColumnName("destinationDistrictId");
+        builder.Property(e => e.DestinationDistrictName).HasColumnName("destinationDistrictName").HasMaxLength(120);
+        builder.Property(e => e.DeliveryMode).HasColumnName("deliveryMode").HasConversion<string>().IsRequired();
+        builder.Property(e => e.DeliveryTypeId).HasColumnName("deliveryTypeId");
+        builder.Property(e => e.CurrentCityId).HasColumnName("currentCityId").IsRequired();
+        builder.Property(e => e.Description).HasColumnName("description").IsRequired();
+        builder.Property(e => e.RecipientName).HasColumnName("recipientName").IsRequired();
+        builder.Property(e => e.RecipientPhone).HasColumnName("recipientPhone").IsRequired();
+        builder.Property(e => e.PickupAddress).HasColumnName("pickupAddress").IsRequired();
+        builder.Property(e => e.DeliveryAddress).HasColumnName("deliveryAddress").IsRequired();
+        builder.Property(e => e.CodAmount).HasColumnName("codAmount").HasPrecision(12, 2).IsRequired();
+        builder.Property(e => e.DeliveryFee).HasColumnName("deliveryFee").HasPrecision(12, 2).IsRequired();
+        builder.Property(e => e.FailureFee).HasColumnName("failureFee").HasPrecision(12, 2);
+        builder.Property(e => e.OtherFees).HasColumnName("otherFees").HasPrecision(12, 2).IsRequired();
+        builder.Property(e => e.FeeIncluded).HasColumnName("feeIncluded").IsRequired();
+        builder.Property(e => e.AlreadyPaid).HasColumnName("alreadyPaid").IsRequired();
+        builder.Property(e => e.PickupWaived).HasColumnName("pickupWaived").IsRequired();
+        builder.Property(e => e.CourierCommission).HasColumnName("courierCommission").HasPrecision(12, 2);
+        builder.Property(e => e.CourierCommissionAt).HasColumnName("courierCommissionAt").HasColumnType("timestamptz(3)");
+        builder.Property(e => e.CourierCommissionSource).HasColumnName("courierCommissionSource").HasConversion<string>();
+        builder.Property(e => e.CourierCommissionCourierId).HasColumnName("courierCommissionCourierId");
+        builder.Property(e => e.ReimbursedByCourier).HasColumnName("reimbursedByCourier").IsRequired();
+        builder.Property(e => e.ReimbursedAt).HasColumnName("reimbursedAt").HasColumnType("timestamptz(3)");
+        builder.Property(e => e.ReimbursedRemittanceId).HasColumnName("reimbursedRemittanceId");
+        builder.Property(e => e.Kind).HasColumnName("kind").HasConversion<string>().IsRequired();
+        builder.Property(e => e.IsReturn).HasColumnName("isReturn").IsRequired();
+        builder.Property(e => e.IsFailed).HasColumnName("isFailed").IsRequired();
+        builder.Property(e => e.ReferenceParcelId).HasColumnName("referenceParcelId");
+        builder.Property(e => e.ImportId).HasColumnName("importId");
+        builder.Property(e => e.OpenOnDelivery).HasColumnName("openOnDelivery").IsRequired();
+        builder.Property(e => e.Fragile).HasColumnName("fragile").IsRequired();
+        builder.Property(e => e.BlRequested).HasColumnName("blRequested").IsRequired();
+        builder.Property(e => e.Quantity).HasColumnName("quantity").IsRequired();
+        builder.Property(e => e.ExpectedPayment).HasColumnName("expectedPayment").HasConversion<string>();
+        builder.Property(e => e.ScheduledAt).HasColumnName("scheduledAt").HasColumnType("timestamptz(3)");
+        builder.Property(e => e.Latitude).HasColumnName("latitude").HasPrecision(10, 7);
+        builder.Property(e => e.Longitude).HasColumnName("longitude").HasPrecision(10, 7);
+        builder.Property(e => e.CreatedAt).HasColumnName("createdAt").HasColumnType("timestamptz(3)").IsRequired().HasAnnotation(PersistenceAnnotations.DefaultNow, true);
+        builder.Property(e => e.UpdatedAt).HasColumnName("updatedAt").HasColumnType("timestamptz(3)").IsRequired().HasAnnotation(PersistenceAnnotations.UpdatedAt, true);
+        builder.Property(e => e.DeletedAt).HasColumnName("deletedAt").HasColumnType("timestamptz(3)");
+        builder.HasIndex(e => e.Code).IsUnique();
+        builder.HasIndex(e => new { e.ClientId, e.ExternalCode }).IsUnique();
+        builder.HasIndex(e => e.IdempotencyKey).IsUnique();
+        builder.HasIndex(e => e.StatusId);
+        builder.HasIndex(e => e.Kind);
+        builder.HasIndex(e => e.FinancialStatus);
+        builder.HasIndex(e => e.Code);
+        builder.HasIndex(e => e.ImportId);
+        builder.HasIndex(e => new { e.AgencyId, e.CreatedAt });
+        builder.HasIndex(e => new { e.ClientId, e.CreatedAt });
+        builder.HasIndex(e => e.CourierId);
+        builder.HasIndex(e => e.DestinationCityId);
+        builder.HasIndex(e => new { e.ClientId, e.ReimbursedByCourier });
+        builder.HasIndex(e => e.CourierCommissionCourierId);
+        builder.HasOne(e => e.Client).WithMany(e => e.Parcels).HasForeignKey(e => e.ClientId).OnDelete(DeleteBehavior.Restrict).IsRequired();
+        builder.HasOne(e => e.Courier).WithMany(e => e.Parcels).HasForeignKey(e => e.CourierId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(e => e.CommissionCourier).WithMany(e => e.CommissionedParcels).HasForeignKey(e => e.CourierCommissionCourierId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(e => e.Agency).WithMany(e => e.Parcels).HasForeignKey(e => e.AgencyId).OnDelete(DeleteBehavior.Restrict).IsRequired();
+        builder.HasOne(e => e.Status).WithMany(e => e.Parcels).HasForeignKey(e => e.StatusId).OnDelete(DeleteBehavior.Restrict).IsRequired();
+        builder.HasOne(e => e.OriginCity).WithMany(e => e.OriginParcels).HasForeignKey(e => e.OriginCityId).OnDelete(DeleteBehavior.Restrict).IsRequired();
+        builder.HasOne(e => e.DestinationCity).WithMany(e => e.DestParcels).HasForeignKey(e => e.DestinationCityId).OnDelete(DeleteBehavior.Restrict).IsRequired();
+        builder.HasOne(e => e.DestinationDistrict).WithMany(e => e.Parcels).HasForeignKey(e => e.DestinationDistrictId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(e => e.DeliveryType).WithMany(e => e.Parcels).HasForeignKey(e => e.DeliveryTypeId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(e => e.CurrentCity).WithMany(e => e.CurrentParcels).HasForeignKey(e => e.CurrentCityId).OnDelete(DeleteBehavior.Restrict).IsRequired();
+        builder.HasOne(e => e.ReferenceParcel).WithMany(e => e.DerivedParcels).HasForeignKey(e => e.ReferenceParcelId).OnDelete(DeleteBehavior.SetNull);
+        builder.HasOne(e => e.Import).WithMany(e => e.Parcels).HasForeignKey(e => e.ImportId).OnDelete(DeleteBehavior.Restrict);
+    }
+}

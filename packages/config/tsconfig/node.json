@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Node (CommonJS)",
+  "extends": "./base.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "lib": ["ES2023"],
+    "target": "ES2023",
+
+    /*
+     * `verbatimModuleSyntax` interdit la syntaxe ESM dans une sortie CommonJS :
+     * il doit être désactivé ici, alors qu'il reste actif côté bundler.
+     */
+    "verbatimModuleSyntax": false,
+
+    /* Nest a besoin des métadonnées de décorateurs pour son injection. */
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+
+    "declaration": true,
+    "sourceMap": true,
+    "removeComments": false,
+    "incremental": true
+  }
+}

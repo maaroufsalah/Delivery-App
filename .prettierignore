@@ -1,0 +1,10 @@
+node_modules
+.next
+.turbo
+dist
+pnpm-lock.yaml
+*.d.json.ts
+
+# Docs et instructions : prose a 80 colonnes, tableaux alignes a la main.
+# Prettier les reflow sans rien apporter.
+*.md
