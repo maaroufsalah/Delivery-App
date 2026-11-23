@@ -11,13 +11,13 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("Default")
-            ?? throw new InvalidOperationException("ConnectionStrings:Default manquant.");
-
         services.AddSingleton<IClock, SystemClock>();
         services.AddScoped<TimestampsInterceptor>();
         services.AddDbContext<AppDbContext>((provider, options) =>
         {
+            // Lue à la résolution, pas à l'enregistrement : la configuration finale fait foi.
+            var connectionString = provider.GetRequiredService<IConfiguration>().GetConnectionString("Default")
+                ?? throw new InvalidOperationException("ConnectionStrings:Default manquant.");
             options.UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable("__ef_migrations"));
             options.AddInterceptors(provider.GetRequiredService<TimestampsInterceptor>());
         });

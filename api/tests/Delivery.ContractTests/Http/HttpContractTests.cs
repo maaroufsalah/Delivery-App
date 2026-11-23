@@ -1,4 +1,5 @@
 using System.Net;
+using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using Delivery.Api.Http;
 using Delivery.ContractTests.Infrastructure;
@@ -20,6 +21,13 @@ public sealed class HttpContractTests(ApiFactory factory)
         body.GetProperty("code").GetString().ShouldBe("NOT_FOUND");
         body.GetProperty("message").GetString().ShouldBe("Cannot GET /api/nope?x=1");
         body.TryGetProperty("details", out _).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Tests_run_on_their_own_database()
+    {
+        var database = await factory.QueryDbAsync(db => Task.FromResult(db.Database.GetDbConnection().Database));
+        database.ShouldNotBe("wimo_delivery");
     }
 
     [Fact]
