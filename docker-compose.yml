@@ -1,0 +1,41 @@
+# Pile locale Wimo. Postgres sur 5434 : la pile Speedy occupe déjà 5432.
+#   docker compose up -d postgres        # base seule (dev, tests)
+#   docker compose up -d --build         # api + base
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: wimo
+      POSTGRES_PASSWORD: wimo
+      POSTGRES_DB: wimo_delivery
+    ports:
+      - '5434:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U wimo -d wimo_delivery']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: ./api
+    environment:
+      ASPNETCORE_URLS: http://+:5080
+      ConnectionStrings__Default: Host=postgres;Port=5432;Database=wimo_delivery;Username=wimo;Password=wimo
+      WEB_ORIGIN: http://localhost:3000
+      JWT_SECRET: ${JWT_SECRET:-dev-only-secret-change-me-dev-only-secret}
+      LUCKYPENNY_LICENSE_KEY: ${LUCKYPENNY_LICENSE_KEY:-}
+      UPLOADS_DIR: /app/uploads
+    ports:
+      - '5080:5080'
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  uploads:
