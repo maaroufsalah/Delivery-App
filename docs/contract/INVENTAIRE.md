@@ -28,58 +28,48 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 
 ### `modules/auth/auth.controller.ts`
 
-- [ ] `POST /api/auth/login` — `login` (L102) · public · entrée: loginSchema
-- [ ] `POST /api/auth/forgot-password` — `forgotPassword` (L172) · public · gardes: PublicRateLimitGuard · entrée: forgotPasswordSchema
-- [ ] `POST /api/auth/impersonate` — `impersonate` (L197) · public · entrée: impersonationExchangeSchema
-- [ ] `POST /api/auth/refresh` — `refresh` (L218) · public · entrée: refreshSchema
-- [ ] `POST /api/auth/logout` — `logout` (L271) · public · entrée: refreshSchema · sortie: `Promise<void>`
-- [ ] `GET /api/auth/me` — `me` (L303)
-- [ ] `DELETE /api/auth/me` — `deleteMe` (L366)
+- [x] `POST /api/auth/login` — `login` (L102) · public · entrée: loginSchema
+- [x] `POST /api/auth/forgot-password` — `forgotPassword` (L172) · public · gardes: PublicRateLimitGuard · entrée: forgotPasswordSchema
+- [x] `POST /api/auth/impersonate` — `impersonate` (L197) · public · entrée: impersonationExchangeSchema
+- [x] `POST /api/auth/refresh` — `refresh` (L218) · public · entrée: refreshSchema
+- [x] `POST /api/auth/logout` — `logout` (L271) · public · entrée: refreshSchema · sortie: `Promise<void>`
+- [x] `GET /api/auth/me` — `me` (L303)
+- [x] `DELETE /api/auth/me` — `deleteMe` (L366)
 
 ### `modules/health/health.controller.ts`
 
-- [ ] `GET /api/health` — `check` (L36) · public · sortie: `Promise<HealthBody>`
+- [x] `GET /api/health` — `check` (L36) · public · sortie: `Promise<HealthBody>`
 
 ### `modules/public/public.controller.ts`
 
-- [ ] `GET /api/public/company` — `company` (L35) · public · gardes: PublicRateLimitGuard
-- [ ] `GET /api/public/logo/:fileName` — `logo` (L59) · public · gardes: PublicRateLimitGuard · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/public/rates` — `rates` (L71) · public · gardes: PublicRateLimitGuard
-- [ ] `GET /api/public/mobile-config` — `mobileConfig` (L90) · public · gardes: PublicRateLimitGuard · sortie: `MobileConfig`
-- [ ] `GET /api/public/cities` — `cities` (L103) · public · gardes: PublicRateLimitGuard · sortie: `Promise<PublicCity[]>`
-- [ ] `POST /api/public/register` — `register` (L123) · public · gardes: PublicRateLimitGuard · entrée: registrationSchema · sortie: `Promise<RegistrationResult>`
-- [ ] `GET /api/public/track/:code` — `track` (L132) · public · gardes: PublicRateLimitGuard
+- [x] `POST /api/public/register` — `register` (L123) · public · gardes: PublicRateLimitGuard · entrée: registrationSchema · sortie: `Promise<RegistrationResult>`
 
 ### `modules/roles/roles.controller.ts`
 
-- [ ] `GET /api/roles` — `matrix` (L18) · perm: accounts.read
-- [ ] `PUT /api/roles` — `update` (L26) · perm: accounts.write · entrée: roleMatrixSchema
-- [ ] `POST /api/roles/reload` — `reload` (L43) · perm: accounts.write
+- [x] `GET /api/roles` — `matrix` (L18) · perm: accounts.read
+- [x] `PUT /api/roles` — `update` (L26) · perm: accounts.write · entrée: roleMatrixSchema
+- [x] `POST /api/roles/reload` — `reload` (L43) · perm: accounts.write
 
 ### `modules/roles/user-permissions.controller.ts`
 
-- [ ] `GET /api/users/:id/permissions` — `get` (L19) · perm: accounts.read
-- [ ] `PUT /api/users/:id/permissions` — `update` (L27) · perm: accounts.write · entrée: userPermissionsSchema
-- [ ] `DELETE /api/users/:id/permissions` — `reset` (L38) · perm: accounts.write
-
-### `modules/staff/staff.controller.ts`
-
-- [ ] `GET /api/staff/me/alerts` — `list` (L32) · gardes: StaffGuard · perm: parcels.read · query: agencyId
+- [x] `GET /api/users/:id/permissions` — `get` (L19) · perm: accounts.read
+- [x] `PUT /api/users/:id/permissions` — `update` (L27) · perm: accounts.write · entrée: userPermissionsSchema
+- [x] `DELETE /api/users/:id/permissions` — `reset` (L38) · perm: accounts.write
 
 ### `modules/users/users.controller.ts`
 
-- [ ] `GET /api/users` — `list` (L70) · perm: accounts.read · entrée: listQuerySchema · query: role, agencyId
-- [ ] `GET /api/users/export` — `export` (L89) · perm: accounts.read · entrée: listQuerySchema · query: role, agencyId · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/users/me/password` — `changePassword` (L118) · entrée: changePasswordSchema, updateOwnProfileSchema
-- [ ] `PATCH /api/users/me` — `updateOwnProfile` (L139) · entrée: updateOwnProfileSchema
-- [ ] `GET /api/users/team` — `team` (L150) · perm: accounts.read · entrée: listQuerySchema
-- [ ] `GET /api/users/:id` — `detail` (L157) · perm: accounts.read
-- [ ] `POST /api/users` — `create` (L171) · perm: accounts.write · entrée: createUserSchema
-- [ ] `PATCH /api/users/:id` — `update` (L178) · perm: accounts.write · entrée: updateUserSchema
-- [ ] `PATCH /api/users/:id/active` — `setActive` (L189) · perm: accounts.write · entrée: toggleActiveSchema
-- [ ] `POST /api/users/:id/reset-password` — `resetPassword` (L200) · perm: accounts.write
-- [ ] `POST /api/users/:id/set-password` — `setPassword` (L215) · perm: accounts.write · entrée: setUserPasswordSchema
-- [ ] `DELETE /api/users/:id` — `remove` (L226) · perm: accounts.write
+- [x] `GET /api/users` — `list` (L70) · perm: accounts.read · entrée: listQuerySchema · query: role, agencyId
+- [x] `GET /api/users/export` — `export` (L89) · perm: accounts.read · entrée: listQuerySchema · query: role, agencyId · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/users/me/password` — `changePassword` (L118) · entrée: changePasswordSchema, updateOwnProfileSchema
+- [x] `PATCH /api/users/me` — `updateOwnProfile` (L139) · entrée: updateOwnProfileSchema
+- [x] `GET /api/users/team` — `team` (L150) · perm: accounts.read · entrée: listQuerySchema
+- [x] `GET /api/users/:id` — `detail` (L157) · perm: accounts.read
+- [x] `POST /api/users` — `create` (L171) · perm: accounts.write · entrée: createUserSchema
+- [x] `PATCH /api/users/:id` — `update` (L178) · perm: accounts.write · entrée: updateUserSchema
+- [x] `PATCH /api/users/:id/active` — `setActive` (L189) · perm: accounts.write · entrée: toggleActiveSchema
+- [x] `POST /api/users/:id/reset-password` — `resetPassword` (L200) · perm: accounts.write
+- [x] `POST /api/users/:id/set-password` — `setPassword` (L215) · perm: accounts.write · entrée: setUserPasswordSchema
+- [x] `DELETE /api/users/:id` — `remove` (L226) · perm: accounts.write
 
 ## Module 3 — Société et référentiel
 
@@ -143,6 +133,14 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 - [ ] `POST /api/pricing-rules` — `create` (L117) · gardes: NotMerchantGuard · perm: directory.write · entrée: pricingRuleSchema
 - [ ] `PATCH /api/pricing-rules/:id` — `update` (L124) · gardes: NotMerchantGuard · perm: directory.write · entrée: pricingRuleSchema
 - [ ] `DELETE /api/pricing-rules/:id` — `remove` (L135) · gardes: NotMerchantGuard · perm: directory.write
+
+### `modules/public/public.controller.ts`
+
+- [ ] `GET /api/public/company` — `company` (L35) · public · gardes: PublicRateLimitGuard
+- [ ] `GET /api/public/logo/:fileName` — `logo` (L59) · public · gardes: PublicRateLimitGuard · sortie: `Promise<StreamableFile>`
+- [ ] `GET /api/public/rates` — `rates` (L71) · public · gardes: PublicRateLimitGuard
+- [ ] `GET /api/public/mobile-config` — `mobileConfig` (L90) · public · gardes: PublicRateLimitGuard · sortie: `MobileConfig`
+- [ ] `GET /api/public/cities` — `cities` (L103) · public · gardes: PublicRateLimitGuard · sortie: `Promise<PublicCity[]>`
 
 ### `modules/settings/settings.controller.ts`
 
@@ -335,6 +333,10 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 
 - [ ] `POST /api/provider/parcels/:code/status` — `report` (L52) · public · gardes: ProviderTokenGuard, NotMerchantGuard · perm: parcels.status · entrée: providerStatusSchema
 
+### `modules/public/public.controller.ts`
+
+- [ ] `GET /api/public/track/:code` — `track` (L132) · public · gardes: PublicRateLimitGuard
+
 ### `modules/warehouse/orders.controller.ts`
 
 - [ ] `GET /api/orders` — `list` (L71) · perm: warehouse.read · entrée: orderListQuerySchema
@@ -426,6 +428,10 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 - [ ] `POST /api/delivery-notes/:code/validate` — `validate` (L622) · perm: notes.write
 - [ ] `POST /api/delivery-notes/:code/removed/:parcelId/restore` — `restoreRemoved` (L643) · perm: notes.write
 - [ ] `DELETE /api/delivery-notes/:code` — `remove` (L662) · perm: notes.write
+
+### `modules/staff/staff.controller.ts`
+
+- [ ] `GET /api/staff/me/alerts` — `list` (L32) · gardes: StaffGuard · perm: parcels.read · query: agencyId
 
 ## Module 7 — Retours
 
