@@ -1,0 +1,73 @@
+{
+  "cli": {
+    "version": ">= 12.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "development",
+      "ios": {
+        "simulator": true
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "channel": "preview",
+      "autoIncrement": true,
+      "env": {
+        "APP_VARIANT": "recette",
+        "EXPO_PUBLIC_API_URL": "https://speedy.delivery.nocido.com"
+      },
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "simulator": false
+      }
+    },
+    "production-apk": {
+      "distribution": "internal",
+      "channel": "production",
+      "autoIncrement": true,
+      "env": {
+        "APP_VARIANT": "production",
+        "EXPO_PUBLIC_API_URL": "https://api.speedytrans.ma"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "production": {
+      "distribution": "store",
+      "channel": "production",
+      "autoIncrement": true,
+      "env": {
+        "APP_VARIANT": "production",
+        "EXPO_PUBLIC_API_URL": "https://api.speedytrans.ma"
+      },
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "ios": {
+        "resourceClass": "m-medium"
+      }
+    }
+  },
+  "submit": {
+    "preview": {
+      "ios": {
+        "ascAppId": "REMPLACER_APRES_CREATION_DANS_APP_STORE_CONNECT"
+      }
+    },
+    "production": {
+      "android": {
+        "track": "internal"
+      },
+      "ios": {
+        "ascAppId": "REMPLACER_APRES_CREATION_DANS_APP_STORE_CONNECT"
+      }
+    }
+  }
+}

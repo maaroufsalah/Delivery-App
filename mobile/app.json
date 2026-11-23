@@ -1,0 +1,114 @@
+{
+  "expo": {
+    "name": "SpeedyTrans",
+    "slug": "salaheddine",
+    "version": "1.2.0",
+    "orientation": "portrait",
+    "scheme": "nocidodelivery",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "assetBundlePatterns": ["**/*"],
+    "locales": {
+      "fr": "./locales/fr.json",
+      "ar": "./locales/ar.json",
+      "en": "./locales/en.json"
+    },
+    "ios": {
+      "bundleIdentifier": "ma.nocido.delivery",
+      "supportsTablet": false,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "L’appareil photo sert à scanner les codes-barres des colis et à photographier une preuve de livraison ou un chèque. Aucune image n’est envoyée sans votre action.",
+        "NSPhotoLibraryUsageDescription": "Choisir une photo existante comme preuve de livraison ou image de chèque, lorsque vous préférez ne pas en prendre une nouvelle.",
+        "NSLocationWhenInUseUsageDescription": "Votre position est enregistrée avec une livraison, pour prouver où elle a eu lieu. Elle n’est jamais relevée en arrière-plan, et l’application fonctionne si vous refusez."
+      }
+    },
+    "android": {
+      "package": "ma.nocido.delivery",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#F05A28"
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.USE_BIOMETRIC"
+      ],
+      "blockedPermissions": [
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-updates",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "L’appareil photo sert à scanner les codes-barres des colis et à photographier une preuve de livraison.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choisir une photo existante comme preuve de livraison ou image de chèque."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Votre position est enregistrée avec une livraison, pour prouver où elle a eu lieu. Jamais en arrière-plan."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "imageWidth": 240,
+          "resizeMode": "contain",
+          "backgroundColor": "#F05A28",
+          "dark": {
+            "backgroundColor": "#0B0B0B"
+          }
+        }
+      ],
+      "expo-notifications",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Le verrou biométrique protège votre tournée et vos relevés si le téléphone change de mains. Il est facultatif et se désactive dans Profil."
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true
+          }
+        }
+      ],
+      "./plugins/with-android-lint"
+    ],
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "95a670d2-1d83-4340-9003-9de4f43c44a6"
+      }
+    },
+    "owner": "maaroufsalaheddines-team",
+    "updates": {
+      "url": "https://u.expo.dev/95a670d2-1d83-4340-9003-9de4f43c44a6",
+      "fallbackToCacheTimeout": 10000
+    }
+  }
+}

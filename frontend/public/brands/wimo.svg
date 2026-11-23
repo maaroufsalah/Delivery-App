@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Wimo Delivery">
+  <rect width="48" height="48" rx="11" fill="#12306B"/>
+  <path d="M24 9.5 38 16v16L24 38.5 10 32V16z" fill="none" stroke="#2F6FED" stroke-width="2.6" stroke-linejoin="round"/>
+  <path d="M10 16l14 6.5L38 16" fill="none" stroke="#2F6FED" stroke-width="2.6" stroke-linejoin="round"/>
+  <line x1="24" y1="22.5" x2="24" y2="38.5" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round"/>
+  <circle cx="31" cy="12.8" r="3.4" fill="#2F6FED"/>
+</svg>

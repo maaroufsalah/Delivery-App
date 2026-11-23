@@ -1,0 +1,6 @@
+{
+  "NSCameraUsageDescription": "L’appareil photo sert à scanner les codes-barres des colis et à photographier une preuve de livraison ou un chèque. Aucune image n’est envoyée sans votre action.",
+  "NSPhotoLibraryUsageDescription": "Choisir une photo existante comme preuve de livraison, image de chèque ou pièce jointe à une réclamation.",
+  "NSLocationWhenInUseUsageDescription": "Votre position est enregistrée avec une livraison, pour prouver où elle a eu lieu. Elle n’est jamais relevée en arrière-plan, et l’application fonctionne si vous refusez.",
+  "NSFaceIDUsageDescription": "Le verrou biométrique protège votre tournée et vos relevés si le téléphone change de mains. Il est facultatif et se désactive dans Profil."
+}

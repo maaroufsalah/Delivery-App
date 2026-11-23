@@ -1,0 +1,368 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * `dense:` — l'écran de bureau sous 1700 px (laptop, 1366, 1536). Chantier
+ * « Affichage web et étiquette », point 5 : les composants communs y prennent
+ * des marges plus serrées. Voir la règle de taille de base dans `@layer base`.
+ */
+@custom-variant dense (@media (min-width: 1024px) and (max-width: 1699.98px));
+
+/*
+ * Les valeurs des tokens ne sont PAS écrites ici : elles sont injectées par
+ * <CompanyStyle />, qui les dérive des deux couleurs de la société avec
+ * `buildThemeTokens()` (packages/shared/src/themes.ts) et les émet sous
+ * `:root` (et `.dark` pour le mode sombre).
+ *
+ * Ce bloc ne fait que brancher Tailwind sur ces variables, et fournit plus bas
+ * un repli neutre pour une page rendue SANS <CompanyStyle />.
+ */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  /* Recette 6, point 4 : déjà émis par `buildThemeTokens()`, ils manquaient ici
+     — `bg-success/15` et `text-success` de l'espace livreur ne produisaient rien. */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /*
+   * Tokens de ZONE — thème avancé (D-033).
+   *
+   * Sans surcharge, ils valent exactement le token générique qu'ils doublent :
+   * `--header` vaut `--background`, `--table-header` vaut `--muted`. Passer un
+   * composant de `bg-background` à `bg-header` ne change donc rien tant que
+   * personne n'a rempli l'écran Thème.
+   */
+  --color-header: var(--header);
+  --color-header-foreground: var(--header-foreground);
+  --color-header-border: var(--header-border);
+  --color-table-header: var(--table-header);
+  --color-table-header-foreground: var(--table-header-foreground);
+  --color-table-row-hover: var(--table-row-hover);
+  --color-table-border: var(--table-border);
+  --color-badge: var(--badge);
+  --color-badge-foreground: var(--badge-foreground);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --font-sans:
+    var(--font-app-sans, ui-sans-serif), system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+/*
+ * Repli neutre, DANS la couche `base`.
+ *
+ * La couche est ce qui fait tout : en cascade CSS, une déclaration sans couche
+ * l'emporte TOUJOURS sur une déclaration en couche, quelle que soit sa
+ * spécificité. <CompanyStyle /> émet ses tokens hors couche, il gagne donc
+ * mécaniquement — sans avoir à surenchérir sur le sélecteur.
+ *
+ * C'est la leçon du bug de l'étape 1bis : ce bloc était hors couche lui aussi,
+ * et `:root` (spécificité 0,1,0) battait le `html` (0,0,1) de <CompanyStyle />.
+ * Toute la marque tombait sur ce gris neutre.
+ *
+ * Aucune couleur de marque ici — c'est la règle 3 de CLAUDE.md. Ce repli n'a
+ * qu'un rôle : qu'une page rendue sans <CompanyStyle /> reste lisible.
+ */
+@layer base {
+  :root {
+    --radius: 0.625rem;
+    --background: #ffffff;
+    --foreground: #1f1f1f;
+    --card: #ffffff;
+    --card-foreground: #1f1f1f;
+    --popover: #ffffff;
+    --popover-foreground: #1f1f1f;
+    --primary: #1f1f1f;
+    --primary-foreground: #ffffff;
+    --secondary: #f5f5f4;
+    --secondary-foreground: #1f1f1f;
+    --muted: #f5f5f4;
+    --muted-foreground: #78716c;
+    --accent: #f5f5f4;
+    --accent-foreground: #1f1f1f;
+    --destructive: #dc2626;
+    --destructive-foreground: #ffffff;
+    --border: #e7e5e4;
+    --input: #e7e5e4;
+    --ring: #a8a29e;
+    --chart-1: #1f1f1f;
+    --chart-2: #78716c;
+    --chart-3: #a8a29e;
+    --chart-4: #d6d3d1;
+    --chart-5: #e7e5e4;
+    --sidebar: #1f1f1f;
+    --sidebar-foreground: #d6d3d1;
+    --sidebar-primary: #ffffff;
+    --sidebar-primary-foreground: #1f1f1f;
+    --sidebar-accent: #2e2e2e;
+    --sidebar-accent-foreground: #ffffff;
+    --sidebar-border: #333333;
+    --sidebar-ring: #a8a29e;
+
+    /* Repli des tokens de zone : la valeur du token qu'ils doublent. */
+    --header: #ffffff;
+    --header-foreground: #1f1f1f;
+    --header-border: #e7e5e4;
+    --table-header: #1f1f1f;
+    --table-header-foreground: #ffffff;
+    --table-row-hover: #f5f5f4;
+    --table-border: #e7e5e4;
+    --badge: #f5f5f4;
+    --badge-foreground: #1f1f1f;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    /* Évite le saut de largeur quand une modale verrouille le scroll. */
+    scrollbar-gutter: stable;
+  }
+
+  /* L'arabe a besoin d'un peu plus d'interligne pour rester lisible. */
+  html[lang='ar'] body {
+    line-height: 1.75;
+  }
+
+  /*
+   * LE LAPTOP N'EST PAS UN 27 POUCES — chantier « Affichage web et étiquette »,
+   * point 5.
+   *
+   * Constat sur /remittances : un 1920 × 1080 à 125 % de Windows ne laisse
+   * qu'environ 1536 px utiles ; tout y était dessiné pour 2560, deux lignes de
+   * tableau tenaient à l'écran. Toutes les tailles de Tailwind v4 sont en
+   * `rem` : abaisser la taille de base de 16 à 15 px entre 1024 et 1699 px
+   * resserre d'un coup chaque marge, chaque police et le menu, sur TOUTES les
+   * pages, sans toucher au mobile (sous 1024 px) ni au grand écran (1700 et
+   * plus), dont l'affichage était jugé correct. Les composants communs
+   * (tableau, cartes, barre de filtres, menu, fiches) se resserrent en plus par
+   * la variante `dense:`, définie plus bas sur la même plage.
+   */
+  :root {
+    /* Les marges des cartes (`components/ui/card.tsx`), celles de shadcn par défaut. */
+    --card-py: 1.5rem;
+    --card-gap: 1.5rem;
+    --card-px: 1.5rem;
+  }
+
+  @media (min-width: 1024px) and (max-width: 1699.98px) {
+    html {
+      font-size: 93.75%;
+    }
+
+    /* Les fiches : moins de vide autour de chaque bloc. */
+    :root {
+      --card-py: 1rem;
+      --card-gap: 1rem;
+      --card-px: 1.125rem;
+    }
+  }
+
+  /*
+   * Ce qui agit au clic le dit — C9 bloc 3.
+   *
+   * Le défaut du navigateur pour un `<button>` est `default`, pas `pointer` :
+   * seuls les liens changent de curseur. Sur une application entière, l'écart
+   * finit par se voir — on ne sait pas, avant de cliquer, ce qui répondra.
+   *
+   * La règle est posée UNE fois ici, dans la couche de base, plutôt qu'en
+   * `cursor-pointer` sur chaque composant : une classe utilitaire oubliée sur
+   * un écran neuf recrée le trou, une règle de base couvre aussi ce qui n'est
+   * pas encore écrit. Étant dans `@layer base`, elle reste sous n'importe
+   * quelle classe Tailwind qui voudrait la contredire localement.
+   *
+   * La liste est volontairement fermée : on nomme ce qui est CLIQUABLE, on ne
+   * met pas `pointer` sur tout. Un `<label>` n'y est pas — il déplace le focus
+   * mais ne ressemble pas à une commande —, et les cartes de la landing non
+   * plus : elles se soulèvent au survol sans rien déclencher.
+   */
+  button,
+  summary,
+  a[href],
+  select,
+  [role='button'],
+  [role='tab'],
+  [role='menuitem'],
+  [role='menuitemcheckbox'],
+  [role='menuitemradio'],
+  [role='option'],
+  [role='switch'],
+  [role='checkbox'],
+  [role='radio'],
+  input[type='checkbox'],
+  input[type='radio'],
+  input[type='file'],
+  input[type='color'],
+  input[type='range'],
+  input[type='submit'],
+  input[type='reset'] {
+    cursor: pointer;
+  }
+
+  /*
+   * Désactivé : le pointeur mentirait.
+   *
+   * Après la règle précédente, donc elle l'emporte à spécificité égale ou
+   * supérieure. Radix marque ses éléments inertes par `data-disabled` sans
+   * toujours poser l'attribut `disabled` du DOM, d'où les trois formes.
+   *
+   * Lot J (J2) : cmdk, lui, pose `data-disabled="false"` sur CHAQUE option
+   * active. Un sélecteur de présence (`[data-disabled]`) l'attrapait, et
+   * toutes les options du menu des villes montraient le curseur « interdit ».
+   * Radix pose `data-disabled=""` : seule la valeur `false` est exclue.
+   */
+  button:disabled,
+  select:disabled,
+  input:disabled,
+  [aria-disabled='true'],
+  [data-disabled]:not([data-disabled='false']) {
+    cursor: not-allowed;
+  }
+}
+
+@layer utilities {
+  /*
+   * Filet de sécurité des apparitions au scroll.
+   *
+   * `motion` sérialise `opacity: 0` dans le HTML rendu au serveur : sans
+   * JavaScript, les sections de la landing resteraient invisibles. Cette règle
+   * les rend à leur état final quand le script ne tourne pas.
+   *
+   * `!important` est ici nécessaire et suffisant : il s'agit d'écraser un style
+   * inline posé par la bibliothèque d'animation, pas une classe.
+   */
+  @media (scripting: none) {
+    [data-reveal] {
+      opacity: 1 !important;
+      transform: none !important;
+    }
+  }
+
+  /* Retourne une icône directionnelle en RTL (flèches, chevrons de navigation). */
+  .flip-rtl:where([dir='rtl'] *) {
+    transform: scaleX(-1);
+  }
+
+  /*
+   * IMPRESSION DU TABLEAU DE BORD — chantier « Dashboard de pilotage », spec
+   * § 16. La coque (barre latérale, en-tête, barre basse) et tout ce qui porte
+   * `print:hidden` disparaissent ; le contenu prend la page, les cartes ne se
+   * coupent pas, les grilles passent sur une colonne. Les couleurs de fond sont
+   * conservées : les pastilles de statut et les barres n'auraient plus de sens
+   * en gris.
+   */
+  @media print {
+    aside,
+    body > div > header,
+    nav {
+      display: none !important;
+    }
+
+    main {
+      padding: 0 !important;
+    }
+
+    [data-slot='card'] {
+      break-inside: avoid;
+      box-shadow: none;
+    }
+
+    .print-stack {
+      grid-template-columns: 1fr !important;
+    }
+
+    * {
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+  }
+
+  /*
+   * Barre de défilement fine et discrète — C10 bloc 1.
+   *
+   * Deux syntaxes, et les deux sont nécessaires : `scrollbar-width` est le
+   * standard (Firefox, et Chrome depuis 121), `::-webkit-scrollbar` couvre
+   * Safari et les Chrome plus anciens. Aucune des deux ne remplace l'autre
+   * aujourd'hui.
+   *
+   * La barre reste TRANSPARENTE au repos et n'apparaît qu'au survol de la
+   * zone : dans une barre latérale sombre, un rail permanent ajoute une ligne
+   * verticale que personne n'a demandée. La largeur, elle, ne change pas au
+   * survol — sinon le contenu se décalerait de quelques pixels à chaque fois
+   * que la souris entre.
+   *
+   * Le défilement tactile reste celui du navigateur : c'est un `overflow`
+   * natif, donc l'inertie et le rebond de la plateforme s'appliquent sans
+   * qu'on ait à les réimplémenter.
+   */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+
+  .scrollbar-thin:hover,
+  .scrollbar-thin:focus-within {
+    scrollbar-color: color-mix(in oklab, currentColor 22%, transparent) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    border-radius: 9999px;
+  }
+
+  .scrollbar-thin:hover::-webkit-scrollbar-thumb,
+  .scrollbar-thin:focus-within::-webkit-scrollbar-thumb {
+    background-color: color-mix(in oklab, currentColor 22%, transparent);
+  }
+}

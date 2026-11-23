@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Logo">
+  <rect width="48" height="48" rx="11" fill="currentColor" opacity="0.08"/>
+  <path d="M18 16h14.5a2 2 0 0 1 1.79 1.11L37 22.5V31a1.5 1.5 0 0 1-1.5 1.5h-1.2a3.8 3.8 0 0 0-7.6 0h-3.4a3.8 3.8 0 0 0-7.6 0H15A1.5 1.5 0 0 1 13.5 31V17.5A1.5 1.5 0 0 1 15 16h3z" fill="currentColor" opacity="0.45"/>
+  <circle cx="20.5" cy="32.5" r="2.6" fill="currentColor" opacity="0.65"/>
+  <circle cx="31.5" cy="32.5" r="2.6" fill="currentColor" opacity="0.65"/>
+</svg>
