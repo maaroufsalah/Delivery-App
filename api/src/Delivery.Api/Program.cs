@@ -9,7 +9,8 @@ try
     builder.AddDeliveryApi();
     var app = builder.Build();
     app.UseDeliveryApi();
-    app.Run();
+    await app.PrepareDatabaseAsync();
+    await app.RunAsync();
 }
 catch (Exception exception) when (exception is not HostAbortedException)
 {

@@ -23,6 +23,7 @@ public static class DependencyInjection
             cfg.AddOpenBehavior(typeof(PerformanceBehavior<,>));
         });
         services.AddAutoMapper(cfg => cfg.LicenseKey = licenseKey, assembly);
+        services.AddSingleton<Identity.LoginThrottle>();
         services.AddValidatorsFromAssembly(assembly, includeInternalTypes: true);
         ValidatorOptions.Global.DefaultClassLevelCascadeMode = CascadeMode.Continue;
         return services;

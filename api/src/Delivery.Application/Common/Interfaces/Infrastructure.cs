@@ -16,11 +16,33 @@ public interface IFileStorage
     Task DeleteAsync(string key, CancellationToken cancellationToken);
 }
 
-/// <summary>Production des classeurs Excel.</summary>
+/// <summary>Bandeau d'un export : raison sociale, puis ligne légale.</summary>
+public sealed record ExcelBanner(string Title, string? Subtitle);
+
+/// <summary>Une feuille de classeur (`ExportSheet`).</summary>
+public sealed record ExcelSheet(
+    string Name,
+    IReadOnlyList<string>? Header,
+    IReadOnlyList<IReadOnlyList<object?>> Rows,
+    ExcelBanner? Banner = null,
+    IReadOnlyList<double>? Widths = null,
+    IReadOnlySet<int>? TextColumns = null,
+    IReadOnlySet<int>? AmountColumns = null,
+    IReadOnlySet<int>? BoldRows = null);
+
+/// <summary>Lecture et écriture des classeurs Excel (`SpreadsheetService`).</summary>
 public interface IExcelService
 {
-    byte[] Build(string sheetName, IReadOnlyList<string> headers, IEnumerable<IReadOnlyList<object?>> rows);
+    /// <summary>`write` : bandeau, en-tête gras, lignes, pied « n lignes », colonnes de 18.</summary>
+    byte[] Write(string sheetName, IReadOnlyList<string> header, IReadOnlyList<IReadOnlyList<object?>> rows, ExcelBanner? banner, IReadOnlySet<int>? textColumns = null);
+
+    byte[] WriteSheets(IReadOnlyList<ExcelSheet> sheets);
+
+    /// <summary>Première feuille en texte : en-tête brut puis lignes non vides.</summary>
+    ExcelTable Read(byte[] content);
 }
+
+public sealed record ExcelTable(IReadOnlyList<string> RawHeader, IReadOnlyList<IReadOnlyList<string>> Rows, IReadOnlyList<int> RowNumbers);
 
 /// <summary>Production des documents PDF (étiquettes, bons, factures).</summary>
 public interface IPdfService

@@ -47,6 +47,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
         using var scope = Services.CreateScope();
         await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
+        await scope.ServiceProvider.GetRequiredService<Delivery.Infrastructure.Persistence.Seed.DatabaseSeeder>().SeedAsync();
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -55,7 +56,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["ConnectionStrings:Default"] = _connectionString,
-            ["JWT_SECRET"] = JwtSecret,
+            ["JWT_ACCESS_SECRET"] = JwtSecret,
+            ["JWT_REFRESH_SECRET"] = JwtSecret + "-refresh",
             ["UPLOADS_DIR"] = Path.Combine(Path.GetTempPath(), "wimo-tests-uploads"),
             ["Serilog:MinimumLevel:Default"] = "Warning",
         }));
