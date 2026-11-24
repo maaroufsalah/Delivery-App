@@ -53,15 +53,32 @@ retour de fonds, chèque), clôture ; (D) statut 13 (`OutForDeliveryPlacer`, tes
 la fin du 500), correction de statut, annulation de livraison, `field-status`, transfert ;
 (E) `courier/*`, `courier-stock`, statut prestataire, `staff/me/alerts` ; (F) PDF fidèles (étiquettes,
 reçu d'entreposage, feuille de route, bon) comparés dans `docs/design/labels/`.
-Reste à faire au lot (A) : PDF du bon (`GET /delivery-notes/:code/pdf`, lot F) ; découper
-`NoteUseCases.cs` un fichier par cas d'usage.
-Décisions : frais de ramassage écrits sur la facture brouillon (`Invoices/InvoiceDrafts.cs`, totaux
-portés depuis `invoices.service.ts`) ; `GET /bulk-jobs` sans tâche = 200 corps vide (comme Nest) ;
-identité des tâches de masse rejouée par `CurrentUser.Background`.
+État : (A) FAIT ; (B) FAIT (commit `feat(routes): draft circuits…`) ; (C) FAIT et (D) partiel
+(commit `feat(routes): dispatch, outcomes…`) : départ (+ tâche `route-dispatch`), confirmation unitaire
+et en masse (+ tâche `route-outcomes`), encaissement espèces/chèque en centimes, commission figée,
+ligne de retour de fonds automatique (`Finance/CashLines.cs` : `attachDelivered`, `refreshTotal`,
+chèque reçu, versements COD brouillons), clôture et clôture automatique (livraison, retour, balayage).
+Statut 13 : le 500 a disparu, `Routes/OutForDelivery.cs` place le colis sur le circuit du livreur ;
+test de contrat `Out_for_delivery_places_the_parcel_on_a_circuit_instead_of_failing`.
+257/494 routes cochées ; 81 tests de contrat et 48 unitaires verts.
+Écart : le verrou consultatif par livreur remplace le SAVEPOINT de Speedy à l'ouverture d'un retour de
+fonds (même résultat : jamais deux bons ouverts). Le « brouillon du jour » du placeur se lit en UTC.
+
+Reste au module 6 :
+- (D) correction de statut (+ aperçu), `cancel-delivery`, `parcels/field-status`, `routes/transfer`
+  (+ options, tâche `parcel-transfer`), `replayAutoClose` après changement de destination ;
+  `parcel-moves.controller.ts`, `status-correction.service.ts`, `delivery-cancel.service.ts`,
+  `admin-field-status.service.ts`, `routes.service.ts` l. 1824-2420.
+- (E) `courier/*`, `courier-stock`, statut prestataire, `staff/me/alerts`.
+- (F) PDF fidèles (étiquettes, reçu, feuille de route `routes/:code/sheet`, étiquettes du circuit
+  `routes/:code/labels`, bon `delivery-notes/:code/pdf`) comparés dans `docs/design/labels/`.
+- Découper `NoteUseCases.cs`, `RouteUseCases.cs`, `RouteRunUseCases.cs` (un fichier par cas d'usage) ;
+  tests de balayage de portée ; PR ; fusion sur CI verte.
 
 ## Prochaine action exacte
 
-1. Lot (B) : `routes.service.ts` l. 343-1019 (liste, fiche), 1076-1834 (écritures), 2420-2955 (bons du circuit).
+1. Lot (D) : lire `delivery-cancel.service.ts` et `status-correction.service.ts` (argent : défaire
+   l'encaissement via `RemittanceLines.DetachDeliveredAsync`), puis `transferParcels`.
 
 ## Blocages / décisions pour Salah
 
