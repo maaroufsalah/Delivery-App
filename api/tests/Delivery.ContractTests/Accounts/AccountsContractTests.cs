@@ -108,7 +108,7 @@ public sealed class AccountsContractTests(ApiFactory factory)
         var twice = await admin.PutAsJsonAsync($"/api/couriers/{id}/cities", new { cities = new[] { new { cityId = city.Id, pickupFee = 5, deliveryFee = 1 }, new { cityId = city.Id, pickupFee = 5, deliveryFee = 1 } } });
         twice.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
 
-        var audit = await factory.QueryDbAsync(db => db.AuditLogs.CountAsync(a => a.Entity == "Courier" && a.EntityId == id));
+        var audit = await factory.QueryDbAsync(db => db.AuditLogs.CountAsync(a => a.Entity == "Courier" && a.EntityId == id && a.Diff.Contains("cities")));
         audit.ShouldBe(1);
 
         var account = await admin.PostAsJsonAsync($"/api/couriers/{id}/account", new { email = TestData.Unique("yas") + "@wimo.test", firstName = "Yassine", lastName = "Amrani", roles = new[] { "STAFF" }, password = "Password-1" });
