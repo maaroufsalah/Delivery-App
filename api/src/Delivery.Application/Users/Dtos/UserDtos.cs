@@ -41,10 +41,13 @@ public class UserListItemDto
 /// <summary>`UserDetail`.</summary>
 public sealed class UserDetailDto : UserListItemDto
 {
+    [System.Text.Json.Serialization.JsonPropertyOrder(1)]
     public string? NationalId { get; set; }
 
+    [System.Text.Json.Serialization.JsonPropertyOrder(1)]
     public string? ClientId { get; set; }
 
+    [System.Text.Json.Serialization.JsonPropertyOrder(1)]
     public string? CourierId { get; set; }
 }
 
