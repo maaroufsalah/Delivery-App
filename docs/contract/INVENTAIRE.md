@@ -441,63 +441,63 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 
 ### `modules/bl/bl.controller.ts`
 
-- [ ] `POST /api/bl/parcels/:code/collect` — `collect` (L76) · perm: returns.write · entrée: blCollectSchema
-- [ ] `GET /api/bl/parcels/:code` — `tracking` (L93) · perm: returns.read
-- [ ] `GET /api/bl/delivery-slips` — `listDeliverySlips` (L105) · perm: returns.read · entrée: deliverySlipListQuerySchema
-- [ ] `GET /api/bl/delivery-slips/export` — `exportDeliverySlips` (L117) · perm: returns.read · entrée: deliverySlipListQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/bl/delivery-slips/advance` — `advanceDeliverySlips` (L138) · perm: returns.confirm · entrée: deliverySlipAdvanceSchema
-- [ ] `POST /api/bl/delivery-slips/:id/revert` — `revertDeliverySlip` (L149) · perm: returns.confirm · entrée: deliverySlipRevertSchema
-- [ ] `GET /api/bl/slips` — `slips` (L163) · gardes: NotMerchantGuard · perm: returns.read · entrée: blSlipListQuerySchema
-- [ ] `GET /api/bl/notes` — `listNotes` (L173) · perm: returns.read · entrée: blNoteListQuerySchema
-- [ ] `GET /api/bl/notes/export` — `exportNotes` (L190) · perm: returns.read · entrée: blNoteListQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/bl/notes/:code` — `noteDetail` (L204) · perm: returns.read
-- [ ] `POST /api/bl/notes` — `createNote` (L211) · perm: returns.write · entrée: blNoteSchema
-- [ ] `POST /api/bl/notes/:code/slips` — `addSlips` (L218) · perm: returns.write · entrée: blNoteItemsSchema
-- [ ] `DELETE /api/bl/notes/:code/slips/:slipId` — `removeSlip` (L229) · perm: returns.write
-- [ ] `POST /api/bl/notes/:code/handover` — `handOver` (L240) · perm: returns.write
-- [ ] `POST /api/bl/notes/:code/receive` — `receive` (L258) · perm: returns.confirm
-- [ ] `POST /api/bl/notes/:code/return` — `returnToClient` (L265) · perm: returns.confirm · entrée: blNoteReturnSchema
-- [ ] `POST /api/bl/notes/:code/close` — `close` (L276) · perm: returns.confirm
-- [ ] `GET /api/bl/notes/:code/pdf` — `pdf` (L284) · perm: returns.read · sortie: `Promise<StreamableFile>`
-- [ ] `DELETE /api/bl/notes/:code` — `removeNote` (L296) · perm: returns.write
+- [x] `POST /api/bl/parcels/:code/collect` — `collect` (L76) · perm: returns.write · entrée: blCollectSchema
+- [x] `GET /api/bl/parcels/:code` — `tracking` (L93) · perm: returns.read
+- [x] `GET /api/bl/delivery-slips` — `listDeliverySlips` (L105) · perm: returns.read · entrée: deliverySlipListQuerySchema
+- [x] `GET /api/bl/delivery-slips/export` — `exportDeliverySlips` (L117) · perm: returns.read · entrée: deliverySlipListQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/bl/delivery-slips/advance` — `advanceDeliverySlips` (L138) · perm: returns.confirm · entrée: deliverySlipAdvanceSchema
+- [x] `POST /api/bl/delivery-slips/:id/revert` — `revertDeliverySlip` (L149) · perm: returns.confirm · entrée: deliverySlipRevertSchema
+- [x] `GET /api/bl/slips` — `slips` (L163) · gardes: NotMerchantGuard · perm: returns.read · entrée: blSlipListQuerySchema
+- [x] `GET /api/bl/notes` — `listNotes` (L173) · perm: returns.read · entrée: blNoteListQuerySchema
+- [x] `GET /api/bl/notes/export` — `exportNotes` (L190) · perm: returns.read · entrée: blNoteListQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/bl/notes/:code` — `noteDetail` (L204) · perm: returns.read
+- [x] `POST /api/bl/notes` — `createNote` (L211) · perm: returns.write · entrée: blNoteSchema
+- [x] `POST /api/bl/notes/:code/slips` — `addSlips` (L218) · perm: returns.write · entrée: blNoteItemsSchema
+- [x] `DELETE /api/bl/notes/:code/slips/:slipId` — `removeSlip` (L229) · perm: returns.write
+- [x] `POST /api/bl/notes/:code/handover` — `handOver` (L240) · perm: returns.write
+- [x] `POST /api/bl/notes/:code/receive` — `receive` (L258) · perm: returns.confirm
+- [x] `POST /api/bl/notes/:code/return` — `returnToClient` (L265) · perm: returns.confirm · entrée: blNoteReturnSchema
+- [x] `POST /api/bl/notes/:code/close` — `close` (L276) · perm: returns.confirm
+- [x] `GET /api/bl/notes/:code/pdf` — `pdf` (L284) · perm: returns.read · sortie: `Promise<StreamableFile>`
+- [x] `DELETE /api/bl/notes/:code` — `removeNote` (L296) · perm: returns.write
 
 ### `modules/returns/returns.controller.ts`
 
-- [ ] `GET /api/return-handovers` — `list` (L125) · gardes: NotMerchantGuard · perm: returns.read · entrée: handoverListQuerySchema
-- [ ] `GET /api/return-handovers/export` — `export` (L142) · gardes: NotMerchantGuard · perm: returns.read · entrée: handoverListQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/return-handovers/candidates` — `candidates` (L168) · gardes: NotMerchantGuard, NotMerchantGuard · perm: returns.read · entrée: handoverCandidatesQuerySchema
-- [ ] `GET /api/return-handovers/bulk` — `bulkPreview` (L185) · gardes: NotMerchantGuard · perm: returns.read
-- [ ] `POST /api/return-handovers/bulk` — `createBulk` (L194) · gardes: NotMerchantGuard · perm: returns.write
-- [ ] `GET /api/return-handovers/:code` — `detail` (L201) · gardes: NotMerchantGuard · perm: returns.read
-- [ ] `POST /api/return-handovers` — `create` (L208) · gardes: NotMerchantGuard · perm: returns.write · entrée: returnHandoverSchema
-- [ ] `POST /api/return-handovers/:code/parcels` — `addParcel` (L220) · gardes: NotMerchantGuard · perm: returns.write · entrée: returnScanSchema
-- [ ] `POST /api/return-handovers/:code/parcels/batch` — `addParcels` (L239) · gardes: NotMerchantGuard · perm: returns.write · entrée: returnHandoverParcelsSchema
-- [ ] `DELETE /api/return-handovers/:code/parcels/:parcelId` — `removeParcel` (L250) · gardes: NotMerchantGuard · perm: returns.write
-- [ ] `POST /api/return-handovers/:code/request` — `request` (L268) · gardes: NotMerchantGuard · perm: returns.write
-- [ ] `POST /api/return-handovers/:code/pickup` — `pickup` (L283) · gardes: NotMerchantGuard · perm: returns.write · entrée: returnHandoverPickupSchema
-- [ ] `POST /api/return-handovers/:code/handover` — `handOver` (L294) · gardes: NotMerchantGuard · perm: returns.write
-- [ ] `POST /api/return-handovers/:code/confirm` — `confirm` (L303) · gardes: NotMerchantGuard · perm: returns.confirm
-- [ ] `POST /api/return-handovers/:code/close` — `close` (L310) · gardes: NotMerchantGuard · perm: returns.confirm
-- [ ] `POST /api/return-handovers/:code/cancel` — `cancel` (L324) · gardes: NotMerchantGuard · perm: returns.write · entrée: returnHandoverCancelSchema
-- [ ] `GET /api/return-handovers/:code/export` — `exportParcels` (L340) · gardes: NotMerchantGuard · perm: returns.read · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/return-handovers/:code/pdf` — `pdf` (L363) · gardes: NotMerchantGuard · perm: returns.read · sortie: `Promise<StreamableFile>`
-- [ ] `DELETE /api/return-handovers/:code` — `remove` (L377) · gardes: NotMerchantGuard · perm: returns.write
-- [ ] `GET /api/return-slips` — `list` (L443) · perm: returns.read · entrée: slipListQuerySchema
-- [ ] `GET /api/return-slips/export` — `export` (L460) · perm: returns.read · entrée: slipListQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/return-slips/bulk` — `bulkPreview` (L484) · gardes: NotMerchantGuard · perm: returns.read
-- [ ] `POST /api/return-slips/bulk` — `createBulk` (L493) · perm: returns.write
-- [ ] `GET /api/return-slips/:code` — `detail` (L500) · perm: returns.read
-- [ ] `POST /api/return-slips` — `create` (L507) · perm: returns.write · entrée: returnSlipSchema
-- [ ] `GET /api/return-slips/:code/candidates` — `candidates` (L527) · perm: returns.read · entrée: returnCandidatesQuerySchema
-- [ ] `POST /api/return-slips/:code/parcels` — `addParcel` (L539) · perm: returns.write · entrée: returnSlipItemSchema
-- [ ] `POST /api/return-slips/:code/parcels/batch` — `addParcels` (L558) · perm: returns.write · entrée: returnSlipItemsSchema
-- [ ] `DELETE /api/return-slips/:code/parcels/:parcelId` — `removeParcel` (L569) · perm: returns.write
-- [ ] `GET /api/return-slips/:code/export` — `exportParcels` (L582) · perm: returns.read · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/return-slips/:code/pdf` — `pdf` (L601) · perm: returns.read · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/return-slips/:code/close` — `close` (L617) · perm: returns.confirm · entrée: returnSlipCloseSchema
-- [ ] `DELETE /api/return-slips/:code` — `remove` (L628) · perm: returns.write
-- [ ] `GET /api/returns/pending` — `pending` (L699) · perm: returns.read · entrée: pendingQuerySchema
-- [ ] `GET /api/returns/pending/export` — `exportPending` (L717) · perm: returns.read · entrée: pendingQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/return-handovers` — `list` (L125) · gardes: NotMerchantGuard · perm: returns.read · entrée: handoverListQuerySchema
+- [x] `GET /api/return-handovers/export` — `export` (L142) · gardes: NotMerchantGuard · perm: returns.read · entrée: handoverListQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/return-handovers/candidates` — `candidates` (L168) · gardes: NotMerchantGuard, NotMerchantGuard · perm: returns.read · entrée: handoverCandidatesQuerySchema
+- [x] `GET /api/return-handovers/bulk` — `bulkPreview` (L185) · gardes: NotMerchantGuard · perm: returns.read
+- [x] `POST /api/return-handovers/bulk` — `createBulk` (L194) · gardes: NotMerchantGuard · perm: returns.write
+- [x] `GET /api/return-handovers/:code` — `detail` (L201) · gardes: NotMerchantGuard · perm: returns.read
+- [x] `POST /api/return-handovers` — `create` (L208) · gardes: NotMerchantGuard · perm: returns.write · entrée: returnHandoverSchema
+- [x] `POST /api/return-handovers/:code/parcels` — `addParcel` (L220) · gardes: NotMerchantGuard · perm: returns.write · entrée: returnScanSchema
+- [x] `POST /api/return-handovers/:code/parcels/batch` — `addParcels` (L239) · gardes: NotMerchantGuard · perm: returns.write · entrée: returnHandoverParcelsSchema
+- [x] `DELETE /api/return-handovers/:code/parcels/:parcelId` — `removeParcel` (L250) · gardes: NotMerchantGuard · perm: returns.write
+- [x] `POST /api/return-handovers/:code/request` — `request` (L268) · gardes: NotMerchantGuard · perm: returns.write
+- [x] `POST /api/return-handovers/:code/pickup` — `pickup` (L283) · gardes: NotMerchantGuard · perm: returns.write · entrée: returnHandoverPickupSchema
+- [x] `POST /api/return-handovers/:code/handover` — `handOver` (L294) · gardes: NotMerchantGuard · perm: returns.write
+- [x] `POST /api/return-handovers/:code/confirm` — `confirm` (L303) · gardes: NotMerchantGuard · perm: returns.confirm
+- [x] `POST /api/return-handovers/:code/close` — `close` (L310) · gardes: NotMerchantGuard · perm: returns.confirm
+- [x] `POST /api/return-handovers/:code/cancel` — `cancel` (L324) · gardes: NotMerchantGuard · perm: returns.write · entrée: returnHandoverCancelSchema
+- [x] `GET /api/return-handovers/:code/export` — `exportParcels` (L340) · gardes: NotMerchantGuard · perm: returns.read · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/return-handovers/:code/pdf` — `pdf` (L363) · gardes: NotMerchantGuard · perm: returns.read · sortie: `Promise<StreamableFile>`
+- [x] `DELETE /api/return-handovers/:code` — `remove` (L377) · gardes: NotMerchantGuard · perm: returns.write
+- [x] `GET /api/return-slips` — `list` (L443) · perm: returns.read · entrée: slipListQuerySchema
+- [x] `GET /api/return-slips/export` — `export` (L460) · perm: returns.read · entrée: slipListQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/return-slips/bulk` — `bulkPreview` (L484) · gardes: NotMerchantGuard · perm: returns.read
+- [x] `POST /api/return-slips/bulk` — `createBulk` (L493) · perm: returns.write
+- [x] `GET /api/return-slips/:code` — `detail` (L500) · perm: returns.read
+- [x] `POST /api/return-slips` — `create` (L507) · perm: returns.write · entrée: returnSlipSchema
+- [x] `GET /api/return-slips/:code/candidates` — `candidates` (L527) · perm: returns.read · entrée: returnCandidatesQuerySchema
+- [x] `POST /api/return-slips/:code/parcels` — `addParcel` (L539) · perm: returns.write · entrée: returnSlipItemSchema
+- [x] `POST /api/return-slips/:code/parcels/batch` — `addParcels` (L558) · perm: returns.write · entrée: returnSlipItemsSchema
+- [x] `DELETE /api/return-slips/:code/parcels/:parcelId` — `removeParcel` (L569) · perm: returns.write
+- [x] `GET /api/return-slips/:code/export` — `exportParcels` (L582) · perm: returns.read · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/return-slips/:code/pdf` — `pdf` (L601) · perm: returns.read · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/return-slips/:code/close` — `close` (L617) · perm: returns.confirm · entrée: returnSlipCloseSchema
+- [x] `DELETE /api/return-slips/:code` — `remove` (L628) · perm: returns.write
+- [x] `GET /api/returns/pending` — `pending` (L699) · perm: returns.read · entrée: pendingQuerySchema
+- [x] `GET /api/returns/pending/export` — `exportPending` (L717) · perm: returns.read · entrée: pendingQuerySchema · sortie: `Promise<StreamableFile>`
 
 ## Module 8 — Caisse et chèques
 

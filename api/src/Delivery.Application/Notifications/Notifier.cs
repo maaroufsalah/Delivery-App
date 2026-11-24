@@ -58,6 +58,21 @@ public static class Notifier
         await DispatchAsync(db, userId is null ? [] : [userId], topic, parameters, data, cancellationToken);
     }
 
+    /// <summary>`notifyStaff` : le personnel actif de l'agence (ou de toutes) qui détient la permission.</summary>
+    public static async Task NotifyStaffAsync(IAppDbContext db, string? agencyId, string topic, string permission, IReadOnlyDictionary<string, object> parameters,
+        IReadOnlyDictionary<string, string> data, CancellationToken cancellationToken)
+    {
+        var candidates = db.Users.AsNoTracking().Where(u => u.IsActive && u.DeletedAt == null && u.Client == null && u.Courier == null);
+        if (agencyId is not null) candidates = candidates.Where(u => u.AgencyId == agencyId || u.Agencies.Any(a => a.AgencyId == agencyId));
+        var rows = await candidates.Select(u => new { u.Id, Roles = u.Roles.Select(r => r.Role).ToList() }).ToListAsync(cancellationToken);
+        var allowed = new List<string>();
+        foreach (var row in rows)
+        {
+            if ((await Common.Security.PermissionQueries.EffectivePermissionsAsync(db, row.Id, row.Roles, cancellationToken)).Contains(permission)) allowed.Add(row.Id);
+        }
+        await DispatchAsync(db, allowed, topic, parameters, data, cancellationToken);
+    }
+
     public static async Task DispatchAsync(IAppDbContext db, IReadOnlyList<string> userIds, string topic, IReadOnlyDictionary<string, object> parameters, IReadOnlyDictionary<string, string> data, CancellationToken cancellationToken)
     {
         var definition = Find(topic);

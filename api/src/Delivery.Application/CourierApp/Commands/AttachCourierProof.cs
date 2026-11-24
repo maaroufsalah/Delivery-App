@@ -49,10 +49,31 @@ internal sealed class AttachCourierProofHandler(IAppDbContext db, ICurrentUser c
     public Task<object?> Handle(AttachCourierProofCommand request, CancellationToken cancellationToken) =>
         IdempotentReplay.RunAsync(db, caller, request.IdempotencyKey, $"POST /courier/parcels/{request.Code}/proof", () => AttachAsync(request, cancellationToken), cancellationToken);
 
+    /// <summary>
+    /// Bug Speedy corrigé : Speedy ne cherchait le colis que sur une tournée OUVERTE ; la livraison du dernier colis
+    /// clôt le circuit, et sa photo tombait en 404. Le colis se retrouve d'abord sur une tournée ouverte du livreur,
+    /// sinon directement, à condition que ce livreur soit bien le sien.
+    /// </summary>
+    private async Task<string> ProofParcelIdAsync(string code, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return (await CourierParcels.LocateAsync(db, caller, code, cancellationToken)).ParcelId;
+        }
+        catch (BusinessException error) when (error.Code == ErrorCode.NOT_FOUND)
+        {
+            var courierId = CourierRouteViews.CourierIdOf(caller);
+            var parcelId = await Parcels.ParcelLookup.ResolveAsync(db.Parcels.AsNoTracking().Where(p => p.DeletedAt == null && p.CourierId == courierId), code,
+                matched => matched.Select(p => p.Id).FirstOrDefaultAsync(cancellationToken));
+            if (parcelId is not null) return parcelId;
+        }
+        throw BusinessException.NotFound($"Le colis {code} n’est pas sur une de vos tournées.", new { reason = "parcel-not-mine", code });
+    }
+
     private async Task<ProofAttachedDto> AttachAsync(AttachCourierProofCommand request, CancellationToken cancellationToken)
     {
-        var located = await CourierParcels.LocateAsync(db, caller, request.Code, cancellationToken);
-        var evt = await db.ParcelEvents.Where(e => e.ParcelId == located.ParcelId && e.AuthorId == caller.UserId).OrderByDescending(e => e.CreatedAt).FirstOrDefaultAsync(cancellationToken)
+        var parcelId = await ProofParcelIdAsync(request.Code, cancellationToken);
+        var evt = await db.ParcelEvents.Where(e => e.ParcelId == parcelId && e.AuthorId == caller.UserId).OrderByDescending(e => e.CreatedAt).FirstOrDefaultAsync(cancellationToken)
                   ?? throw BusinessException.Conflict("Rapportez d’abord une issue : une photo seule ne prouve rien.", new { reason = "no-event-to-attach" });
         byte[] content;
         try

@@ -41,6 +41,6 @@ internal sealed class ExportRoutesHandler(IAppDbContext db, ICurrentUser caller,
         Exports.AssertWithinLimit(await where.CountAsync(cancellationToken));
         var rows = await RouteRows.Project(where.OrderByDescending(r => r.StatusAt)).ToListAsync(cancellationToken);
         var removed = await RouteRows.RemovedCountsAsync(db, rows.Select(r => r.Id).ToList(), cancellationToken);
-        return await Exports.ToXlsxAsync(db, excel, clock, "Circuits", Columns, rows.Select(r => RouteRows.Fill(new RouteListItemDto(), r, removed.GetValueOrDefault(r.Id))).ToList(), cancellationToken);
+        return await Exports.ToXlsxAsync(db, excel, clock, caller, "Circuits", Columns, rows.Select(r => RouteRows.Fill(new RouteListItemDto(), r, removed.GetValueOrDefault(r.Id))).ToList(), cancellationToken);
     }
 }

@@ -34,7 +34,7 @@ public abstract record RouteConfirmBody
     public string? BlReference { get; init => field = Zod.Trim(value); }
 
     public RouteOutcome ToOutcome() => new(Confirmed ?? true, RouteInputs.Int(StatusId), ScheduledAt, Comment, RouteInputs.Number(CollectedAmount), RouteInputs.Number(Latitude),
-        RouteInputs.Number(Longitude), RouteInputs.Number(ChequeAmount), ChequeNumber, ChequeBank, ChequeDate);
+        RouteInputs.Number(Longitude), RouteInputs.Number(ChequeAmount), ChequeNumber, ChequeBank, ChequeDate, BlCollected, BlReference);
 }
 
 public abstract class RouteConfirmBodyValidator<T> : ZodValidator<T> where T : RouteConfirmBody

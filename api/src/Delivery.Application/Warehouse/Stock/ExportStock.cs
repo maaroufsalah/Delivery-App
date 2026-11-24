@@ -35,6 +35,6 @@ internal sealed class ExportStockHandler(IAppDbContext db, ICurrentUser caller, 
         Exports.AssertWithinLimit(await where.CountAsync(cancellationToken));
         var ordered = request.Filter.Order == "desc" ? where.OrderByDescending(s => s.Quantity) : where.OrderBy(s => s.Quantity);
         var rows = (await StockRows.Project(ordered).ToListAsync(cancellationToken)).Select(r => StockRows.Fill(new StockListItemDto(), r, thresholdOf(r.AgencyId))).ToList();
-        return await Exports.ToXlsxAsync(db, excel, clock, "Stock", Columns, rows, cancellationToken);
+        return await Exports.ToXlsxAsync(db, excel, clock, caller, "Stock", Columns, rows, cancellationToken);
     }
 }

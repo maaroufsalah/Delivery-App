@@ -45,6 +45,6 @@ internal sealed class ExportJournalHandler(IAppDbContext db, ICurrentUser caller
             all.AddRange(items);
             if (items.Count == 0 || all.Count >= total) break;
         }
-        return await Exports.ToXlsxAsync(db, excel, clock, "Journal", columns, all, cancellationToken);
+        return await Exports.ToXlsxAsync(db, excel, clock, caller, "Journal", columns, all, cancellationToken);
     }
 }

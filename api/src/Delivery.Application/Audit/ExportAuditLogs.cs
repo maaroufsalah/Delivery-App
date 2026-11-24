@@ -34,6 +34,6 @@ internal sealed class ExportAuditLogsHandler(IAppDbContext db, ICurrentUser call
         var where = await AuditRows.FilterAsync(db, caller, request.Filter, cancellationToken);
         Exports.AssertWithinLimit(await where.CountAsync(cancellationToken));
         var rows = (await where.ToListAsync(cancellationToken)).Select(r => AuditRows.Fill(new AuditLogListItemDto(), r)).ToList();
-        return await Exports.ToXlsxAsync(db, excel, clock, "Journal", Columns, rows, cancellationToken);
+        return await Exports.ToXlsxAsync(db, excel, clock, caller, "Journal", Columns, rows, cancellationToken);
     }
 }

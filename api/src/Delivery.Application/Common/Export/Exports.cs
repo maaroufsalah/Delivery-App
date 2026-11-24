@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using Delivery.Application.Common.Interfaces;
+using Delivery.Application.Common.Security;
 using Delivery.Application.Common.Models;
 using Delivery.Domain.Common;
 using Microsoft.EntityFrameworkCore;
@@ -29,7 +30,8 @@ public static class Exports
     }
 
     public static async Task<FileContent> ToXlsxAsync<T>(
-        IAppDbContext db, IExcelService excel, IClock clock, string sheetName, IReadOnlyList<ExportColumn<T>> columns, IReadOnlyList<T> rows, CancellationToken cancellationToken)
+        IAppDbContext db, IExcelService excel, IClock clock, ICurrentUser reader, string sheetName, IReadOnlyList<ExportColumn<T>> columns, IReadOnlyList<T> rows,
+        CancellationToken cancellationToken)
     {
         if (rows.Count > MaxRows)
         {
@@ -40,7 +42,7 @@ public static class Exports
         var content = excel.Write(
             sheetName,
             columns.Select(c => c.Header).ToList(),
-            rows.Select(r => (IReadOnlyList<object?>)columns.Select(c => c.Value(r)).ToList()).ToList(),
+            await CellsAsync(db, reader, columns, rows, cancellationToken),
             banner,
             text.Count > 0 ? text : null);
         return new FileContent(content, FileContent.Xlsx, $"{Slug(sheetName)}-{Stamp(clock.UtcNow)}.xlsx", CacheControl: "private, no-store");
@@ -78,6 +80,19 @@ public static class Exports
     public static string DateText(DateTime? value) => value is null ? string.Empty : Local(value.Value).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
 
     public static string CalendarDateText(DateOnly? value) => value?.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture) ?? string.Empty;
+
+    /// <summary>
+    /// Lot O, D-228 : un vendeur lit « Livreur &lt;nom court&gt; » dans son Excel comme à l'écran ; les cellules de
+    /// texte passent par le masque des livreurs quand le lecteur n'en voit pas l'identité.
+    /// </summary>
+    private static async Task<List<IReadOnlyList<object?>>> CellsAsync<T>(IAppDbContext db, ICurrentUser reader, IReadOnlyList<ExportColumn<T>> columns, IReadOnlyList<T> rows,
+        CancellationToken cancellationToken)
+    {
+        var cells = rows.Select(r => (IReadOnlyList<object?>)columns.Select(c => c.Value(r)).ToList()).ToList();
+        if (!reader.IsAuthenticated || reader.CanSeeCourierIdentity()) return cells;
+        var mask = await CourierMasks.LoadAsync(db, reader, cancellationToken);
+        return cells.Select(row => (IReadOnlyList<object?>)row.Select(cell => cell is string text ? CourierMasks.MaskText(text, mask) : cell).ToList()).ToList();
+    }
 
     /// <summary>`exportAmount` : centimes → dirhams.</summary>
     public static decimal Amount(long? cents) => (cents ?? 0) / 100m;

@@ -32,6 +32,7 @@ public static class ApiSetup
         builder.Services.AddScoped<ICurrentUser, CurrentUser>();
         builder.Services.AddSingleton<PublicRateLimiter>();
         builder.Services.AddScoped<AccessFilter>();
+        builder.Services.AddScoped<CourierMaskFilter>();
         builder.Services.AddHostedService<Background.LabelJobWorker>();
         builder.Services.AddHostedService<Background.BulkJobWorker>();
 
@@ -41,6 +42,7 @@ public static class ApiSetup
             {
                 options.Conventions.Add(new ApiRoutePrefixConvention("api"));
                 options.Filters.AddService<AccessFilter>();
+                options.Filters.AddService<CourierMaskFilter>();
                 // Un corps absent vaut `undefined` pour zod : le validator en décide.
                 options.AllowEmptyInputInBodyModelBinding = true;
             })

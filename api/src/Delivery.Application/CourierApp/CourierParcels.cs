@@ -52,7 +52,7 @@ public static class CourierParcels
                 new { reason = "courier-transition-forbidden", from = located.StatusId, to = target, allowed = StatusCatalog.CourierOutcomesFor(located.StatusId, kind) });
         }
         await RouteParcelConfirm.RunAsync(db, caller, logger, located.RouteCode, located.ParcelId, outcome with { Confirmed = true }, false, cancellationToken);
-        // Le BL collecté à la livraison (`bl.collectOnDelivery`) se branche avec le module des retours et BL.
+        if (target == 4 && outcome.BlCollected == true) await Bl.BlCollection.CollectOnDeliveryAsync(db, caller, logger, located.Code, outcome.BlReference, cancellationToken);
         return await CourierRouteViews.RouteAsync(db, caller, located.RouteCode, cancellationToken, includeClosed: true);
     }
 

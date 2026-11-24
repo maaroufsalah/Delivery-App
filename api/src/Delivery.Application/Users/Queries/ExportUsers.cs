@@ -12,7 +12,7 @@ namespace Delivery.Application.Users.Queries;
 /// <summary>`GET /users/export` : la liste courante en classeur « Comptes ».</summary>
 public sealed record ExportUsersQuery(GetUsersQuery Filter) : IRequest<FileContent>;
 
-internal sealed class ExportUsersHandler(IAppDbContext db, IMapper mapper, IExcelService excel, IClock clock) : IRequestHandler<ExportUsersQuery, FileContent>
+internal sealed class ExportUsersHandler(IAppDbContext db, IMapper mapper, IExcelService excel, IClock clock, ICurrentUser caller) : IRequestHandler<ExportUsersQuery, FileContent>
 {
     private static readonly IReadOnlyList<ExportColumn<UserListItemDto>> Columns =
     [
@@ -34,6 +34,6 @@ internal sealed class ExportUsersHandler(IAppDbContext db, IMapper mapper, IExce
         var ordered = Sorting.OrderByKey(where, request.Filter.Query, GetUsersHandler.Sorts, "lastName");
         Exports.AssertWithinLimit(await where.CountAsync(cancellationToken));
         var rows = await ordered.ProjectTo<UserListItemDto>(mapper.ConfigurationProvider).ToListAsync(cancellationToken);
-        return await Exports.ToXlsxAsync(db, excel, clock, "Comptes", Columns, rows, cancellationToken);
+        return await Exports.ToXlsxAsync(db, excel, clock, caller, "Comptes", Columns, rows, cancellationToken);
     }
 }

@@ -26,9 +26,9 @@ public static class Shipments
     public static bool ShowsCartons(IEnumerable<int> quantities) => quantities.Any(q => CartonsOf(q) > 1);
 
     /// <summary>`shipmentTotalFr` : « 3 expéditions · 7 cartons », ou « 3 expéditions ».</summary>
-    public static string TotalFr(IReadOnlyList<int> quantities)
+    public static string TotalFr(IReadOnlyList<int> quantities, int? total = null)
     {
-        var count = quantities.Count;
+        var count = total ?? quantities.Count;
         var shipments = $"{count} {(count == 1 ? "expédition" : "expéditions")}";
         if (!ShowsCartons(quantities)) return shipments;
         var cartons = quantities.Sum(CartonsOf);
