@@ -83,4 +83,27 @@ public sealed class RoutesController(ISender sender) : ApiControllerBase(sender)
     [HttpGet("{code}/export")]
     [RequirePermission("routes.read")]
     public Task<IActionResult> ExportParcels(string code) => FileOf(new ExportRouteParcelsQuery(Uri.UnescapeDataString(code)));
+
+    [HttpPost("auto-close-sweep")]
+    [RequirePermission("routes.close")]
+    public Task<IActionResult> SweepAutoClose() => Ok(new SweepAutoCloseCommand());
+
+    [HttpPost("{code}/dispatch")]
+    [RequirePermission("routes.write")]
+    public Task<IActionResult> Dispatch(string code, [FromHeader(Name = BulkJobsHeader.Name)] string? bulk) =>
+        Accepted(new DispatchRouteCommand(Uri.UnescapeDataString(code), bulk == "1"));
+
+    [HttpPost("{code}/parcels/{parcelId}/confirm")]
+    [RequirePermission("routes.confirm")]
+    public Task<IActionResult> Confirm(string code, string parcelId, [FromBody] ConfirmRouteParcelCommand? body) =>
+        Created((body ?? new ConfirmRouteParcelCommand()) with { Code = Uri.UnescapeDataString(code), ParcelId = parcelId });
+
+    [HttpPost("{code}/outcomes")]
+    [RequirePermission("routes.confirm")]
+    public Task<IActionResult> Outcomes(string code, [FromBody] ConfirmRouteOutcomesCommand? body, [FromHeader(Name = BulkJobsHeader.Name)] string? bulk) =>
+        Accepted((body ?? new ConfirmRouteOutcomesCommand()) with { Code = Uri.UnescapeDataString(code), Async = bulk == "1" });
+
+    [HttpPost("{code}/close")]
+    [RequirePermission("routes.close")]
+    public Task<IActionResult> Close(string code, [FromBody] CloseRouteCommand? body) => Created((body ?? new CloseRouteCommand()) with { Code = Uri.UnescapeDataString(code) });
 }

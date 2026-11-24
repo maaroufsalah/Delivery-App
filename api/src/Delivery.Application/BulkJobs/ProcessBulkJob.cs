@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Delivery.Application.Common.Interfaces;
 using Delivery.Application.DeliveryNotes;
+using Delivery.Application.Routes;
 using Delivery.Domain.Common;
 using Delivery.Domain.Entities;
 using Delivery.Domain.Enums;
@@ -25,7 +26,7 @@ internal sealed class ProcessBulkJobHandler(IAppDbContext db, ICurrentUser calle
         if (job is null || job.Status is not (BulkJobStatus.PENDING or BulkJobStatus.RUNNING)) return;
         using var input = JsonDocument.Parse(job.Input);
         var all = input.RootElement.TryGetProperty("parcelIds", out var ids) ? ids.EnumerateArray().Select(e => e.GetString()!).ToList() : [];
-        if (job.Kind is not (BulkJobKinds.NoteValidate))
+        if (job.Kind is not (BulkJobKinds.NoteValidate or BulkJobKinds.RouteDispatch or BulkJobKinds.RouteOutcomes))
         {
             await StopAsync(job, "bulk-job-unknown-kind");
             return;
@@ -103,6 +104,8 @@ internal sealed class ProcessBulkJobHandler(IAppDbContext db, ICurrentUser calle
     private static IReadOnlyList<string>? Kept(JsonElement input) =>
         input.TryGetProperty("kept", out var kept) && kept.ValueKind == JsonValueKind.Array ? kept.EnumerateArray().Select(e => e.GetString()!).ToList() : null;
 
+    private static string? Text(JsonElement input, string key) => input.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
+
     private static int Int(JsonElement input, string key) => input.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.Number ? v.GetInt32() : 0;
 
     private async Task<Dictionary<string, long>> ChunkAsync(BulkJob job, JsonElement input, List<string> chunk, CancellationToken cancellationToken)
@@ -112,6 +115,15 @@ internal sealed class ProcessBulkJobHandler(IAppDbContext db, ICurrentUser calle
             case BulkJobKinds.NoteValidate:
                 var part = await NoteValidation.RunAsync(db, caller, logger, job.Target, Kept(input), new NoteValidation.Options(ParcelsPhase: true, ChunkIds: chunk, PickedUpCount: Int(input, "pickedUpCount")), cancellationToken);
                 return new() { ["removed"] = part.Removed, ["validated"] = part.Validated };
+            case BulkJobKinds.RouteDispatch:
+                return new() { ["count"] = await RouteDispatch.RunAsync(db, caller, logger, job.Target, new RouteDispatch.Options(ParcelsPhase: true, ChunkIds: chunk), cancellationToken) };
+            case BulkJobKinds.RouteOutcomes:
+                var outcomes = (RouteBulkConfirmResultDto)await RouteBulkOutcomes.RunAsync(db, caller, logger, null, new ConfirmRouteOutcomesCommand
+                {
+                    Code = job.Target, FromJob = true, ParcelIds = chunk, StatusId = input.TryGetProperty("statusId", out var status) ? status.Clone() : null,
+                    ScheduledAt = Text(input, "scheduledAt"), Comment = Text(input, "comment"),
+                }, cancellationToken);
+                return new() { ["count"] = outcomes.Count, ["cashExpected"] = outcomes.CashExpected };
             default:
                 throw new InvalidOperationException($"Tâche inconnue : {job.Kind}");
         }
@@ -125,6 +137,9 @@ internal sealed class ProcessBulkJobHandler(IAppDbContext db, ICurrentUser calle
                 var removed = result.GetValueOrDefault("removed");
                 await NoteValidation.RunAsync(db, caller, logger, job.Target, Kept(input), new NoteValidation.Options(FinishPhase: true, PickedUpCount: Int(input, "pickedUpCount"), RemovedTotal: (int)removed), cancellationToken);
                 return new(result) { ["count"] = result.GetValueOrDefault("validated"), ["removed"] = removed };
+            case BulkJobKinds.RouteDispatch:
+                await RouteDispatch.RunAsync(db, caller, logger, job.Target, new RouteDispatch.Options(FinishPhase: true), cancellationToken);
+                return result;
             default:
                 return result;
         }

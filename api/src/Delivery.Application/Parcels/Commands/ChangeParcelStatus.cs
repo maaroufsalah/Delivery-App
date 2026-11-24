@@ -122,11 +122,10 @@ public static class ParcelStatusChange
         var failure = FailureFees.AfterTransition(parcel.IsFailed, Money.ToCentsOrNull(parcel.FailureFee), input.StatusId,
             target.Group is "failure" or "retry", FailureFees.For(input.StatusId, sameCity, policy));
         var author = await AuthorNameAsync(db, caller.UserId, cancellationToken);
-        if (outForDelivery)
-        {
-            // La mise en circuit (`OutForDeliveryPlacer`) relève des circuits : sans elle, Speedy refuse ainsi.
-            throw BusinessException.Internal("Mise en circuit indisponible : le statut n’a pas été changé.");
-        }
+        var placement = outForDelivery
+            ? await Routes.OutForDelivery.PrepareAsync(db, caller, parcel.Id, parcel.Code, parcel.DestinationCityId, parcel.CourierId, parcel.BillingState, input.CourierId!.Trim(),
+                string.IsNullOrWhiteSpace(input.DestinationCityId) ? null : input.DestinationCityId.Trim(), cancellationToken)
+            : null;
 
         var scheduled = ParcelCreation.ParseDate(input.ScheduledDate);
         var evt = new ParcelEvent
@@ -152,8 +151,10 @@ public static class ParcelStatusChange
             if (scheduled is not null) tracked.ScheduledAt = scheduled;
             db.ParcelEvents.Add(evt);
             await db.SaveChangesAsync(cancellationToken);
+            if (placement is not null) await Routes.OutForDelivery.PlaceAsync(db, caller, placement, now, author, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
         }
+        if (placement is not null) await Routes.OutForDelivery.SettleAsync(db, caller, logger, placement, cancellationToken);
         await NotifyMerchantOfStatusAsync(db, logger, parcel.ClientId, code, input.StatusId, input.ScheduledDate, cancellationToken);
         return new ParcelEventDto(evt.Id, evt.ParcelId, evt.StatusId, evt.Comment, evt.AuthorName, evt.CityId, evt.AttachmentName, evt.ScheduledDate, evt.CreatedAt);
     }

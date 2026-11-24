@@ -315,21 +315,7 @@ public static class RouteWrites
             await db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
         }
-        if (unpicked.Count > 0)
-        {
-            try
-            {
-                var kept = await db.DeliveryNoteParcels.CountAsync(l => l.DeliveryNoteId == note.Id, cancellationToken);
-                var removedTotal = await db.DeliveryNoteRemovedParcels.CountAsync(r => r.DeliveryNoteId == note.Id, cancellationToken);
-                await Notifier.NotifyMerchantAsync(db, note.ClientId, "note-parcels-removed",
-                    new Dictionary<string, object> { ["removed"] = unpicked.Count, ["picked"] = kept, ["total"] = kept + removedTotal, ["code"] = note.Code },
-                    new Dictionary<string, string> { ["noteCode"] = note.Code }, cancellationToken);
-            }
-            catch (Exception error) when (error is not OperationCanceledException)
-            {
-                logger.LogWarning("Notification « note-parcels-removed » du bon {Code} non envoyée : {Message}", note.Code, error.Message);
-            }
-        }
+        if (unpicked.Count > 0) await NoteRules.AnnounceRemovalAsync(db, logger, note, unpicked.Count, cancellationToken);
     }
 
     /// <summary>`removeParcelFromDraft` : le colis quitte le brouillon, sauf s'il est déjà en main du livreur.</summary>

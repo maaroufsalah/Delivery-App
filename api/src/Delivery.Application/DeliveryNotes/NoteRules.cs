@@ -7,7 +7,9 @@ using Delivery.Domain.Common;
 using Delivery.Domain.Entities;
 using Delivery.Domain.Enums;
 using Delivery.Domain.Pricing;
+using Delivery.Application.Notifications;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Delivery.Application.DeliveryNotes;
 
@@ -225,4 +227,21 @@ public static class NoteRules
         db.RouteNotes.AsNoTracking().Where(l => l.DeliveryNoteId == noteId && l.Route.Status != RouteStatus.CLOSED).Select(l => l.RouteId).ToListAsync(cancellationToken);
 
     public static async Task<PricingPolicy> PolicyAsync(IAppDbContext db, string? agencyId, CancellationToken cancellationToken) => await db.PricingPolicyAsync(cancellationToken, agencyId);
+
+    /// <summary>`announceRemoval` : le vendeur apprend combien de colis ont quitté son bon (best effort).</summary>
+    public static async Task AnnounceRemovalAsync(IAppDbContext db, ILogger logger, DeliveryNote note, int removed, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var kept = await db.DeliveryNoteParcels.CountAsync(l => l.DeliveryNoteId == note.Id, cancellationToken);
+            var removedTotal = await db.DeliveryNoteRemovedParcels.CountAsync(r => r.DeliveryNoteId == note.Id, cancellationToken);
+            await Notifier.NotifyMerchantAsync(db, note.ClientId, "note-parcels-removed",
+                new Dictionary<string, object> { ["removed"] = removed, ["picked"] = kept, ["total"] = kept + removedTotal, ["code"] = note.Code },
+                new Dictionary<string, string> { ["noteCode"] = note.Code }, cancellationToken);
+        }
+        catch (Exception error) when (error is not OperationCanceledException)
+        {
+            logger.LogWarning("Notification « note-parcels-removed » du bon {Code} non envoyée : {Message}", note.Code, error.Message);
+        }
+    }
 }

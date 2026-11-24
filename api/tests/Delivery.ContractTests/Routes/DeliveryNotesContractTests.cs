@@ -36,6 +36,14 @@ public sealed class DeliveryNotesContractTests(ApiFactory factory)
     public async Task Pickup_note_is_requested_validated_partially_and_its_fee_billed()
     {
         var world = await WorldAsync(factory);
+        await factory.ExecuteDbAsync(async db =>
+        {
+            // Frais négocié du client : le test ne dépend pas du réglage global, que d'autres tests modifient.
+            var client = await db.Clients.SingleAsync(c => c.Id == world.Merchant.Id);
+            client.PickupFee = 20m;
+            client.FreePickupThreshold = 10;
+            await db.SaveChangesAsync();
+        });
         var first = await ParcelAsync(world);
         var second = await ParcelAsync(world);
 
@@ -75,7 +83,9 @@ public sealed class DeliveryNotesContractTests(ApiFactory factory)
             invoice.Adjustments.Single().Kind.ShouldBe(InvoiceAdjustmentKind.PICKUP_NOTE_FEE);
             invoice.Adjustments.Single().Amount.ShouldBe(20m);
             invoice.TotalAdjustment.ShouldBe(20m);
-            invoice.TotalDue.ShouldBe(-20m);
+            // TVA sur le frais selon le réglage global (0 % par défaut, 20 % après le test des réglages).
+            new[] { 0m, 4m }.ShouldContain(invoice.TotalVat);
+            invoice.TotalDue.ShouldBe(-(20m + invoice.TotalVat));
         });
 
         (await world.Admin.PostAsJsonAsync($"/api/delivery-notes/{code}/validate", new { })).StatusCode.ShouldBe(HttpStatusCode.Conflict);

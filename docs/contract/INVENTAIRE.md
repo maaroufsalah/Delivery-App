@@ -402,7 +402,7 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 - [x] `GET /api/routes/stats` — `stats` (L143) · perm: routes.read · entrée: routeListQuerySchema
 - [x] `GET /api/routes/export` — `export` (L160) · perm: routes.read · entrée: routeListQuerySchema · sortie: `Promise<StreamableFile>`
 - [x] `POST /api/routes` — `create` (L175) · perm: routes.write · entrée: routeSchema
-- [ ] `POST /api/routes/auto-close-sweep` — `sweepAutoClose` (L189) · perm: routes.close
+- [x] `POST /api/routes/auto-close-sweep` — `sweepAutoClose` (L189) · perm: routes.close
 - [x] `GET /api/routes/:code` — `detail` (L196) · perm: routes.read
 - [x] `PATCH /api/routes/:code` — `update` (L207) · perm: routes.write · entrée: routeUpdateSchema
 - [x] `DELETE /api/routes/:code` — `remove` (L219) · perm: routes.write
@@ -416,10 +416,10 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 - [x] `GET /api/routes/:code/export` — `exportParcels` (L338) · perm: routes.read · sortie: `Promise<StreamableFile>`
 - [ ] `GET /api/routes/:code/sheet` — `sheet` (L357) · perm: routes.read · sortie: `Promise<StreamableFile>`
 - [ ] `GET /api/routes/:code/labels` — `labels` (L370) · perm: routes.read · entrée: labelQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/routes/:code/dispatch` — `dispatch` (L389) · perm: routes.write
-- [ ] `POST /api/routes/:code/parcels/:parcelId/confirm` — `confirm` (L407) · perm: routes.confirm · entrée: routeConfirmSchema
-- [ ] `POST /api/routes/:code/outcomes` — `confirmMany` (L422) · perm: routes.confirm · entrée: routeBulkConfirmSchema
-- [ ] `POST /api/routes/:code/close` — `close` (L442) · perm: routes.close · entrée: routeCloseSchema
+- [x] `POST /api/routes/:code/dispatch` — `dispatch` (L389) · perm: routes.write
+- [x] `POST /api/routes/:code/parcels/:parcelId/confirm` — `confirm` (L407) · perm: routes.confirm · entrée: routeConfirmSchema
+- [x] `POST /api/routes/:code/outcomes` — `confirmMany` (L422) · perm: routes.confirm · entrée: routeBulkConfirmSchema
+- [x] `POST /api/routes/:code/close` — `close` (L442) · perm: routes.close · entrée: routeCloseSchema
 - [x] `GET /api/delivery-notes` — `list` (L503) · perm: notes.read · entrée: noteListQuerySchema
 - [x] `GET /api/delivery-notes/stats` — `stats` (L513) · perm: notes.read · entrée: noteListQuerySchema
 - [x] `GET /api/delivery-notes/export` — `export` (L530) · perm: notes.read · entrée: noteListQuerySchema · sortie: `Promise<StreamableFile>`
