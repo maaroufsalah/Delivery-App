@@ -60,10 +60,14 @@ public static class Notifier
 
     /// <summary>`notifyStaff` : le personnel actif de l'agence (ou de toutes) qui détient la permission.</summary>
     public static async Task NotifyStaffAsync(IAppDbContext db, string? agencyId, string topic, string permission, IReadOnlyDictionary<string, object> parameters,
-        IReadOnlyDictionary<string, string> data, CancellationToken cancellationToken)
+        IReadOnlyDictionary<string, string> data, CancellationToken cancellationToken, bool withSuperAdmins = false)
     {
         var candidates = db.Users.AsNoTracking().Where(u => u.IsActive && u.DeletedAt == null && u.Client == null && u.Courier == null);
-        if (agencyId is not null) candidates = candidates.Where(u => u.AgencyId == agencyId || u.Agencies.Any(a => a.AgencyId == agencyId));
+        if (agencyId is not null)
+        {
+            candidates = candidates.Where(u => u.AgencyId == agencyId || u.Agencies.Any(a => a.AgencyId == agencyId)
+                                               || (withSuperAdmins && u.Roles.Any(r => r.Role == Domain.Enums.RoleName.SUPER_ADMIN)));
+        }
         var rows = await candidates.Select(u => new { u.Id, Roles = u.Roles.Select(r => r.Role).ToList() }).ToListAsync(cancellationToken);
         var allowed = new List<string>();
         foreach (var row in rows)

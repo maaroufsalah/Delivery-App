@@ -163,4 +163,56 @@ public sealed class ClaimsContractTests(ApiFactory factory)
         (await (await phone.GetAsync("/api/claims")).JsonAsync()).GetProperty("total").GetInt32().ShouldBe(1);
         (await world.Seller.GetAsync($"/api/claims/{claim.GetProperty("code").GetString()}")).StatusCode.ShouldBe(HttpStatusCode.OK);
     }
+
+    [Fact]
+    public async Task Agent_only_reaches_the_claims_of_his_agencies()
+    {
+        var world = await DeliveryNotesContractTests.WorldAsync(factory);
+        var typeId = await TypeAsync(world);
+        var parcel = await DeliveryNotesContractTests.ParcelAsync(world);
+        var claim = await OpenAsync(world, typeId, parcel.Code);
+        var code = claim.GetProperty("code").GetString()!;
+        var attachment = claim.GetProperty("attachments")[0].GetProperty("id").GetString()!;
+        var other = await TestData.AgencyAsync(factory, world.City.Id);
+
+        var mine = await TestData.ClientForAsync(factory, await TestData.UserAsync(factory, RoleName.STAFF, world.Agency.Id));
+        (await mine.GetAsync($"/api/claims/{code}")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await (await mine.GetAsync($"/api/claims?search={code}")).JsonAsync()).GetProperty("total").GetInt32().ShouldBe(1);
+        (await mine.PostAsJsonAsync($"/api/claims/{code}/events", new { body = "Pris en charge", status = "in-progress" })).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        var outsider = await TestData.ClientForAsync(factory, await TestData.UserAsync(factory, RoleName.STAFF, other.Id));
+        var orphan = await TestData.ClientForAsync(factory, await TestData.UserAsync(factory, RoleName.STAFF));
+        foreach (var agent in new[] { outsider, orphan })
+        {
+            (await agent.GetAsync($"/api/claims/{code}")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+            (await agent.GetAsync($"/api/claims/{code}/attachments/{attachment}")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+            (await agent.PostAsJsonAsync($"/api/claims/{code}/events", new { body = "Intrusion" })).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+            (await agent.PatchAsJsonAsync($"/api/claims/{code}/assignee", new { assigneeId = (string?)null })).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+            (await (await agent.GetAsync($"/api/claims?search={code}")).JsonAsync()).GetProperty("total").GetInt32().ShouldBe(0);
+            var refused = await agent.PostAsJsonAsync("/api/claims", new { typeId, subject = "Carton", message = "Abîmé", parcelCode = parcel.Code, clientId = world.Merchant.Id });
+            refused.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        }
+        (await world.Admin.GetAsync($"/api/claims/{code}")).StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task Late_false_keeps_only_the_claims_on_time()
+    {
+        var world = await DeliveryNotesContractTests.WorldAsync(factory);
+        var typeId = await TypeAsync(world);
+        var late = (await OpenAsync(world, typeId, (await DeliveryNotesContractTests.ParcelAsync(world)).Code)).GetProperty("code").GetString()!;
+        var onTime = (await OpenAsync(world, typeId, (await DeliveryNotesContractTests.ParcelAsync(world)).Code)).GetProperty("code").GetString()!;
+        await factory.ExecuteDbAsync(async db =>
+        {
+            (await db.Claims.SingleAsync(c => c.Code == late)).DueAt = DateTime.UtcNow.AddDays(-1);
+            (await db.Claims.SingleAsync(c => c.Code == onTime)).DueAt = DateTime.UtcNow.AddDays(3);
+            await db.SaveChangesAsync();
+        });
+        async Task<List<string?>> Codes(string query) =>
+            (await (await world.Seller.GetAsync($"/api/claims?{query}")).JsonAsync()).GetProperty("items").EnumerateArray().Select(c => c.GetProperty("code").GetString()).ToList();
+
+        (await Codes("late=true")).ShouldBe([late]);
+        (await Codes("late=false")).ShouldBe([onTime]);
+        (await Codes("")).Count.ShouldBe(2);
+    }
 }

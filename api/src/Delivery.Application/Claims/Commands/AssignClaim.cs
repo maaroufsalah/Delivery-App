@@ -43,7 +43,7 @@ internal sealed class AssignClaimHandler(IAppDbContext db, ICurrentUser caller, 
     public async Task<ClaimDetailDto> Handle(AssignClaimCommand input, CancellationToken cancellationToken)
     {
         if (!ClaimRows.CanHandle(caller)) throw BusinessException.Forbidden("Seul le staff assigne une réclamation.");
-        var claim = await ClaimRows.Scoped(db.Claims, caller).FirstOrDefaultAsync(c => c.Code == input.Code, cancellationToken)
+        var claim = await (await ClaimRows.ScopedAsync(db, db.Claims, caller, cancellationToken)).FirstOrDefaultAsync(c => c.Code == input.Code, cancellationToken)
                     ?? throw BusinessException.NotFound($"Réclamation introuvable : {input.Code}");
         var name = "la pile commune";
         if (!string.IsNullOrEmpty(input.AssigneeId))

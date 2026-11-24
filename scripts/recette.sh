@@ -82,12 +82,14 @@ call "fiche vendeur" 201 POST /clients "$ADMIN" "{\"name\":\"Boutique $RUN\",\"p
 CLIENT_ID="$(json 'j.id')"
 call "compte vendeur" 201 POST "/clients/$CLIENT_ID/account" "$ADMIN" \
   "{\"email\":\"$MERCHANT_EMAIL\",\"firstName\":\"Nadia\",\"lastName\":\"Recette\",\"roles\":[\"MERCHANT\"],\"password\":\"$PASSWORD\"}"
+MERCHANT_USER="$(json 'j.id')"
 COURIER_EMAIL="livreur.$RUN@recette.test"
 call "fiche livreur" 201 POST /couriers "$ADMIN" "{\"firstName\":\"Karim\",\"lastName\":\"Recette\",\"phone\":\"0622222222\",\"cityId\":\"$CITY\",\"agencyId\":\"$AGENCY\",\"fixedSalary\":0}"
 COURIER_ID="$(json 'j.id')"
 call "villes et tarifs du livreur" 200 PUT "/couriers/$COURIER_ID/cities" "$ADMIN" "{\"cities\":[{\"cityId\":\"$CITY\",\"pickupFee\":5,\"deliveryFee\":15}]}"
 call "compte livreur" 201 POST "/couriers/$COURIER_ID/account" "$ADMIN" \
   "{\"email\":\"$COURIER_EMAIL\",\"firstName\":\"Karim\",\"lastName\":\"Recette\",\"roles\":[\"COURIER\"],\"password\":\"$PASSWORD\"}"
+COURIER_USER="$(json 'j.id')"
 
 step "Vendeur : colis et demande de ramassage"
 SELLER="$(login "$MERCHANT_EMAIL" "$PASSWORD")" || ko "vendeur connecté"
@@ -163,6 +165,21 @@ else
     case "$code" in 200*) ok "web $name : $page rendu ($code)";; *) ko "web $name : $page → $code";; esac
   done
 fi
+
+step "Nettoyage : comptes de recette supprimés, fiches désactivées"
+# Les fiches vendeur / livreur restent (des colis les référencent : suppression refusée, comme Speedy) ;
+# le colis, le circuit, la caisse, la facture et la réclamation de la recette restent tracés en base,
+# tous rattachés à « Boutique $RUN » / « Karim Recette ».
+[ -n "${MERCHANT_USER:-}" ] && call "compte vendeur supprimé" 200 DELETE "/users/$MERCHANT_USER" "$ADMIN"
+[ -n "${COURIER_USER:-}" ] && call "compte livreur supprimé" 200 DELETE "/users/$COURIER_USER" "$ADMIN"
+[ -n "${CLIENT_ID:-}" ] && call "fiche vendeur désactivée" 200 PATCH "/clients/$CLIENT_ID/active" "$ADMIN" '{"isActive":false}'
+[ -n "${COURIER_ID:-}" ] && call "fiche livreur désactivée" 200 PATCH "/couriers/$COURIER_ID/active" "$ADMIN" '{"isActive":false}'
+[ -n "${CLAIM_TYPE:-}" ] && call "type de réclamation désactivé" 200 PATCH "/claims/types/$CLAIM_TYPE" "$ADMIN" \
+  "{\"code\":\"recette-$RUN\",\"label\":\"Recette\",\"subjectType\":\"parcel\",\"isActive\":false}"
+code="$(curl -s -o /dev/null -w '%{http_code}' -H 'x-client: mobile' -H 'content-type: application/json' \
+  --data "{\"identifier\":\"$MERCHANT_EMAIL\",\"password\":\"$PASSWORD\"}" "$API/auth/login")"
+[ "$code" != 200 ] && ok "le compte vendeur supprimé ne se connecte plus ($code)" || ko "le compte vendeur supprimé se connecte encore"
+echo "Traces laissées : vendeur « Boutique $RUN », livreur « Karim Recette », colis ${PARCEL:-}, facture ${INVOICE:-}, réclamation ${CLAIM:-}."
 
 printf '\n%s PASS, %s FAIL\n' "$PASS" "$FAIL"
 if [ "$FAIL" -eq 0 ]; then echo "RECETTE PASS"; exit 0; fi

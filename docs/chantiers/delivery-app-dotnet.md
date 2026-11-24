@@ -53,23 +53,25 @@ API=http://localhost:5080/api WEB=http://localhost:3000 ADMIN_EMAIL=admin@wimo.m
 Docker est absent du poste de développement. La partie API est donc jouée en local contre
 `dotnet run` sur une base neuve (49/49), et la pile complète en CI (55/55).
 
-## Bugs Speedy corrigés (argent : corrigés, jamais reproduits)
+## Bugs Speedy corrigés (argent toujours ; portée et filtres des réclamations avant mise en ligne)
 
 Chacun est couvert par un test. **À corriger aussi dans Speedy.**
 
 1. `POST /exchanges` passait le montant en centimes comme un COD en dirhams (COD × 100). Le COD vaut désormais `amount / 100` MAD.
 2. Le « collecté » du livreur (performance, stock) ignorait le « déjà payé ». Il suit désormais `codToCollect`.
 3. La facturation **en masse** ajoutait à une facture de régime normal un colis dont le COD était déjà versé par bon de versement : le COD était dû deux fois. Ce colis est maintenant exclu, comme dans la liste des candidats et l'ajout manuel.
-4. Hors argent, mais corrigé à la demande de Salah : la photo de preuve du dernier colis d'un circuit tombait en 404, car le circuit se clôt automatiquement. Elle s'attache désormais au colis du livreur.
+4. **Réclamations, portée d'agence** (corrigé avant la mise en ligne, à la demande de Salah) : Speedy ouvrait à un agent les réclamations de toute la société. Un agent ne voit et ne traite plus que celles de ses agences (agence du colis, sinon celle du vendeur) ; hors portée, 404. Sans agence, il n'en voit aucune ; ouvrir une réclamation hors de son agence répond 403. L'admin garde tout. La notification « réclamation ouverte » part aux agents de l'agence concernée et aux super-admins.
+5. **Réclamations, `late=false`** (corrigé avant la mise en ligne) : `z.coerce.boolean` en faisait un « vrai ». `late=false` (ou `0`) garde désormais les réclamations qui ne sont pas en retard.
+6. Hors argent, mais corrigé à la demande de Salah : la photo de preuve du dernier colis d'un circuit tombait en 404, car le circuit se clôt automatiquement. Elle s'attache désormais au colis du livreur.
 
 ## Comportements Speedy reproduits (sans impact financier)
 
 - `GET /courier/me/routes?status=closed` renvoie `[]`.
 - À la remise d'un bon BRT-, seuls le nom et le type de la pièce jointe sont gardés, pas son contenu.
 - Un statut de chèque inconnu dans le filtre ne sélectionne rien. Speedy, lui, répond par une erreur Prisma.
-- `unpaidOnly=false` et `late=false` valent « vrai » (`z.coerce.boolean`).
+- `unpaidOnly=false` vaut « vrai » (`z.coerce.boolean`). Le même défaut sur `late=false` des réclamations est corrigé, voir plus haut.
 - Frontière de mois en UTC (factures du mois).
-- Réclamations : le personnel voit toutes les réclamations, sans restriction d'agence, et les statuts ne sont pas traduits dans l'export.
+- Réclamations : les statuts ne sont pas traduits dans l'export.
 - Tableaux de bord :
   - `clients/:id` lit le nom du vendeur sans contrôle de portée ;
   - un agent sans agence voit les règlements, OV, écarts et soldes livreurs de toute la société ;

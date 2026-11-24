@@ -15,14 +15,15 @@ public sealed class EngagementScopeSweepContractTests(ApiFactory factory)
         var a = await DeliveryNotesContractTests.WorldAsync(factory);
         var b = await DeliveryNotesContractTests.WorldAsync(factory);
         var (_, outsider) = await RoutesContractTests.CourierAsync(factory, b.City.Id);
+        var agentB = await TestData.ClientForAsync(factory, await TestData.UserAsync(factory, Delivery.Domain.Enums.RoleName.STAFF, b.Agency.Id));
         var typeId = await ClaimsContractTests.TypeAsync(a);
         var parcel = await DeliveryNotesContractTests.ParcelAsync(a);
         var claim = await ClaimsContractTests.OpenAsync(a, typeId, parcel.Code);
         var code = claim.GetProperty("code").GetString()!;
         var attachment = claim.GetProperty("attachments")[0].GetProperty("id").GetString()!;
 
-        // Vendeur B et livreur étranger : ni la réclamation, ni sa pièce jointe, ni son fil, ni l'assignation.
-        foreach (var reader in new[] { b.Seller, outsider })
+        // Vendeur B, livreur étranger et agent d'une autre agence : ni la réclamation, ni sa pièce jointe, ni son fil, ni l'assignation.
+        foreach (var reader in new[] { b.Seller, outsider, agentB })
         {
             (await reader.GetAsync($"/api/claims/{code}")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
             (await reader.GetAsync($"/api/claims/{code}/attachments/{attachment}")).StatusCode.ShouldBe(HttpStatusCode.NotFound);

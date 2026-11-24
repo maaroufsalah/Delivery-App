@@ -41,14 +41,33 @@ public static class ClaimRows
 
     public static ClaimStatus Parse(string wire) => Enum.Parse<ClaimStatus>(Money.FromWire(wire));
 
-    /// <summary>`claimWhere` : le vendeur ses réclamations, le livreur celles de ses colis, le personnel toutes.</summary>
-    public static IQueryable<Claim> Scoped(IQueryable<Claim> claims, ICurrentUser caller)
+    /// <summary>
+    /// `claimWhere` : le vendeur ses réclamations, le livreur celles de ses colis, le super-admin toutes.
+    /// Bug Speedy corrigé : un agent ne voit que les réclamations de ses agences (agence du colis, sinon celle
+    /// du vendeur) ; sans agence, aucune. Speedy lui ouvrait celles de toute la société.
+    /// </summary>
+    public static async Task<IQueryable<Claim>> ScopedAsync(IAppDbContext db, IQueryable<Claim> claims, ICurrentUser caller, CancellationToken cancellationToken)
     {
         if (caller.IsSuperAdmin()) return claims;
         if (caller.ClientId is not null) return claims.Where(c => c.ClientId == caller.ClientId);
         if (caller.CourierId is not null) return claims.Where(c => c.Parcel != null && c.Parcel.CourierId == caller.CourierId);
-        return claims;
+        var agencies = await AgenciesAsync(db, caller, cancellationToken);
+        return claims.Where(c => c.Parcel != null ? agencies.Contains(c.Parcel.AgencyId) : c.Client.AgencyId != null && agencies.Contains(c.Client.AgencyId));
     }
+
+    /// <summary>Les agences d'un agent : la sienne et celles qui lui sont rattachées.</summary>
+    public static async Task<List<string>> AgenciesAsync(IAppDbContext db, ICurrentUser caller, CancellationToken cancellationToken)
+    {
+        var agencies = await db.UserAgencies.AsNoTracking().Where(l => l.UserId == caller.UserId).Select(l => l.AgencyId).ToListAsync(cancellationToken);
+        if (caller.AgencyId is { } own) agencies.Add(own);
+        return agencies.Distinct().ToList();
+    }
+
+    /// <summary>L'agence d'une réclamation : celle du colis, sinon celle du vendeur.</summary>
+    public static async Task<string?> AgencyOfAsync(IAppDbContext db, string? parcelId, string clientId, CancellationToken cancellationToken) =>
+        parcelId is not null
+            ? await db.Parcels.AsNoTracking().Where(p => p.Id == parcelId).Select(p => p.AgencyId).FirstOrDefaultAsync(cancellationToken)
+            : await db.Clients.AsNoTracking().Where(c => c.Id == clientId).Select(c => c.AgencyId).FirstOrDefaultAsync(cancellationToken);
 
     public static bool IsMerchant(ICurrentUser caller) => !caller.IsSuperAdmin() && caller.ClientId is not null;
 
@@ -75,7 +94,7 @@ public static class ClaimRows
     }
 
     /// <summary>`where` : multi-filtres, retard, recherche ; un vendeur ne filtre pas par client.</summary>
-    public static (IQueryable<Claim> Rows, int Page, int PageSize) Filter(IAppDbContext db, ICurrentUser caller, ClaimListFilter filter, DateTime now)
+    public static async Task<(IQueryable<Claim> Rows, int Page, int PageSize)> FilterAsync(IAppDbContext db, ICurrentUser caller, ClaimListFilter filter, DateTime now, CancellationToken cancellationToken)
     {
         var issues = new List<object>();
         var page = ListQueryParams.Coerce(filter.Page, 1, 1, null, "page", issues);
@@ -85,7 +104,7 @@ public static class ClaimRows
         Multi(filter.ClientId, "clientId", null, issues);
         if (issues.Count > 0) throw BusinessException.Validation("Saisie invalide.", new { issues });
 
-        var rows = Scoped(db.Claims.AsNoTracking(), caller);
+        var rows = await ScopedAsync(db, db.Claims.AsNoTracking(), caller, cancellationToken);
         if (filter.Status is { } statuses)
         {
             var wanted = statuses.Select(Parse).ToList();
@@ -94,8 +113,13 @@ public static class ClaimRows
         if (filter.TypeId is { } types) rows = rows.Where(c => types.Contains(c.TypeId));
         if (filter.ClientId is { } clients && !IsMerchant(caller)) rows = rows.Where(c => clients.Contains(c.ClientId));
         if (!string.IsNullOrEmpty(filter.AssigneeId)) rows = rows.Where(c => c.AssigneeId == filter.AssigneeId);
-        // `z.coerce.boolean()` : toute chaîne non vide vaut vrai, « false » compris.
-        if (!string.IsNullOrEmpty(filter.Late))
+        // Bug Speedy corrigé : `z.coerce.boolean()` faisait de « false » un vrai. « false » / « 0 » gardent
+        // désormais les réclamations qui ne sont PAS en retard ; toute autre valeur non vide, les en retard.
+        if (filter.Late is "false" or "0")
+        {
+            rows = rows.Where(c => !((c.Status == ClaimStatus.OPEN || c.Status == ClaimStatus.IN_PROGRESS) && c.DueAt != null && c.DueAt < now));
+        }
+        else if (!string.IsNullOrEmpty(filter.Late))
         {
             rows = rows.Where(c => (c.Status == ClaimStatus.OPEN || c.Status == ClaimStatus.IN_PROGRESS) && c.DueAt != null && c.DueAt < now);
         }
@@ -122,7 +146,7 @@ public static class ClaimRows
 
     public static async Task<ClaimDetailDto> DetailAsync(IAppDbContext db, ICurrentUser caller, IClock clock, string code, CancellationToken cancellationToken)
     {
-        var row = await Scoped(db.Claims.AsNoTracking(), caller).Where(c => c.Code == code).Select(Row).FirstOrDefaultAsync(cancellationToken)
+        var row = await (await ScopedAsync(db, db.Claims.AsNoTracking(), caller, cancellationToken)).Where(c => c.Code == code).Select(Row).FirstOrDefaultAsync(cancellationToken)
                   ?? throw BusinessException.NotFound($"Réclamation introuvable : {code}");
         var handler = CanHandle(caller);
         var attachments = await db.ClaimAttachments.AsNoTracking().Where(a => a.ClaimId == row.Id).OrderBy(a => a.CreatedAt)
