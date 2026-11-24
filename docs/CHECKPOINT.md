@@ -85,7 +85,7 @@ Module 6 TERMINÉ sur `feat/routes` : PR #6 ouverte (https://github.com/maaroufs
 Speedy, comparaison et écarts mesurés dans `docs/design/labels/README.md`. Fichiers éclatés un par cas
 d'usage (`scripts/split-module.py`) ; balayage de portée `RoutesScopeSweepContractTests`.
 
-## En cours — module 7 « Retours et BL » sur `feat/returns`
+## Fait — module 7 « Retours et BL » (#7, fusionnée)
 
 54 routes : `bl/*` (19), `return-handovers/*` (19), `return-slips/*` (14), `returns/pending` (+ export).
 343/494 routes cochées. 56 tests unitaires et 99 tests de contrat verts en local.
@@ -105,10 +105,30 @@ d'usage (`scripts/split-module.py`) ; balayage de portée `RoutesScopeSweepContr
   jointe sont gardés, pas son contenu (Speedy fait de même).
 - Balayage de portée : `ReturnsContractTests.Returns_stay_within_their_owner`.
 
+## En cours — module 8 « Caisse et chèques » sur `feat/finance`
+
+54 des 60 routes du module ; 397/494 cochées. 56 tests unitaires et 108 tests de contrat verts.
+- Retours de fonds RF- : liste par étape (ouverte, fermée, reçue, validée), cartes de synthèse,
+  candidats, création manuelle (colis obligatoires, un seul bon ouvert par livreur), comptage avec
+  motif d'écart, confirmation (lignes figées, colis « remis livreur », chèques reçus, écart porté au
+  solde du livreur, le tout en une transaction), réouverture, reçu PDF. Côté livreur : sa caisse,
+  sa clôture, son solde. Solde et règlements d'écart côté agence.
+- Chèques : liste et somme, fiche, parcours (livreur → agence → vendeur), avance en masse, rejet
+  motivé, annulation ; bons de remise BRC- (un chèque, ou groupé par vendeur, logo assombri).
+- Tableau financier, synthèse (sept blocs), banques et comptes.
+- Petite caisse : mouvements, journées chaînées (solde d'ouverture et de clôture), clôture manuelle
+  ou automatique (tâche de fond chaque minute, inactive en test), réouverture motivée, dépenses du
+  livreur en brouillon, exports et PDF.
+- Reportés au module 9 (ils lisent les relevés et les factures) : `GET/POST /courier/me/cheques`,
+  `payments` (4 routes), et le rejeu des lignes de facture brouillon après un chèque rejeté ou
+  annulé (`InvoiceDraftReplay`, à compléter avant toute facture brouillon).
+- Reproduit (sans impact financier) : un statut de chèque inconnu dans le filtre ne sélectionne rien
+  (Speedy répond en erreur Prisma).
+
 ## Prochaine action exacte
 
-1. Ouvrir la PR du module 7 (`feat/returns`), attendre la CI (`gh pr checks <n> --watch --fail-fast`),
-   fusionner, puis module 8.
+1. Ouvrir la PR du module 8 (`feat/finance`), attendre la CI, fusionner, puis module 9 (facturation,
+   relevés livreur, versements, paiements, chèques du livreur, `InvoiceDraftReplay`).
 
 ## Blocages / décisions pour Salah
 

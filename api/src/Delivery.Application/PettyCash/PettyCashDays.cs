@@ -9,13 +9,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Delivery.Application.PettyCash;
 
-public sealed record PettyCashDaySummaryDto(string Day, string? AgencyId, string? AgencyName, int Agencies, long OpeningBalance, long Supplied, long Spent, long ClosingBalance, int PendingDrafts,
-    string Status, DateTime? ClosedAt, string? ClosedBy, DateTime? ReopenedAt, string? ReopenedByName, string? ReopenReason);
-
-public sealed record PettyCashDaysPageDto(IReadOnlyList<PettyCashDaySummaryDto> Items, string Today, PettyCashDaySummaryDto? Current);
-
-public sealed record PettyCashDayDetailDto(PettyCashDaySummaryDto Summary, IReadOnlyList<PettyCashDaySummaryDto> Agencies);
-
 /// <summary>
 /// `PettyCashDaysService` : une journée de caisse par agence, son solde chaîné d'un jour à l'autre, sa clôture.
 /// Toute écriture passe par <see cref="WriteAsync{T}"/> : verrou en base par agence, refus d'une journée close,
