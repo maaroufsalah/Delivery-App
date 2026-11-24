@@ -67,6 +67,24 @@ public sealed class DocumentSnapshots
         var n = sample.RootElement.GetProperty("note");
         var noteLines = n.GetProperty("parcels").EnumerateArray().Select(p => new DeliveryNoteSheetLine(S(p, "code")!, S(p, "recipientName")!, S(p, "destinationCityName")!, S(p, "destinationDistrictName"),
             p.GetProperty("codAmount").GetInt64(), p.GetProperty("deliveryFee").GetInt64(), p.GetProperty("quantity").GetInt32(), S(p, "correction"))).ToList();
+        if (sample.RootElement.TryGetProperty("stock", out var stock))
+        {
+            Delivery.Domain.Parcels.CourierStockCounters Counters(JsonElement e) => new()
+            {
+                InHand = e.GetProperty("inHand").GetInt32(), PickedUp = e.GetProperty("pickedUp").GetInt32(), OutForDelivery = e.GetProperty("outForDelivery").GetInt32(),
+                Awaiting = e.GetProperty("awaiting").GetInt32(), FailedOrReturning = e.GetProperty("failedOrReturning").GetInt32(), DeliveredUnremitted = e.GetProperty("deliveredUnremitted").GetInt32(),
+                CollectedUnremittedInCents = e.GetProperty("collectedUnremittedInCents").GetInt64(), ToCollectInCents = e.GetProperty("toCollectInCents").GetInt64(),
+            };
+            var summaryJson = stock.GetProperty("summary");
+            var summary = new CourierStockSheetSummary(
+                summaryJson.GetProperty("rows").EnumerateArray().Select(r => new CourierStockSheetRow(S(r, "courierName")!, S(r, "agencyName"), Counters(r.GetProperty("counters")))).ToList(),
+                Counters(summaryJson.GetProperty("totals")), summaryJson.GetProperty("filters").EnumerateArray().Select(f => f.GetString()!).ToList());
+            var sections = stock.GetProperty("sections").EnumerateArray().Select(sec => new CourierStockSheetSection(S(sec, "courierName")!, S(sec, "agencyName"), Counters(sec.GetProperty("counters")),
+                sec.GetProperty("byStatus").EnumerateArray().Select(l => new CourierStockSheetStatusLine(l.GetProperty("statusId").GetInt32(), l.GetProperty("count").GetInt32(), l.GetProperty("codInCents").GetInt64())).ToList(),
+                sec.GetProperty("parcels").EnumerateArray().Select(p => new CourierStockSheetParcel(S(p, "code")!, S(p, "recipientName")!, S(p, "recipientPhone")!, S(p, "destinationCityName")!,
+                    S(p, "clientName")!, p.GetProperty("statusId").GetInt32(), S(p, "routeCode"), p.GetProperty("codInCents").GetInt64())).ToList())).ToList();
+            File.WriteAllBytes(Path.Combine(outDir, "dotnet-courier-stock.pdf"), pdf.Render(new CourierStockSheet(company, null, null, Date(stock, "generatedAt")!.Value, summary, sections)));
+        }
         File.WriteAllBytes(Path.Combine(outDir, "dotnet-delivery-note.pdf"), pdf.Render(new DeliveryNoteSheet(company, S(n, "code")!, S(n, "kind")!, S(n, "clientName")!, S(n, "agencyName")!,
             S(n, "cityName")!, Date(n, "createdAt")!.Value, Date(n, "validatedAt"), n.GetProperty("pickupWaived").GetBoolean(), noteLines, Int(n, "pickedCount"), Int(n, "removedCount"))));
     }

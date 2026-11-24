@@ -47,5 +47,31 @@ public sealed class CourierStockContractTests(ApiFactory factory)
         (await world.Admin.GetAsync($"/api/courier-stock/parcels/export?courierId={courier.Id}")).StatusCode.ShouldBe(HttpStatusCode.OK);
         (await world.Admin.GetAsync("/api/courier-stock/parcels/export")).StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
         (await phone.GetAsync("/api/courier-stock")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        var global = await world.Admin.GetAsync($"/api/courier-stock/pdf?search={Uri.EscapeDataString(courier.LastName)}");
+        global.StatusCode.ShouldBe(HttpStatusCode.OK);
+        global.Content.Headers.ContentType!.MediaType.ShouldBe("application/pdf");
+        global.Content.Headers.ContentDisposition!.FileName!.Trim('"').ShouldStartWith("Stock-Livreurs-");
+        var own = await world.Admin.GetAsync($"/api/courier-stock/{courier.Id}/pdf");
+        own.StatusCode.ShouldBe(HttpStatusCode.OK);
+        own.Content.Headers.ContentDisposition!.FileName!.Trim('"').ShouldStartWith("Stock-Hamid-Circuit-");
+
+        (await world.Admin.PostAsJsonAsync("/api/courier-stock/pdf-jobs", new { kind = "nope" })).StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        var created = await world.Admin.PostAsJsonAsync("/api/courier-stock/pdf-jobs", new { kind = "courier", courierId = courier.Id });
+        created.StatusCode.ShouldBe(HttpStatusCode.Accepted);
+        var job = await created.JsonAsync();
+        job.GetProperty("format").GetString().ShouldBe("stock");
+        job.GetProperty("count").GetInt32().ShouldBe(2);
+        var id = job.GetProperty("id").GetString();
+        var status = "pending";
+        for (var attempt = 0; attempt < 50 && status is "pending" or "running"; attempt++)
+        {
+            await Task.Delay(100);
+            status = (await (await world.Admin.GetAsync($"/api/courier-stock/pdf-jobs/{id}")).JsonAsync()).GetProperty("status").GetString();
+        }
+        status.ShouldBe("ready");
+        var file = await world.Admin.GetAsync($"/api/courier-stock/pdf-jobs/{id}/file");
+        file.StatusCode.ShouldBe(HttpStatusCode.OK);
+        file.Content.Headers.ContentDisposition!.FileName!.Trim('"').ShouldBe("situation-stock-livreur-2.pdf");
     }
 }

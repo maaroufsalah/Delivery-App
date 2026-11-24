@@ -3,7 +3,8 @@ using System.Threading.Channels;
 namespace Delivery.Application.Parcels.Labels;
 
 /// <summary>Un travail d'étiquettes en attente : les codes déjà résolus dans la portée du demandeur.</summary>
-public sealed record LabelJobWork(string JobId, IReadOnlyList<string> Codes, string Format, string Folder);
+/// <summary>Un travail de la file : des étiquettes (codes), ou un document déjà préparé (`enqueueDocument`).</summary>
+public sealed record LabelJobWork(string JobId, IReadOnlyList<string> Codes, string Format, string Folder, object? Document = null);
 
 /// <summary>
 /// La file en mémoire de `LabelJobsService` : un seul rendu à la fois, dans l'ordre

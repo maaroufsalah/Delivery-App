@@ -35,6 +35,7 @@ public sealed class PdfService : IPdfService
             StorageReceipt receipt => BusinessDocuments.StorageReceipt(receipt),
             RouteSheet route => RouteDocumentsPdf.RouteSheet(route),
             DeliveryNoteSheet note => RouteDocumentsPdf.DeliveryNote(note),
+            CourierStockSheet stock => CourierStockPdf.Render(stock),
             _ => throw new NotSupportedException($"Document PDF inconnu : {document.GetType().Name}"),
         };
     }

@@ -23,6 +23,9 @@ public static class ParcelLabels
     public const int SinglePdfMax = 1_000;
     public const int ChunkSize = 500;
     public const int JobTtlHours = 24;
+
+    /// <summary>`COURIER_STOCK_JOB_FORMAT` : le « format » d'un travail qui porte la situation du stock livreur.</summary>
+    public const string StockJobFormat = "stock";
     public static readonly string[] Formats = [LabelSheet.Format10X10, LabelSheet.FormatA4];
 
     private static readonly Dictionary<DeliveryMode, string> DeliveryModeLabels = new()
