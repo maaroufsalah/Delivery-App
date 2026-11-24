@@ -1,9 +1,9 @@
 // Produit api/src/Delivery.Application/Common/Documents/DocumentLabels.Data.cs depuis
 // `common/documents/labels.ts` de Speedy (libellés des documents et des exports, fr/en/ar).
-// Usage : node scripts/ts/dump-labels.mjs <speedy>/apps/api/src/common/documents/labels.ts
+// Usage : node scripts/ts/dump-labels.mjs <speedy>/apps/api/src/common/documents/labels.ts <speedy>/packages/shared/src/i18n/status-labels.ts
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 
-const source = readFileSync(process.argv[2], 'utf8');
+let source = readFileSync(process.argv[2], 'utf8');
 
 function literal(name) {
   const start = source.search(new RegExp(`const ${name}\\b[^=]*=\\s*\\{`));
@@ -27,6 +27,11 @@ function literal(name) {
 }
 
 const tables = { ParcelStatus: literal('PARCEL_STATUS'), Enum: literal('ENUM_LABELS') };
+// Libellés d'écran des statuts (`i18n/status-labels.ts`), utilisés dans les messages d'erreur.
+if (process.argv[3]) {
+  source = readFileSync(process.argv[3], 'utf8');
+  tables.StatusScreen = literal('STATUS_LABELS');
+}
 const q = (s) => JSON.stringify(s);
 const lines = ['namespace Delivery.Application.Common.Documents;', '', '/// <summary>Libellés de `labels.ts` (documents, exports), par langue.</summary>', 'public static partial class DocumentLabels', '{'];
 for (const [name, table] of Object.entries(tables)) {

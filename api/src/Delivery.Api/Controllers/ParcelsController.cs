@@ -72,4 +72,19 @@ public sealed partial class ParcelsController(ISender sender) : ApiControllerBas
     [RequirePermission("parcels.write")]
     [Guards(Guard.NotMerchant)]
     public Task<IActionResult> AddNote(string code, [FromBody] AddParcelNoteCommand? body) => Created((body ?? new AddParcelNoteCommand()) with { Code = code });
+
+    [HttpPost("{code}/admin-delete")]
+    [RequirePermission("parcels.write")]
+    [Guards(Guard.NotMerchant)]
+    public Task<IActionResult> AdminDelete(string code, [FromBody] AdminDeleteParcelCommand? body) => Ok((body ?? new AdminDeleteParcelCommand()) with { Code = code });
+
+    [HttpPost("{code}/client/preview")]
+    [RequirePermission("parcels.write")]
+    [Guards(Guard.NotMerchant)]
+    public Task<IActionResult> PreviewClientChange(string code, [FromBody] PreviewParcelClientChangeCommand? body) => Ok((body ?? new PreviewParcelClientChangeCommand()) with { Code = code });
+
+    [HttpPost("{code}/client")]
+    [RequirePermission("parcels.write")]
+    [Guards(Guard.NotMerchant)]
+    public Task<IActionResult> ChangeClient(string code, [FromBody] ChangeParcelClientCommand? body) => Ok((body ?? new ChangeParcelClientCommand()) with { Code = code });
 }

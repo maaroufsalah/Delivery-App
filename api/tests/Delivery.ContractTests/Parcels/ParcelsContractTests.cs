@@ -232,4 +232,41 @@ public sealed class ParcelsContractTests(ApiFactory factory)
         deleted.StatusCode.ShouldBe(HttpStatusCode.OK);
         (await deleted.JsonAsync()).GetProperty("deletedAt").GetString().ShouldNotBeNull();
     }
+
+    [Fact]
+    public async Task Admin_changes_the_client_from_a_preview_then_deletes()
+    {
+        var world = await WorldAsync();
+        var code = (await (await world.MerchantHttp.PostAsJsonAsync("/api/parcels", Body(world))).JsonAsync()).GetProperty("code").GetString();
+        var other = await TestData.MerchantAsync(factory, world.City.Id);
+
+        var staff = await TestData.ClientForAsync(factory, await TestData.UserAsync(factory, RoleName.STAFF, world.Agency.Id));
+        var refused = await staff.PostAsJsonAsync($"/api/parcels/{code}/admin-delete", new { reason = "x" });
+        if (refused.StatusCode == HttpStatusCode.Forbidden && (await refused.JsonAsync()).GetProperty("details").TryGetProperty("reason", out var reason))
+        {
+            reason.GetString().ShouldBe("admin-only");
+        }
+
+        var preview = await world.Admin.PostAsJsonAsync($"/api/parcels/{code}/client/preview", new { clientId = other.Id });
+        preview.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var plan = await preview.JsonAsync();
+        plan.GetProperty("from").GetProperty("id").GetString().ShouldBe(world.Merchant.Id);
+        plan.GetProperty("changes")[0].GetProperty("field").GetString().ShouldBe("clientId");
+        plan.GetProperty("beforePickup").GetBoolean().ShouldBeTrue();
+        var fingerprint = plan.GetProperty("fingerprint").GetString();
+        fingerprint!.Length.ShouldBe(16);
+
+        (await world.Admin.PostAsJsonAsync($"/api/parcels/{code}/client", new { clientId = other.Id, reason = "Erreur", fingerprint = "0000000000000000" })).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        var changed = await world.Admin.PostAsJsonAsync($"/api/parcels/{code}/client", new { clientId = other.Id, reason = "Erreur de saisie", fingerprint });
+        changed.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await changed.JsonAsync()).GetProperty("clientId").GetString().ShouldBe(other.Id);
+        (await world.MerchantHttp.GetAsync($"/api/parcels/{code}")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        var deleted = await world.Admin.PostAsJsonAsync($"/api/parcels/{code}/admin-delete", new { reason = "Doublon" });
+        deleted.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await deleted.JsonAsync()).GetProperty("code").GetString().ShouldBe(code);
+        var detail = await (await world.Admin.GetAsync($"/api/parcels/{code}?deleted=true")).JsonAsync();
+        detail.GetProperty("fieldChanges").EnumerateArray().Select(c => c.GetProperty("field").GetString()).ShouldContain("deletedAt");
+        detail.GetProperty("fieldChanges").EnumerateArray().First(c => c.GetProperty("field").GetString() == "clientId").GetProperty("newLabel").GetString().ShouldBe(other.Name);
+    }
 }

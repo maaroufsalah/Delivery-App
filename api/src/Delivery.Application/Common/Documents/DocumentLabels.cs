@@ -17,6 +17,14 @@ public static partial class DocumentLabels
         return Lookup(ParcelStatusTable, locale, status.Key) ?? status.Key;
     }
 
+    /// <summary>`statusLabel(key, locale)` de `i18n/status-labels.ts` : le libellé d'écran.</summary>
+    public static string StatusScreen(int statusId, string locale = DefaultLocale)
+    {
+        var status = StatusCatalog.Find(statusId);
+        if (status is null) return statusId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        return Lookup(StatusScreenTable, locale, status.Key) ?? status.Key;
+    }
+
     /// <summary>`enumLabel`.</summary>
     public static string Enum(string key, string locale = DefaultLocale) => Lookup(EnumTable, locale, key) ?? key;
 
