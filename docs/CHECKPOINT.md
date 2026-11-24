@@ -53,32 +53,42 @@ retour de fonds, chèque), clôture ; (D) statut 13 (`OutForDeliveryPlacer`, tes
 la fin du 500), correction de statut, annulation de livraison, `field-status`, transfert ;
 (E) `courier/*`, `courier-stock`, statut prestataire, `staff/me/alerts` ; (F) PDF fidèles (étiquettes,
 reçu d'entreposage, feuille de route, bon) comparés dans `docs/design/labels/`.
-État : (A) FAIT ; (B) FAIT (commit `feat(routes): draft circuits…`) ; (C) FAIT et (D) partiel
-(commit `feat(routes): dispatch, outcomes…`) : départ (+ tâche `route-dispatch`), confirmation unitaire
-et en masse (+ tâche `route-outcomes`), encaissement espèces/chèque en centimes, commission figée,
-ligne de retour de fonds automatique (`Finance/CashLines.cs` : `attachDelivered`, `refreshTotal`,
-chèque reçu, versements COD brouillons), clôture et clôture automatique (livraison, retour, balayage).
-Statut 13 : le 500 a disparu, `Routes/OutForDelivery.cs` place le colis sur le circuit du livreur ;
-test de contrat `Out_for_delivery_places_the_parcel_on_a_circuit_instead_of_failing`.
-257/494 routes cochées ; 81 tests de contrat et 48 unitaires verts.
-Écart : le verrou consultatif par livreur remplace le SAVEPOINT de Speedy à l'ouverture d'un retour de
-fonds (même résultat : jamais deux bons ouverts). Le « brouillon du jour » du placeur se lit en UTC.
+État : lots (A) à (E) FAITS sur `feat/routes` (non poussée) — 281/494 routes, tests de contrat verts.
+- (B)(C) circuits : composition, départ, issues (encaissement espèces/chèque en centimes, commission,
+  ligne RF- automatique), clôture et clôture automatique.
+- (D) statut 13 placé sur un circuit (fin du 500, test de contrat) ; annulation de livraison et
+  correction de statut : argent, commission et ligne RF- défaits dans LA MÊME transaction, journal
+  d'audit, test du montant avant/après ; statut de terrain admin ; transferts entre livreurs.
+- (E) espace livreur (`courier/*`, rejeu `Idempotency-Key` sous verrou consultatif de session),
+  prestataires (`provider/parcels/:code/status`, garde par jeton, débit compté en base), alertes staff,
+  stock livreur (liste, détail, exports).
+- Ajustements Salah du 24/11 : index unique partiel `cash_remittances_one_open_per_courier` + verrou
+  `pg_advisory_xact_lock` par livreur + test de concurrence (4 livraisons simultanées → 1 RF-) ;
+  « jour » via `ClockDays` (IClock, Africa/Casablanca) ; liste de tâches à chaque début/fin de module.
 
-Reste au module 6 :
-- (D) correction de statut (+ aperçu), `cancel-delivery`, `parcels/field-status`, `routes/transfer`
-  (+ options, tâche `parcel-transfer`), `replayAutoClose` après changement de destination ;
-  `parcel-moves.controller.ts`, `status-correction.service.ts`, `delivery-cancel.service.ts`,
-  `admin-field-status.service.ts`, `routes.service.ts` l. 1824-2420.
-- (E) `courier/*`, `courier-stock`, statut prestataire, `staff/me/alerts`.
-- (F) PDF fidèles (étiquettes, reçu, feuille de route `routes/:code/sheet`, étiquettes du circuit
-  `routes/:code/labels`, bon `delivery-notes/:code/pdf`) comparés dans `docs/design/labels/`.
-- Découper `NoteUseCases.cs`, `RouteUseCases.cs`, `RouteRunUseCases.cs` (un fichier par cas d'usage) ;
-  tests de balayage de portée ; PR ; fusion sur CI verte.
+Écarts notés pour le rapport final :
+- Bugs Speedy corrigés (argent) : POST /exchanges (centimes/dirhams) ; `collected()` du livreur et du
+  stock ignorait « déjà payé » → `codToCollect` (performance, stock livreur).
+- Reproduits (sans impact financier) : une photo de preuve sur le dernier colis d'un circuit tombe en
+  404 (le circuit vient de se clore automatiquement) ; `GET /courier/me/routes?status=closed` → `[]`.
+- Choix d'infrastructure : débit des prestataires compté sur `provider_calls` (fenêtre glissante,
+  multi-instance) au lieu d'un compteur en mémoire ; rejeu idempotent sérialisé par
+  `pg_advisory_lock` de session au lieu d'une attente en mémoire.
+- Poste Windows : la base de fuseaux Windows donne UTC+0 au Maroc d'octobre 2026 à mars 2027
+  (faux) ; tzdata Linux (VPS, CI) est juste. Les tests de fuseau utilisent une date de juin.
+- À brancher plus tard : `bl.collectOnDelivery` (module 7), recalcul des relevés livreur brouillons
+  après une annulation de livraison (module 8).
+
+Reste au module 6 : (F) PDF fidèles — étiquettes (10×10, A4, A6, logo assombri), reçu d'entreposage,
+feuille de route `routes/:code/sheet`, étiquettes du circuit `routes/:code/labels`, bon
+`delivery-notes/:code/pdf`, stock livreur `courier-stock/pdf`, `:courierId/pdf`, `pdf-jobs` (3) ;
+captures comparées dans `docs/design/labels/`. Puis découpage des fichiers de cas d'usage, tests de
+balayage de portée, PR, fusion sur CI verte.
 
 ## Prochaine action exacte
 
-1. Lot (D) : lire `delivery-cancel.service.ts` et `status-correction.service.ts` (argent : défaire
-   l'encaissement via `RemittanceLines.DetachDeliveredAsync`), puis `transferParcels`.
+1. Lot (F) : générer un PDF Speedy (étiquette, reçu) et le PDF .NET du même colis dans
+   `docs/design/labels/`, comparer, corriger `LabelDocuments.cs` / `BusinessDocuments.cs`.
 
 ## Blocages / décisions pour Salah
 
