@@ -3,6 +3,7 @@ using Delivery.Infrastructure.Documents;
 using Delivery.Infrastructure.Persistence;
 using Delivery.Infrastructure.Persistence.Seed;
 using Delivery.Infrastructure.Security;
+using Delivery.Infrastructure.Storage;
 using Delivery.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -18,7 +19,9 @@ public static class DependencyInjection
         services.AddScoped<TimestampsInterceptor>();
         services.AddSingleton<IJwtService, JwtService>();
         services.AddSingleton<IExcelService, ExcelService>();
+        services.AddSingleton<IFileStorage, LocalFileStorage>();
         services.AddScoped<DatabaseSeeder>();
+        services.AddScoped<ReferentialImporter>();
         services.AddDbContext<AppDbContext>((provider, options) =>
         {
             // Lue à la résolution, pas à l'enregistrement : la configuration finale fait foi.

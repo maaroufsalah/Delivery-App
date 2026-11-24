@@ -38,9 +38,13 @@ public sealed class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidat
 public static class ValidationPaths
 {
     /// <summary>`Items[0].Name` devient `items.0.name`, comme `issue.path.join('.')`.</summary>
+    /// <summary>Préfixe d'un chemin déjà au format zod (clés de dictionnaire, corps brut) : rendu tel quel.</summary>
+    public const string Raw = "@";
+
     public static string ToPath(string propertyName)
     {
         if (string.IsNullOrEmpty(propertyName)) return string.Empty;
+        if (propertyName.StartsWith(Raw, StringComparison.Ordinal)) return propertyName[Raw.Length..];
         var parts = propertyName.Replace("[", ".", StringComparison.Ordinal).Replace("]", string.Empty, StringComparison.Ordinal).Split('.');
         return string.Join('.', parts.Where(p => p.Length > 0).Select(p => char.ToLowerInvariant(p[0]) + p[1..]));
     }

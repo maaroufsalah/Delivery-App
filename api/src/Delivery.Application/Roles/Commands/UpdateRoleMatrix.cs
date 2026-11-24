@@ -36,18 +36,18 @@ public sealed class UpdateRoleMatrixValidator : ZodValidator<UpdateRoleMatrixCom
             // `z.record(z.enum(USER_ROLES), …)` est exhaustif en zod v4.
             foreach (var key in value.Granted.Keys.Where(k => !Roles.Contains(k)))
             {
-                context.AddFailure($"granted.{key}", "Invalid key in record");
+                context.AddFailure($"@granted.{key}", "Invalid key in record");
             }
             foreach (var role in Roles)
             {
                 if (!value.Granted.TryGetValue(role, out var keys) || keys is null)
                 {
-                    context.AddFailure($"granted.{role}", Zod.Expected("array"));
+                    context.AddFailure($"@granted.{role}", Zod.Expected("array"));
                     continue;
                 }
                 for (var i = 0; i < keys.Count; i++)
                 {
-                    if (!Keys.Contains(keys[i])) context.AddFailure($"granted.{role}.{i}", Zod.InvalidOption(Keys));
+                    if (!Keys.Contains(keys[i])) context.AddFailure($"@granted.{role}.{i}", Zod.InvalidOption(Keys));
                 }
             }
         });

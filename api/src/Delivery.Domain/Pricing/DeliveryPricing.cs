@@ -66,3 +66,10 @@ public static class DeliveryPricing
     /// <summary>`Math.round` de JS : le demi va vers +∞.</summary>
     public static long JsRound(double value) => (long)Math.Floor(value + 0.5);
 }
+
+/// <summary>`PricingPolicy` : politique commerciale réglée par les paramètres (centimes).</summary>
+public sealed record PricingPolicy(long FailureFeeSameCity, long FailureFeeCrossCity, long PickupFee, long FreePickupThreshold)
+{
+    /// <summary>`DEFAULT_PRICING_POLICY`.</summary>
+    public static readonly PricingPolicy Default = new(0, 1000, 2000, 5);
+}
