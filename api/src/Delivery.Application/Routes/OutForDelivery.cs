@@ -165,11 +165,12 @@ public static class OutForDelivery
     }
 
     /// <summary>`createRoute` côté serveur : un brouillon de livraison dans la ville du livreur, sortie aujourd'hui.</summary>
-    private static async Task<Route> OpenDraftAsync(IAppDbContext db, ICurrentUser caller, string courierId, string cityId, CancellationToken cancellationToken)
+    /// <remarks>Dans une transaction déjà ouverte (correction de statut), il s'y inscrit : un échec ne laisse aucun brouillon.</remarks>
+    public static async Task<Route> OpenDraftAsync(IAppDbContext db, ICurrentUser caller, string courierId, string cityId, CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
         var origin = await RouteWrites.OriginCityOfAsync(db, caller, cityId, cancellationToken);
-        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        await using var transaction = db.Database.CurrentTransaction is null ? await db.Database.BeginTransactionAsync(cancellationToken) : null;
         var route = new Route
         {
             Code = await DocumentCodes.ReserveAsync(db, RouteRows.Prefix, now, cancellationToken), Status = RouteStatus.DRAFT, StatusAt = now, Kind = RouteKind.DELIVERY, CityId = cityId,
@@ -177,7 +178,7 @@ public static class OutForDelivery
         };
         db.Routes.Add(route);
         await db.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
+        if (transaction is not null) await transaction.CommitAsync(cancellationToken);
         return route;
     }
 }

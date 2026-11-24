@@ -167,6 +167,110 @@ public sealed class RoutesContractTests(ApiFactory factory)
         });
     }
 
+    private sealed record Money(decimal? LinkCollected, decimal? LinkCommission, decimal? ParcelCommission, FinancialStatus Financial, int StatusId, decimal RemittanceCod,
+        decimal RemittanceCommission, decimal RemittanceNet, int RemittanceLines);
+
+    private async Task<Money> MoneyOfAsync(string parcelId, string courierId)
+    {
+        Money? money = null;
+        await factory.ExecuteDbAsync(async db =>
+        {
+            var link = await db.RouteParcels.AsNoTracking().SingleAsync(l => l.ParcelId == parcelId);
+            var parcel = await db.Parcels.AsNoTracking().SingleAsync(p => p.Id == parcelId);
+            var remittance = await db.CashRemittances.AsNoTracking().Include(r => r.Parcels).SingleAsync(r => r.CourierId == courierId);
+            money = new Money(link.CodCollected, link.CourierCommission, parcel.CourierCommission, parcel.FinancialStatus, parcel.StatusId, remittance.ExpectedCod, remittance.ExpectedCommission,
+                remittance.ExpectedNet, remittance.Parcels.Count);
+        });
+        return money!;
+    }
+
+    private async Task<(DeliveryNotesContractTests.World World, Courier Courier, HttpClient CourierClient, string Code, (string Id, string Code) Kept, (string Id, string Code) Undone)>
+        TwoDeliveredAsync()
+    {
+        var world = await DeliveryNotesContractTests.WorldAsync(factory);
+        var (courier, courierClient) = await CourierAsync(factory, world.City.Id);
+        await factory.ExecuteDbAsync(async db =>
+        {
+            db.CourierCities.Add(new CourierCity { CourierId = courier.Id, CityId = world.City.Id, DeliveryFee = 15m });
+            await db.SaveChangesAsync();
+        });
+        var kept = await DeliveryNotesContractTests.ParcelAsync(world, cod: 80);
+        var undone = await DeliveryNotesContractTests.ParcelAsync(world, cod: 150.5);
+        await ReadyAsync(factory, kept.Id);
+        await ReadyAsync(factory, undone.Id);
+        var code = (await (await world.Admin.PostAsJsonAsync("/api/routes", new { cityId = world.City.Id, courierId = courier.Id })).JsonAsync()).GetProperty("code").GetString()!;
+        await world.Admin.PostAsJsonAsync($"/api/routes/{code}/parcels", new { parcelIds = new[] { kept.Id, undone.Id } });
+        await world.Admin.PostAsync($"/api/routes/{code}/dispatch", null);
+        (await courierClient.PostAsJsonAsync($"/api/routes/{code}/parcels/{kept.Id}/confirm", new { statusId = 4 })).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await courierClient.PostAsJsonAsync($"/api/routes/{code}/parcels/{undone.Id}/confirm", new { statusId = 4 })).StatusCode.ShouldBe(HttpStatusCode.Created);
+        return (world, courier, courierClient, code, kept, undone);
+    }
+
+    [Fact]
+    public async Task Cancelling_a_delivery_undoes_cash_commission_and_remittance_line_with_an_audit_entry()
+    {
+        var (world, courier, courierClient, code, _, undone) = await TwoDeliveredAsync();
+        var before = await MoneyOfAsync(undone.Id, courier.Id);
+        before.ShouldBe(new Money(150.5m, 15m, 15m, FinancialStatus.ENCAISSE, 4, 230.5m, 30m, 200.5m, 2));
+        (await (await world.Admin.GetAsync($"/api/routes/{code}")).JsonAsync()).GetProperty("status").GetString().ShouldBe("closed");
+
+        (await courierClient.PostAsJsonAsync($"/api/parcels/{undone.Code}/cancel-delivery", new { reason = "Erreur" })).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await world.Admin.PostAsJsonAsync($"/api/parcels/{undone.Code}/cancel-delivery", new { reason = "" })).StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        var cancelled = await world.Admin.PostAsJsonAsync($"/api/parcels/{undone.Code}/cancel-delivery", new { reason = "Client injoignable, livré par erreur" });
+        cancelled.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var result = await cancelled.JsonAsync();
+        result.GetProperty("statusId").GetInt32().ShouldBe(13);
+        result.GetProperty("routeCode").GetString().ShouldBe(code);
+        result.GetProperty("routeReopened").GetBoolean().ShouldBeTrue();
+        result.GetProperty("remittanceCode").GetString()!.ShouldStartWith("RF-");
+
+        var after = await MoneyOfAsync(undone.Id, courier.Id);
+        after.ShouldBe(new Money(null, null, null, FinancialStatus.NON_ENCAISSE, 13, 80m, 15m, 65m, 1));
+        (await (await world.Admin.GetAsync($"/api/routes/{code}")).JsonAsync()).GetProperty("status").GetString().ShouldBe("dispatched");
+        await factory.ExecuteDbAsync(async db =>
+        {
+            var audit = await db.AuditLogs.AsNoTracking().Where(a => a.Entity == "Parcel" && a.EntityId == undone.Id).OrderByDescending(a => a.At).FirstAsync();
+            System.Text.Json.JsonDocument.Parse(audit.After!).RootElement.GetProperty("deliveryCancelled").GetBoolean().ShouldBeTrue();
+            (await db.AuditLogs.AsNoTracking().Where(a => a.Entity == "Route").Select(a => a.After).ToListAsync()).ShouldContain(a => a!.Contains("reopened"));
+        });
+        (await world.Admin.PostAsJsonAsync($"/api/parcels/{undone.Code}/cancel-delivery", new { reason = "Encore" })).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
+    public async Task Correcting_a_delivered_parcel_undoes_its_money_and_records_the_new_outcome_in_one_go()
+    {
+        var (world, courier, _, code, _, undone) = await TwoDeliveredAsync();
+        var preview = await world.Admin.PostAsJsonAsync($"/api/parcels/{undone.Code}/correction/preview", new { statusId = 8, reason = "Refusé en réalité" });
+        preview.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var plan = await preview.JsonAsync();
+        plan.GetProperty("from").GetInt32().ShouldBe(4);
+        plan.GetProperty("steps")[0].GetProperty("kind").GetString().ShouldBe("cancel-delivery");
+        plan.GetProperty("routeCode").GetString().ShouldBe(code);
+        var fingerprint = plan.GetProperty("fingerprint").GetString();
+
+        (await world.Admin.PostAsJsonAsync($"/api/parcels/{undone.Code}/correction", new { statusId = 8, reason = "Refusé en réalité", fingerprint = "stale" })).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        var applied = await world.Admin.PostAsJsonAsync($"/api/parcels/{undone.Code}/correction", new { statusId = 8, reason = "Refusé en réalité", fingerprint });
+        applied.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await applied.JsonAsync()).GetProperty("to").GetInt32().ShouldBe(8);
+
+        var after = await MoneyOfAsync(undone.Id, courier.Id);
+        after.StatusId.ShouldBe(8);
+        after.LinkCollected.ShouldBeNull();
+        after.Financial.ShouldBe(FinancialStatus.NON_ENCAISSE);
+        after.RemittanceCod.ShouldBe(80m);
+        after.RemittanceLines.ShouldBe(1);
+        await factory.ExecuteDbAsync(async db =>
+        {
+            var link = await db.RouteParcels.AsNoTracking().SingleAsync(l => l.ParcelId == undone.Id);
+            link.Confirmed.ShouldBeTrue();
+            link.FinalStatusId.ShouldBe(8);
+            // Refusé : la course passe de la commission de livraison (grille) à celle d'échec (réglage).
+            link.CourierCommissionSource.ShouldBe(CourierCommissionSource.FAILURE_SETTING);
+            (await db.Parcels.AsNoTracking().SingleAsync(p => p.Id == undone.Id)).CourierCommissionSource.ShouldBe(CourierCommissionSource.FAILURE_SETTING);
+            (await db.AuditLogs.AsNoTracking().Where(a => a.Entity == "Parcel" && a.EntityId == undone.Id).Select(a => a.After).ToListAsync()).ShouldContain(a => a!.Contains("statusCorrection"));
+        });
+    }
+
     [Fact]
     public async Task Draft_route_is_created_filled_emptied_and_deleted_within_courier_scope()
     {

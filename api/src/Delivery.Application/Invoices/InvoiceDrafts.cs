@@ -111,6 +111,19 @@ public static class InvoiceDrafts
         await db.SaveChangesAsync(cancellationToken);
     }
 
+    /// <summary>`detachDraftParcel` : le colis quitte les factures brouillons qui le portent ; rend leurs codes.</summary>
+    public static async Task<IReadOnlyList<string>> DetachDraftParcelAsync(IAppDbContext db, string parcelId, CancellationToken cancellationToken)
+    {
+        var touched = await db.InvoiceLines.Where(l => l.ParcelId == parcelId && l.InvoicedParcelId == null && l.Invoice.Status == InvoiceStatus.DRAFT)
+            .Select(l => new { l.InvoiceId, l.Invoice.Code }).Distinct().ToListAsync(cancellationToken);
+        foreach (var invoice in touched)
+        {
+            await db.InvoiceLines.Where(l => l.InvoiceId == invoice.InvoiceId && l.ParcelId == parcelId).ExecuteDeleteAsync(cancellationToken);
+            await RefreshTotalsAsync(db, invoice.InvoiceId, cancellationToken);
+        }
+        return touched.Select(t => t.Code).ToList();
+    }
+
     private static InvoiceLineSums Sum(IEnumerable<InvoiceLine> lines)
     {
         long cod = 0, delivery = 0, failure = 0, vat = 0, due = 0;
