@@ -105,7 +105,7 @@ d'usage (`scripts/split-module.py`) ; balayage de portée `RoutesScopeSweepContr
   jointe sont gardés, pas son contenu (Speedy fait de même).
 - Balayage de portée : `ReturnsContractTests.Returns_stay_within_their_owner`.
 
-## En cours — module 8 « Caisse et chèques » sur `feat/finance`
+## Fait — module 8 « Caisse et chèques » (#8, fusionnée)
 
 54 des 60 routes du module ; 397/494 cochées. 56 tests unitaires et 108 tests de contrat verts.
 - Retours de fonds RF- : liste par étape (ouverte, fermée, reçue, validée), cartes de synthèse,
@@ -125,10 +125,29 @@ d'usage (`scripts/split-module.py`) ; balayage de portée `RoutesScopeSweepContr
 - Reproduit (sans impact financier) : un statut de chèque inconnu dans le filtre ne sélectionne rien
   (Speedy répond en erreur Prisma).
 
+## En cours — module 9 « Facturation » sur `feat/billing`
+
+60 routes (dont les 6 reportées du module 8) ; 457/494 cochées. 56 tests unitaires, 115 de contrat.
+- Relevés livreur PAI- : courses confirmées de la période (montant figé, sinon négocié, sinon grille),
+  commissions déjà gardées aux remises soustraites, validation (une course payée une seule fois),
+  règlement espèces / virement / chèque, photo du chèque, PDF. Côté livreur : `courier/me/cheques`.
+  Branché : l'annulation d'une livraison recalcule les relevés brouillons qui portaient la course.
+- Bons de versement BV- : COD des vendeurs professionnels (part chèque déduite), création en masse
+  sous verrou en base par vendeur, versement une seule fois, PDF (pied réglable).
+- Factures FA- (clients et clients Pro) : facturables, brouillon unique par vendeur, facture du mois,
+  masse, ajustements, émission (TVA figée, colis « facturés »), PDF (identité et logo Pro), export
+  deux feuilles, journées d'émission, PDF du jour ; règlements (solde, retour à « émise ») ; ordres
+  de virement OV- (sélection ou factures, un colis viré une seule fois), PDF et classeur.
+- `InvoiceDraftReplay` complété : un chèque rejeté ou annulé recalcule les lignes brouillons.
+- Bug Speedy corrigé (argent) : la facturation EN MASSE ajoutait à une facture de régime normal un colis
+  dont le COD était déjà versé par bon de versement (COD dû deux fois) ; il en est exclu, comme dans
+  la liste des candidats et l'ajout manuel. Test `Bulk_invoice_skips_a_cod_already_paid_out_for_a_normal_client`.
+- Reproduit : `unpaidOnly=false` vaut « vrai » (`z.coerce.boolean`), frontière de mois en UTC.
+
 ## Prochaine action exacte
 
-1. Ouvrir la PR du module 8 (`feat/finance`), attendre la CI, fusionner, puis module 9 (facturation,
-   relevés livreur, versements, paiements, chèques du livreur, `InvoiceDraftReplay`).
+1. Ouvrir la PR du module 9 (`feat/billing`), attendre la CI, fusionner, puis module 10 (réclamations,
+   annonces, notifications, tableaux de bord : 37 routes).
 
 ## Blocages / décisions pour Salah
 
