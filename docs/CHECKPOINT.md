@@ -79,16 +79,16 @@ reçu d'entreposage, feuille de route, bon) comparés dans `docs/design/labels/`
 - À brancher plus tard : `bl.collectOnDelivery` (module 7), recalcul des relevés livreur brouillons
   après une annulation de livraison (module 8).
 
-Reste au module 6 : (F) PDF fidèles — étiquettes (10×10, A4, A6, logo assombri), reçu d'entreposage,
-feuille de route `routes/:code/sheet`, étiquettes du circuit `routes/:code/labels`, bon
-`delivery-notes/:code/pdf`, stock livreur `courier-stock/pdf`, `:courierId/pdf`, `pdf-jobs` (3) ;
-captures comparées dans `docs/design/labels/`. Puis découpage des fichiers de cas d'usage, tests de
-balayage de portée, PR, fusion sur CI verte.
+Module 6 TERMINÉ sur `feat/routes` : PR #6 ouverte (https://github.com/maaroufsalah/Delivery-App/pull/6),
+289/494 routes, 55 tests unitaires et 91 tests de contrat verts en local. Lot (F) : PDF alignés sur
+Speedy, comparaison et écarts mesurés dans `docs/design/labels/README.md`. Fichiers éclatés un par cas
+d'usage (`scripts/split-module.py`) ; balayage de portée `RoutesScopeSweepContractTests`.
 
 ## Prochaine action exacte
 
-1. Lot (F) : générer un PDF Speedy (étiquette, reçu) et le PDF .NET du même colis dans
-   `docs/design/labels/`, comparer, corriger `LabelDocuments.cs` / `BusinessDocuments.cs`.
+1. Attendre la CI de la PR #6, la fusionner (`gh pr merge 6 --squash --delete-branch`), puis
+   `git checkout main && git pull` et ouvrir `feat/returns` pour le module 7 (Retours, BL) :
+   y brancher `bl.collectOnDelivery` dans `CourierParcels.ReportAsync`.
 
 ## Blocages / décisions pour Salah
 
