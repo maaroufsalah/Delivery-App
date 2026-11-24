@@ -50,8 +50,13 @@ public sealed class CreateUserValidator : ZodValidator<CreateUserCommand>
 
 internal sealed class CreateUserHandler(IAppDbContext db, ICurrentUser caller, IClock clock, IMapper mapper) : IRequestHandler<CreateUserCommand, UserDetailDto>
 {
-    public async Task<UserDetailDto> Handle(CreateUserCommand input, CancellationToken cancellationToken)
+    public Task<UserDetailDto> Handle(CreateUserCommand input, CancellationToken cancellationToken) =>
+        CreateAsync(db, caller, clock, mapper, input, cancellationToken);
+
+    /// <summary>`UsersService.create`, repris par la création du compte d'une fiche client ou livreur.</summary>
+    internal static async Task<UserDetailDto> CreateAsync(IAppDbContext db, ICurrentUser caller, IClock clock, IMapper mapper, CreateUserCommand input, CancellationToken cancellationToken)
     {
+
         await UserFields.AssertEmailFreeAsync(db, input.Email, null, cancellationToken);
         await UserFields.AssertUsernameFreeAsync(db, input.Username, null, cancellationToken);
         var agencyIds = UserFields.AgencyList(input.AgencyId, input.AgencyIds);
