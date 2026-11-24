@@ -7,7 +7,28 @@
 #
 # Aucun raccourci en base : chaque étape passe par l'API publique, comme le web et le mobile.
 # WEB vide : la partie « web » est sautée (annoncée comme telle, jamais comptée PASS).
+#
+# Nettoyage (--cleanup, par défaut ; --no-cleanup pour garder les données) : avec CLEANUP_PSQL (commande
+# psql lisant l'entrée standard, ex. « docker exec -i wimo-delivery-dotnet-postgres-1 psql -U wimo -d wimo_dotnet »),
+# tout ce que le passage a créé est supprimé en base (scripts/recette-cleanup.sql) et les compteurs de
+# numérotation reprennent leur valeur d'avant. Sans CLEANUP_PSQL : comptes supprimés, fiches désactivées.
 set -uo pipefail
+
+CLEANUP=1
+for arg in "$@"; do
+  case "$arg" in
+    --cleanup) CLEANUP=1 ;;
+    --no-cleanup) CLEANUP=0 ;;
+    *) echo "argument inconnu : $arg (--cleanup | --no-cleanup)" >&2; exit 2 ;;
+  esac
+done
+CLEANUP_PSQL="${CLEANUP_PSQL:-}"
+HERE="$(cd "$(dirname "$0")" && pwd)"
+SINCE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+if [ "$CLEANUP" = 1 ] && [ -n "$CLEANUP_PSQL" ]; then
+  DOC_SEQ="$($CLEANUP_PSQL -qAt -c 'select coalesce(json_agg(d), $$[]$$) from document_sequences d' </dev/null)" || { echo "CLEANUP_PSQL injoignable" >&2; exit 2; }
+  PARCEL_SEQ="$($CLEANUP_PSQL -qAt -c 'select coalesce(json_agg(d), $$[]$$) from parcel_code_sequences d' </dev/null)"
+fi
 
 API="${API:-http://localhost:5080/api}"
 WEB="${WEB-http://localhost:3000}"
@@ -168,23 +189,43 @@ else
     cookie="dp.at=$(json 'j.accessToken'); dp.rt=$(json 'j.refreshToken')"
     code="$(curl -s -H "Cookie: $cookie" -o "$TMP/$name.html" -w '%{http_code} %{redirect_url}' "$WEB$page")"
     case "$code" in 200*) ok "web $name : $page rendu ($code)";; *) ko "web $name : $page → $code";; esac
+    if [ "$name" = livreur ]; then
+      # Le livreur n'a pas de back-office : toute page d'administration le renvoie vers son espace.
+      code="$(curl -s -H "Cookie: $cookie" -o /dev/null -w '%{http_code} %{redirect_url}' "$WEB/fr/dashboard")"
+      case "$code" in 30[0-9]*"/fr/me"*) ok "web livreur : /fr/dashboard renvoie vers son espace ($code)";; *) ko "web livreur : /fr/dashboard → $code (attendu une redirection vers /fr/me)";; esac
+    fi
   done
 fi
 
-step "Nettoyage : comptes de recette supprimés, fiches désactivées"
-# Les fiches vendeur / livreur restent (des colis les référencent : suppression refusée, comme Speedy) ;
-# le colis, le circuit, la caisse, la facture et la réclamation de la recette restent tracés en base,
-# tous rattachés à « Boutique $RUN » / « Karim Recette ».
-[ -n "${MERCHANT_USER:-}" ] && call "compte vendeur supprimé" 200 DELETE "/users/$MERCHANT_USER" "$ADMIN"
-[ -n "${COURIER_USER:-}" ] && call "compte livreur supprimé" 200 DELETE "/users/$COURIER_USER" "$ADMIN"
-[ -n "${CLIENT_ID:-}" ] && call "fiche vendeur désactivée" 200 PATCH "/clients/$CLIENT_ID/active" "$ADMIN" '{"isActive":false}'
-[ -n "${COURIER_ID:-}" ] && call "fiche livreur désactivée" 200 PATCH "/couriers/$COURIER_ID/active" "$ADMIN" '{"isActive":false}'
-[ -n "${CLAIM_TYPE:-}" ] && call "type de réclamation désactivé" 200 PATCH "/claims/types/$CLAIM_TYPE" "$ADMIN" \
-  "{\"code\":\"recette-$RUN\",\"label\":\"Recette\",\"subjectType\":\"parcel\",\"isActive\":false}"
-code="$(curl -s -o /dev/null -w '%{http_code}' -H 'x-client: mobile' -H 'content-type: application/json' \
-  --data "{\"identifier\":\"$MERCHANT_EMAIL\",\"password\":\"$PASSWORD\"}" "$API/auth/login")"
-[ "$code" != 200 ] && ok "le compte vendeur supprimé ne se connecte plus ($code)" || ko "le compte vendeur supprimé se connecte encore"
-echo "Traces laissées : vendeur « Boutique $RUN », livreur « Karim Recette », colis ${PARCEL:-}, facture ${INVOICE:-}, réclamation ${CLAIM:-}."
+if [ "$CLEANUP" = 0 ]; then
+  step "Nettoyage : désactivé (--no-cleanup)"
+  echo "Données gardées : vendeur « Boutique $RUN », colis ${PARCEL:-}, facture ${INVOICE:-}, réclamation ${CLAIM:-}."
+elif [ -n "$CLEANUP_PSQL" ]; then
+  step "Nettoyage : tout ce que la recette a créé est supprimé en base"
+  out="$($CLEANUP_PSQL -qAt -F' | ' -v client="${CLIENT_ID:-}" -v courier="${COURIER_ID:-}" -v merchant_user="${MERCHANT_USER:-}" \
+    -v courier_user="${COURIER_USER:-}" -v claim_type="${CLAIM_TYPE:-}" -v since="$SINCE" -v doc_seq="$DOC_SEQ" -v parcel_seq="$PARCEL_SEQ" \
+    <"$HERE/recette-cleanup.sql" 2>&1)" && ok "suppression en base ($(printf '%s' "$out" | tail -1))" || ko "suppression en base" "$out"
+  [ -n "${PARCEL:-}" ] && call "le colis de recette n'existe plus" 404 GET "/parcels/$PARCEL" "$ADMIN"
+  [ -n "${INVOICE:-}" ] && call "la facture de recette n'existe plus" 404 GET "/invoices/$INVOICE" "$ADMIN"
+  [ -n "${CLAIM:-}" ] && call "la réclamation de recette n'existe plus" 404 GET "/claims/$CLAIM" "$ADMIN"
+  [ -n "${CLIENT_ID:-}" ] && call "la fiche vendeur n'existe plus" 404 GET "/clients/$CLIENT_ID" "$ADMIN"
+else
+  step "Nettoyage : comptes de recette supprimés, fiches désactivées"
+  # Sans accès à la base, l'API refuse de supprimer un colis livré ou une facture émise : ils restent,
+  # rattachés à « Boutique $RUN » / « Karim Recette ».
+  [ -n "${MERCHANT_USER:-}" ] && call "compte vendeur supprimé" 200 DELETE "/users/$MERCHANT_USER" "$ADMIN"
+  [ -n "${COURIER_USER:-}" ] && call "compte livreur supprimé" 200 DELETE "/users/$COURIER_USER" "$ADMIN"
+  [ -n "${CLIENT_ID:-}" ] && call "fiche vendeur désactivée" 200 PATCH "/clients/$CLIENT_ID/active" "$ADMIN" '{"isActive":false}'
+  [ -n "${COURIER_ID:-}" ] && call "fiche livreur désactivée" 200 PATCH "/couriers/$COURIER_ID/active" "$ADMIN" '{"isActive":false}'
+  [ -n "${CLAIM_TYPE:-}" ] && call "type de réclamation désactivé" 200 PATCH "/claims/types/$CLAIM_TYPE" "$ADMIN" \
+    "{\"code\":\"recette-$RUN\",\"label\":\"Recette\",\"subjectType\":\"parcel\",\"isActive\":false}"
+  echo "Traces laissées : vendeur « Boutique $RUN », colis ${PARCEL:-}, facture ${INVOICE:-}, réclamation ${CLAIM:-}."
+fi
+if [ "$CLEANUP" = 1 ]; then
+  code="$(curl -s -o /dev/null -w '%{http_code}' -H 'x-client: mobile' -H 'content-type: application/json' \
+    --data "{\"identifier\":\"$MERCHANT_EMAIL\",\"password\":\"$PASSWORD\"}" "$API/auth/login")"
+  [ "$code" != 200 ] && ok "le compte vendeur de recette ne se connecte plus ($code)" || ko "le compte vendeur de recette se connecte encore"
+fi
 
 printf '\n%s PASS, %s FAIL\n' "$PASS" "$FAIL"
 if [ "$FAIL" -eq 0 ]; then echo "RECETTE PASS"; exit 0; fi
