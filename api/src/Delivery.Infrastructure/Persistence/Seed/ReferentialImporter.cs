@@ -214,7 +214,7 @@ public sealed class ReferentialImporter(AppDbContext db, ILogger<ReferentialImpo
             public bool? Bool(string column) => Get(column).ToLowerInvariant() switch
             {
                 "" => null,
-                "1" or "true" or "oui" or "yes" => true,
+                "1" or "t" or "true" or "oui" or "yes" => true,
                 _ => false,
             };
 
