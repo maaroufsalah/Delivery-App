@@ -4,18 +4,19 @@
 
 | | |
 | --- | --- |
-| Mise en ligne | 2026-11-24, bascule à 17h04 (environ 20 s d'interruption) |
+| Mise en ligne | 2026-11-24, bascule à 17h04 (environ 20 s d'interruption) ; redéploiement `240c4fd` à 17h42 |
 | Domaines | https://new.wimodelivery.ma (web), https://api-new.wimodelivery.ma (API) ; nginx inchangé |
-| Commit déployé | `127c914` (`main`), checkout détaché dans `/opt/wimo-delivery/app-dotnet` |
-| Images | `wimo-delivery-dotnet-api:127c914`, `wimo-delivery-dotnet-web:127c914` (construites sur le VPS) |
+| Commit déployé | `240c4fd` (`main`), checkout détaché dans `/opt/wimo-delivery/app-dotnet` ; précédent : `127c914` |
+| Images | `wimo-delivery-dotnet-api:240c4fd`, `wimo-delivery-dotnet-web:240c4fd` (construites sur le VPS) ; celles de `127c914` sont gardées pour le rollback |
 | Pile Docker | projet `wimo-delivery-dotnet` : `deploy/docker-compose.prod.yml` + `/opt/wimo-delivery/app-dotnet.env` (600, hors Git) |
 | Ports | web `127.0.0.1:3102`, api `127.0.0.1:3103` (recette avant bascule : 3112 / 3113) |
 | Base | `wimo_dotnet` (conteneur `wimo-delivery-dotnet-postgres-1`, volume `wimo-delivery-dotnet-postgres-data`), **nouvelle base** ; pièces jointes : volume `wimo-delivery-dotnet-uploads-data` |
 | Migrations EF | `20261123223924_InitialSchema`, `20261124111629_RemittanceOneOpenPerCourier` |
-| Recette | `scripts/recette.sh` PASS **64/64** sur 127.0.0.1:3112/3113, puis PASS **64/64** sur les URL publiques |
+| Recette | `scripts/recette.sh --cleanup` PASS **66/66** sur les URL publiques (`240c4fd`) ; tout ce qu'elle a créé est supprimé en base, compteurs restaurés |
+| Base | **propre pour les tests** : aucun colis, facture, réclamation, vendeur ni livreur ; compteurs de numérotation à zéro ; seul compte : `wimo@gmail.com` ; aucun compte de démo |
 | Sauvegarde | quotidienne 03h30 (root, `/etc/cron.d/wimo-delivery-backup` → `/opt/wimo-delivery/backup.sh` → `app-dotnet/deploy/backup.sh`), dumps `backups/wimo_dotnet_*.dump` vérifiés par `pg_restore -l`, rotation 14 jours |
 | Ancienne pile NestJS | **arrêtée** (`docker compose stop`), conteneurs, volumes et images conservés ; base intacte |
-| Dump d'avant bascule | `/opt/wimo-delivery/backups/wimo_avant-dotnet_20261124_163926.dump` (572 Ko, sha256 `32fd65a4…833f000e8b`) |
+| Dumps | avant bascule : `backups/wimo_avant-dotnet_20261124_163926.dump` (572 Ko, sha256 `32fd65a4…833f000e8b`) ; avant nettoyage : `backups/wimo_dotnet_avant-nettoyage_20261124_172239.dump` ; avant `240c4fd` : `backups/wimo_dotnet_avant-240c4fd_20261124_174200.dump` |
 
 ### Données reprises
 
@@ -35,26 +36,18 @@ Import :
 | Tarifs de zone à zone | 5 |
 | Paramètres société (étiquettes, thèmes, finance, tarifs…) | 28 |
 | Comptes | `wimo@gmail.com` (super-admin, empreinte argon2id identique à l'ancienne base) |
+| Banques (reprises de l'ancienne base) | 12 |
+| Types de réclamation (repris de l'ancienne base) | 6 |
 
 - **Statuts** : identiques à l'ancienne base (35).
 - **Transitions** : 158 au lieu de 140. Les 18 de plus sont les transitions `RETURN_RECEPTION` (→ « récupéré par le livreur ») du flux de retours, absentes de l'ancienne version.
 - **Société** : « Wimo Delivery », logo `/brands/wimo.png` (ajouté au web), coordonnées de production.
 - **Palette** : « Bleu Wimo » `#0F62FE` / `#0A1F44`. La production affichait l'ambre `#C98A1B`.
 
-**Non repris** (données de l'ancienne base, intactes dans le dump) :
-- 7 colis ;
-- 2 vendeurs et 4 livreurs ;
-- 5 autres comptes ;
-- 1 facture et 5 circuits ;
-- les 12 banques et les 6 types de réclamation.
+**Non repris** (intacts dans le dump d'avant bascule) :
+- les données de l'ancienne base : 7 colis, 2 vendeurs, 4 livreurs, 5 autres comptes, 1 facture, 5 circuits.
 
-**Traces de recette dans la base de production.** Deux passages, sur 3112 puis sur les URL publiques, ont laissé :
-- les vendeurs « Boutique r1795539796 » et « Boutique r1795539873 », désactivés, avec leurs livreurs « Karim Recette », désactivés ;
-- les colis `CAS240012611CAS` et `CAS240022611CAS` ;
-- les factures `FA-2611-0001` et `FA-2611-0002` ;
-- les réclamations `RCL-2611-0001` et `RCL-2611-0002`.
-
-Les comptes de recette sont désactivés et supprimés, comme le super-admin temporaire `recette-admin@wimodelivery.ma`. Les numéros FA-2611-0001/0002 sont consommés.
+**Données de recette** : celles des deux premiers passages (colis, factures FA-2611-0001/0002, réclamations RCL-2611-0001/0002, comptes et super-admin de recette) ont été supprimées le 2026-11-24, et les compteurs remis à zéro. Depuis `240c4fd`, `recette.sh --cleanup` (par défaut) efface lui-même ce qu'il crée.
 
 ### Rollback (exact)
 
@@ -68,6 +61,14 @@ curl -s https://api-new.wimodelivery.ma/health
 ```
 
 Les données écrites dans la pile .NET depuis la bascule ne remontent pas dans l'ancienne base.
+
+Revenir seulement au commit .NET précédent (`127c914`, images gardées) :
+
+```bash
+cd /opt/wimo-delivery/app-dotnet && git checkout -q --detach 127c914b4ceefc15abd2344f4116c0b83acf77a2
+sed -i 's/^APP_VERSION=.*/APP_VERSION=127c914/' ../app-dotnet.env
+docker compose -p wimo-delivery-dotnet -f deploy/docker-compose.prod.yml --env-file ../app-dotnet.env up -d --no-build api web
+```
 
 ### Redéployer un nouveau commit
 
@@ -83,12 +84,14 @@ Le VPS ne commite ni ne pousse jamais.
 
 ### Rejouer la recette
 
-Elle demande un super-admin.
-1. Mettre `SEED_ADMIN_EMAIL` (nouvelle adresse) et `SEED_ADMIN_PASSWORD` dans `app-dotnet.env`, puis `up -d api` (le seed le crée).
-2. Lancer sur le VPS : `API=https://api-new.wimodelivery.ma/api WEB=https://new.wimodelivery.ma ADMIN_EMAIL=… ADMIN_PASSWORD=… bash app-dotnet/scripts/recette.sh`.
-3. Désactiver ensuite ce compte et vider `SEED_ADMIN_PASSWORD`.
-
-Chaque passage laisse un colis, une facture et une réclamation de recette.
+Elle demande un super-admin temporaire.
+1. Mettre `SEED_ADMIN_EMAIL=recette-admin@wimodelivery.ma` et un `SEED_ADMIN_PASSWORD` dans `app-dotnet.env`, puis `up -d api` (le seed crée le compte).
+2. Lancer sur le VPS :
+   ```bash
+   CLEANUP_PSQL="docker exec -i wimo-delivery-dotnet-postgres-1 psql -U wimo -d wimo_dotnet"    API=https://api-new.wimodelivery.ma/api WEB=https://new.wimodelivery.ma ADMIN_EMAIL=… ADMIN_PASSWORD=…    bash app-dotnet/scripts/recette.sh --cleanup
+   ```
+   Tout ce que le passage crée est supprimé en base, et les compteurs reviennent à leur valeur d'avant si personne n'a numéroté pendant le passage.
+3. Supprimer ensuite le super-admin de recette (`users`, `user_roles`, `refresh_sessions`, `audit_logs` de ce compte), puis vider `SEED_ADMIN_*` et `up -d api`.
 
 ## Ce qui reste
 
@@ -102,5 +105,3 @@ Chaque passage laisse un colis, une facture et une réclamation de recette.
    - `WEB_ORIGIN` et `PUBLIC_API_URL` ;
    - reconstruction de l'image web (`NEXT_PUBLIC_API_URL` est figé au build).
 4. **`LUCKYPENNY_LICENSE_KEY`** (licence MediatR / AutoMapper) : absente de `app-dotnet.env`. Sans elle, l'API tourne mais journalise un avertissement de licence. À renseigner, puis `up -d api`.
-5. **Données de recette** : les supprimer de la base de production si Wimo le souhaite (liste ci-dessus).
-6. **Référentiel à compléter** : recréer les banques (12) et les types de réclamation (6) dans l'interface s'ils servent.
