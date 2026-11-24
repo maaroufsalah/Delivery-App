@@ -90,7 +90,7 @@ internal sealed class CreateExchangeHandler(IAppDbContext db, ICurrentUser calle
 
         var districtTyped = !string.IsNullOrEmpty(input.DestinationDistrictName) || !string.IsNullOrEmpty(input.DestinationDistrictId);
         var sameDestination = destinationCityId == original.DestinationCityId;
-        // `codAmount: input.amount` : Speedy passe ici des centimes là où la création attend des MAD (COD ×100), reproduit.
+        // Speedy passe `amount` (centimes) tel quel comme COD en dirhams : COD ×100. Bug d'argent corrigé ici.
         var fields = new CreateParcelFields
         {
             ClientId = original.ClientId,
@@ -107,7 +107,7 @@ internal sealed class CreateExchangeHandler(IAppDbContext db, ICurrentUser calle
             DestinationDistrictName = districtTyped ? Zod.EmptyToNull(input.DestinationDistrictName) : sameDestination ? original.DestinationDistrictName : null,
             DeliveryTarget = Money.ToWire(original.DeliveryMode),
             DeliveryAddress = deliveryAddress,
-            CodAmount = amount,
+            CodAmount = ExchangeWrites.CodMadOf(amount),
             OpenOnDelivery = original.OpenOnDelivery,
             Fragile = original.Fragile,
         };

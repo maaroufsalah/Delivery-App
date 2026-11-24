@@ -351,6 +351,14 @@ public sealed class ParcelsContractTests(ApiFactory factory)
         list.GetProperty("total").GetInt32().ShouldBe(1);
         list.GetProperty("pageSize").GetInt32().ShouldBe(20);
         (await world.MerchantHttp.PostAsJsonAsync("/api/exchanges", new { originalParcelCode = code, returnedProduct = "a", newProduct = "b" })).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        // Montant en centimes sur le fil (formulaire web) : le COD du nouveau colis vaut 150,50 MAD, pas ×100.
+        var manual = await world.Admin.PostAsJsonAsync("/api/exchanges", new { originalParcelCode = code, returnedProduct = "Rouge", newProduct = "Bleu", amount = 15_050 });
+        manual.StatusCode.ShouldBe(HttpStatusCode.Created);
+        var manualExchange = await manual.JsonAsync();
+        manualExchange.GetProperty("amount").GetInt64().ShouldBe(15_050);
+        var manualParcel = await (await world.Admin.GetAsync($"/api/parcels/{manualExchange.GetProperty("newParcelCode").GetString()}")).JsonAsync();
+        manualParcel.GetProperty("codAmount").GetInt64().ShouldBe(15_050);
     }
 
     [Fact]

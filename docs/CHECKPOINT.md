@@ -20,7 +20,7 @@ Rapport final : `docs/chantiers/delivery-app-dotnet.md` (en fin de chantier). Ch
 - **PR 4 comptes** (#4, fusionnée) : 35 routes clients/livreurs/merchant company. Journal d'audit
   générique (`AuditInterceptor`, 64 entités) commité en tête de `feat/parcels`.
 
-## En cours — module 5 « Colis », PR ouverte depuis `feat/parcels`
+## Fait — module 5 « Colis » (#5, fusionnée)
 
 90 routes (220/494 cochées) : colis (liste, fiche, création idempotente, statut, frais, destination,
 vendeur, admin, client, BL, notes), échanges, étiquettes PDF + label-jobs, suivi public, import Excel,
@@ -33,7 +33,12 @@ scan,performance}`, `courier/parcels/:code/*`, `courier-stock`, `provider/parcel
 **Écarts à reporter dans le rapport final** : journal sans la reprise des anciens `UPDATE_MANY`
 (aucune ligne de ce type n'est écrite ici) ; mise en page des étiquettes et du bon de réception
 reprise à l'identique en contenu, rendu QuestPDF (à vérifier en recette) ; logo de marque non
-« assombri » (`logoForLightBackground`) ; `POST /exchanges` reproduit le COD ×100 de Speedy.
+« assombri » (`logoForLightBackground`, corrigé au module 6).
+
+**Bugs Speedy corrigés côté .NET, à corriger aussi dans Speedy** (règle : un bug d'argent se corrige,
+jamais de reproduction) : `POST /exchanges` passait `amount` (centimes) comme COD en dirhams (COD ×100) ;
+le COD du nouveau colis vaut désormais `amount / 100` MAD (`ExchangeWrites.CodMadOf`, test unitaire
+15050 → 150,50 MAD, test de contrat).
 
 **Dettes à solder au module 6** : statut 13 « En cours de livraison » (500 « Mise en circuit
 indisponible », comme Speedy sans `OutForDeliveryPlacer`) ; `replayAutoClose` après changement de

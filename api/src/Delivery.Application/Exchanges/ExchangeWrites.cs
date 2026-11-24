@@ -13,6 +13,12 @@ namespace Delivery.Application.Exchanges;
 /// <summary>Écritures partagées d'`ExchangesService` : ouverture du dossier, avancement.</summary>
 public static class ExchangeWrites
 {
+    /// <summary>
+    /// Le COD (en dirhams, comme la création de colis l'attend) du nouveau colis d'un échange
+    /// dont le montant arrive en centimes. Speedy passait les centimes tels quels (COD ×100).
+    /// </summary>
+    public static double CodMadOf(long amountCents) => amountCents / 100.0;
+
     /// <summary>Le dossier `DEMANDE` et son premier événement, sous un code `ECH-AAMM-0001`.</summary>
     public static async Task<Exchange> OpenAsync(IAppDbContext db, ICurrentUser caller, Parcel original, string returnedProduct, string newProduct, string newDestination,
         long amountCents, long feesCents, string? courierId, string? note, string firstComment, DateTime now, CancellationToken cancellationToken)
