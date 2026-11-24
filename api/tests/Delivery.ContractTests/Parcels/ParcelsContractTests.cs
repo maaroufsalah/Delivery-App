@@ -424,4 +424,70 @@ public sealed class ParcelsContractTests(ApiFactory factory)
         tracking.GetProperty("steps").GetArrayLength().ShouldBe(1);
         (await anonymous.GetAsync("/api/public/track/NOPE")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
+
+    [Fact]
+    public async Task Excel_import_previews_then_creates_the_valid_rows()
+    {
+        var world = await WorldAsync();
+        var noAddress = await world.MerchantHttp.PostAsJsonAsync("/api/parcels/import/preview", new { rows = new[] { new { recipientName = "A" } } });
+        noAddress.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        (await noAddress.JsonAsync()).GetProperty("details").GetProperty("reason").GetString().ShouldBe("missing-pickup-address");
+        await factory.ExecuteDbAsync(async db =>
+        {
+            var client = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.FirstAsync(db.Clients, c => c.Id == world.Merchant.Id);
+            client.Address = "Zone industrielle, lot 4";
+            await db.SaveChangesAsync();
+        });
+
+        var template = await world.MerchantHttp.GetAsync("/api/parcels/import/template.xlsx");
+        template.StatusCode.ShouldBe(HttpStatusCode.OK);
+        template.Content.Headers.ContentType!.MediaType.ShouldBe("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        var workbook = Convert.ToBase64String(await template.Content.ReadAsByteArrayAsync());
+        var fromFile = await (await world.MerchantHttp.PostAsJsonAsync("/api/parcels/import/preview", new { content = workbook })).JsonAsync();
+        fromFile.GetProperty("rows").GetInt32().ShouldBe(1);
+
+        (await world.MerchantHttp.PostAsJsonAsync("/api/parcels/import/preview", new { })).StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        var rows = new object[]
+        {
+            new { externalCode = "CMD-1", recipientName = "Salma", recipientPhone = "06 12 34 56 78", city = world.City.Name, district = "Inconnu", address = "12 rue Atlas", cod = "199,90", description = "Sac", openOnDelivery = "O", fragile = "", notes = "Fragile", quantity = "2", row = 2 },
+            new { externalCode = "CMD-1", recipientName = "Omar", recipientPhone = "abc", city = "Nulle part", district = "", address = "x", cod = "abc", description = "", openOnDelivery = "peut-être", fragile = "", notes = "", quantity = "0", row = 3 },
+        };
+        var preview = await world.MerchantHttp.PostAsJsonAsync("/api/parcels/import/preview", new { rows });
+        preview.StatusCode.ShouldBe(HttpStatusCode.Created);
+        var plan = await preview.JsonAsync();
+        plan.GetProperty("valid").GetInt32().ShouldBe(1);
+        plan.GetProperty("invalid").GetInt32().ShouldBe(1);
+        plan.GetProperty("estimatedFees").GetInt64().ShouldBe(4000);
+        var good = plan.GetProperty("items")[0];
+        good.GetProperty("warnings")[0].GetProperty("code").GetString().ShouldBe("district-unknown");
+        var bad = plan.GetProperty("items")[1].GetProperty("errors").EnumerateArray().Select(e => e.GetProperty("code").GetString()).ToList();
+        bad.ShouldBe(["duplicate-in-file", "invalid-phone", "unknown-city", "not-a-number", "required", "not-a-boolean", "not-an-integer"]);
+
+        var anomalies = await world.MerchantHttp.PostAsJsonAsync("/api/parcels/import/anomalies.xlsx", new { rows });
+        anomalies.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var refused = await world.MerchantHttp.PostAsJsonAsync("/api/parcels/import", new { rows });
+        refused.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        var done = await world.MerchantHttp.PostAsJsonAsync("/api/parcels/import", new { rows, mode = "valid-only", filename = "commandes.xlsx" });
+        done.StatusCode.ShouldBe(HttpStatusCode.Created);
+        var result = await done.JsonAsync();
+        result.GetProperty("created").GetInt32().ShouldBe(1);
+        result.GetProperty("skipped").GetInt32().ShouldBe(1);
+        result.GetProperty("warnings").GetInt32().ShouldBe(1);
+        var code = result.GetProperty("codes")[0].GetString();
+        var parcel = await (await world.MerchantHttp.GetAsync($"/api/parcels/{code}")).JsonAsync();
+        parcel.GetProperty("codAmount").GetInt64().ShouldBe(19990);
+        parcel.GetProperty("quantity").GetInt32().ShouldBe(2);
+        parcel.GetProperty("openOnDelivery").GetBoolean().ShouldBeTrue();
+        parcel.GetProperty("pickupAddress").GetString().ShouldBe("Zone industrielle, lot 4");
+
+        var history = await (await world.MerchantHttp.GetAsync("/api/parcels/imports")).JsonAsync();
+        history.GetProperty("total").GetInt32().ShouldBe(1);
+        history.GetProperty("items")[0].GetProperty("mode").GetString().ShouldBe("valid-only");
+        var report = await world.MerchantHttp.GetAsync($"/api/parcels/imports/{result.GetProperty("importId").GetString()}/report.xlsx");
+        report.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var again = await (await world.MerchantHttp.PostAsJsonAsync("/api/parcels/import/preview", new { rows = new[] { rows[0] } })).JsonAsync();
+        again.GetProperty("items")[0].GetProperty("errors")[0].GetProperty("code").GetString().ShouldBe("duplicate-external-code");
+    }
 }

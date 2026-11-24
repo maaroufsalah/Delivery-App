@@ -7,7 +7,9 @@ registerHooks({
   resolve(specifier, context, next) {
     // Alias de Speedy : le paquet partagé (copie locale) et `@/` (sources de l'API, lecture seule).
     if (specifier === '@delivery/shared') {
-      return next(new URL('../../packages/shared/src/index.ts', import.meta.url).href, context);
+      // `SHARED_ENTRY` : un module du paquet à la place de l'index (qui tire du TypeScript non effaçable).
+      const entry = process.env.SHARED_ENTRY ?? 'index.ts';
+      return next(new URL(`../../packages/shared/src/${entry}`, import.meta.url).href, context);
     }
     if (specifier.startsWith('@/')) {
       const api = process.env.SPEEDY_API_SRC ?? 'D:/Work/Projects/Freelance/Anass/delivery-platform/apps/api/src/';

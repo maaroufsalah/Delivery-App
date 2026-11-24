@@ -3,6 +3,8 @@ using Delivery.Application.Exchanges.Commands;
 using Delivery.Application.Parcels;
 using Delivery.Application.Parcels.Commands;
 using Delivery.Application.Parcels.Labels;
+using Delivery.Application.Parcels.Import;
+using Delivery.Application.Common.Models;
 using Delivery.Application.Parcels.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -36,6 +38,31 @@ public sealed partial class ParcelsController(ISender sender) : ApiControllerBas
     [RequirePermission("parcels.write")]
     public Task<IActionResult> Create([FromBody] CreateParcelCommand? body, [FromHeader(Name = "idempotency-key")] string? idempotencyKey) =>
         Created((body ?? new CreateParcelCommand()) with { IdempotencyKey = idempotencyKey });
+
+    [HttpGet("import/template.xlsx")]
+    [RequirePermission("parcels.write")]
+    public Task<IActionResult> ImportTemplate() => FileOf(new GetImportTemplateQuery());
+
+    [HttpPost("import/preview")]
+    [RequirePermission("parcels.write")]
+    public Task<IActionResult> PreviewImport([FromBody] PreviewParcelImportCommand? body) => Created(body ?? new PreviewParcelImportCommand());
+
+    [HttpPost("import/anomalies.xlsx")]
+    [RequirePermission("parcels.write")]
+    public Task<IActionResult> ImportAnomalies([FromBody] ExportImportAnomaliesCommand? body) => FileOf(body ?? new ExportImportAnomaliesCommand());
+
+    [HttpPost("import")]
+    [RequirePermission("parcels.write")]
+    public Task<IActionResult> RunImport([FromBody] RunParcelImportCommand? body) => Created(body ?? new RunParcelImportCommand());
+
+    [HttpGet("imports")]
+    [RequirePermission("parcels.read")]
+    public Task<IActionResult> ImportHistory([FromQuery] ListQueryParams query, [FromQuery] string? clientId) =>
+        Ok(new GetParcelImportsQuery(query.ToQueryWithDefault(20), clientId));
+
+    [HttpGet("imports/{id}/report.xlsx")]
+    [RequirePermission("parcels.read")]
+    public Task<IActionResult> ImportReport(string id) => FileOf(new GetParcelImportReportQuery(id));
 
     [HttpGet("labels")]
     [RequirePermission("parcels.read")]

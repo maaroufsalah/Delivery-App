@@ -56,7 +56,14 @@ public interface IExcelService
 
     /// <summary>Première feuille en texte : en-tête brut puis lignes non vides.</summary>
     ExcelTable Read(byte[] content);
+
+    /// <summary>`writeTemplate` : en-tête sombre, ligne d'exemple, listes déroulantes (feuille cachée), feuille d'aide.</summary>
+    byte[] WriteTemplate(ExcelTemplate template);
 }
+
+public sealed record ExcelTemplateColumn(string Header, string Example, IReadOnlyList<string>? Choices, bool Required, bool SuggestOnly, double? Width, bool Text);
+
+public sealed record ExcelTemplate(string SheetName, string ListsName, int RowCount, IReadOnlyList<ExcelTemplateColumn> Columns, string HelpName, string HelpTitle, IReadOnlyList<(string Label, string Text)> HelpRows);
 
 public sealed record ExcelTable(IReadOnlyList<string> RawHeader, IReadOnlyList<IReadOnlyList<string>> Rows, IReadOnlyList<int> RowNumbers);
 
