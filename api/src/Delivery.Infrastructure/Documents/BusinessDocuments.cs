@@ -11,6 +11,7 @@ internal static class BusinessDocuments
 {
     private const string Ink = "#111111";
     private const string Muted = "#6B6B6B";
+    private const string FooterInk = "#8A8A8A";
     private static readonly PageSize A4 = new(595.28f, 841.89f);
 
     internal static void Page(IDocumentContainer container, PdfCompany company, string footerNote, Action<ColumnDescriptor> body)
@@ -19,17 +20,24 @@ internal static class BusinessDocuments
         {
             page.Size(A4);
             page.MarginTop(32);
-            page.MarginBottom(40);
+            // `styles.footer` : pied en position absolue, 20 pt du bas, aligné à gauche ; le contenu s'arrête au-dessus.
+            page.MarginBottom(20);
             page.MarginHorizontal(34);
             page.DefaultTextStyle(PdfService.Base(9).FontColor(Ink));
             page.Content().Column(body);
-            page.Footer().AlignCenter().Text(company.Footer(footerNote)).FontSize(7).FontColor(Muted);
+            page.Footer().PaddingTop(2).Text(company.Footer(footerNote)).FontSize(6.5f).FontColor(FooterInk);
         });
     }
 
     internal static TextBlockDescriptor Caption(IContainer container, string text) => container.Text(text.ToUpperInvariant()).FontSize(7).FontColor(Muted).LetterSpacing(0.08f);
 
     internal static void Rule(ColumnDescriptor column) => column.Item().PaddingVertical(10).LineHorizontal(0.6f).LineColor(Ink);
+
+    internal static void Signature(IContainer container, string label) => container.Column(c =>
+    {
+        Caption(c.Item(), label);
+        c.Item().PaddingTop(30).LineHorizontal(0.6f).LineColor(Ink);
+    });
 
     public static byte[] StorageReceipt(StorageReceipt receipt)
     {
@@ -60,12 +68,13 @@ internal static class BusinessDocuments
             Rule(column);
             column.Item().Row(row =>
             {
-                row.RelativeItem().Column(c =>
+                row.AutoItem().MaxWidth(240).Column(c =>
                 {
                     Caption(c.Item(), "E-commerçant");
                     c.Item().PaddingTop(2).Text(receipt.ClientName).FontSize(11);
                 });
-                row.RelativeItem().Column(c =>
+                row.RelativeItem();
+                row.AutoItem().MaxWidth(240).Column(c =>
                 {
                     Caption(c.Item(), "État");
                     c.Item().PaddingTop(2).Text(statusLabel).FontSize(11);
@@ -74,7 +83,7 @@ internal static class BusinessDocuments
             });
             if (receipt.Status == "refused" && !string.IsNullOrEmpty(receipt.RefusalReason))
             {
-                column.Item().PaddingTop(12).Border(0.6f).BorderColor(Ink).Padding(8).Column(c =>
+                column.Item().PaddingTop(12).Border(0.6f).BorderColor(Ink).CornerRadius(3).Padding(8).Column(c =>
                 {
                     Caption(c.Item(), "Motif du refus");
                     c.Item().PaddingTop(2).Text(receipt.RefusalReason);
@@ -109,15 +118,9 @@ internal static class BusinessDocuments
             });
             column.Item().PaddingTop(36).Row(row =>
             {
-                foreach (var label in new[] { "Déposé par", "Reçu par (agence)" })
-                {
-                    row.ConstantItem(210).Column(c =>
-                    {
-                        Caption(c.Item(), label);
-                        c.Item().PaddingTop(30).LineHorizontal(0.6f).LineColor(Ink);
-                    });
-                    row.RelativeItem();
-                }
+                Signature(row.ConstantItem(210), "Déposé par");
+                row.RelativeItem();
+                Signature(row.ConstantItem(210), "Reçu par (agence)");
             });
         })).WithMetadata(new DocumentMetadata { Title = receipt.Code }).GeneratePdf();
     }

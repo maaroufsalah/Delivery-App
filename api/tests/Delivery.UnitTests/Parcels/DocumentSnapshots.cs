@@ -34,5 +34,26 @@ public sealed class DocumentSnapshots
         }
     }
 
+    [Fact]
+    public void Render_business_document_snapshots_when_asked()
+    {
+        var outDir = Environment.GetEnvironmentVariable("DOCUMENT_SNAPSHOTS");
+        var sampleFile = Environment.GetEnvironmentVariable("DOCUMENT_BUSINESS_SAMPLE");
+        if (string.IsNullOrEmpty(outDir) || string.IsNullOrEmpty(sampleFile)) return;
+        using var sample = JsonDocument.Parse(File.ReadAllText(sampleFile));
+        var c = sample.RootElement.GetProperty("company");
+        string? S(JsonElement e, string key) => e.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
+        var company = new PdfCompany(S(c, "name")!, S(c, "legalName"), S(c, "taxId"), S(c, "rc"), S(c, "address"), S(c, "city"), S(c, "phone"), S(c, "email"), S(c, "website"));
+        var pdf = new PdfService();
+        foreach (var (key, name) in new[] { ("receipt", "dotnet-storage-receipt"), ("refused", "dotnet-storage-receipt-refused") })
+        {
+            var r = sample.RootElement.GetProperty(key);
+            var lines = r.GetProperty("items").EnumerateArray().Select(i => new StorageReceiptLine(S(i, "productReference"), S(i, "productName")!, i.GetProperty("quantity").GetInt32())).ToList();
+            var receipt = new StorageReceipt(company, S(r, "code")!, S(r, "agencyName")!, S(r, "clientName")!, S(r, "status")!, DateTime.Parse(S(r, "decidedAt")!, null, System.Globalization.DateTimeStyles.AdjustToUniversal),
+                S(r, "decidedByName"), S(r, "refusalReason"), lines, r.GetProperty("lineCount").GetInt32(), r.GetProperty("totalQuantity").GetInt32());
+            File.WriteAllBytes(Path.Combine(outDir, $"{name}.pdf"), pdf.Render(receipt));
+        }
+    }
+
     private static byte[]? Bytes(string? dataUri) => dataUri is null ? null : Convert.FromBase64String(dataUri[(dataUri.IndexOf(',') + 1)..]);
 }
