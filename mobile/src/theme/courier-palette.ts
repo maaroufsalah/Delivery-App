@@ -68,7 +68,7 @@ interface Pastille {
 }
 
 const LIGHT: Record<TileKey, Pastille> = {
-  pickups: { tint: '#FFE4CC', icon: '#B45309' }, // orange clair
+  pickups: { tint: '#D6F0FF', icon: '#0369A1' }, // bleu ciel
   deliveries: { tint: '#DCEBFF', icon: '#1D4ED8' }, // bleu
   stock: { tint: '#FFE0EA', icon: '#BE185D' }, // rose
   parcels: { tint: '#DCF5E3', icon: '#15803D' }, // vert
@@ -78,7 +78,7 @@ const LIGHT: Record<TileKey, Pastille> = {
 };
 
 const DARK: Record<TileKey, Pastille> = {
-  pickups: { tint: '#B4530940', icon: '#FDBA74' },
+  pickups: { tint: '#0369A140', icon: '#7DD3FC' },
   deliveries: { tint: '#1D4ED840', icon: '#93C5FD' },
   stock: { tint: '#BE185D40', icon: '#F9A8D4' },
   parcels: { tint: '#15803D40', icon: '#86EFAC' },

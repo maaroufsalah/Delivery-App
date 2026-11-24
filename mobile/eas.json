@@ -17,8 +17,8 @@
       "channel": "preview",
       "autoIncrement": true,
       "env": {
-        "APP_VARIANT": "recette",
-        "EXPO_PUBLIC_API_URL": "https://speedy.delivery.nocido.com"
+        "APP_VARIANT": "production",
+        "EXPO_PUBLIC_API_URL": "https://api-new.wimodelivery.ma"
       },
       "android": {
         "buildType": "apk"

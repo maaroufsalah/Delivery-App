@@ -1,20 +1,22 @@
 {
   "expo": {
-    "name": "SpeedyTrans",
-    "slug": "salaheddine",
-    "version": "1.2.0",
+    "name": "Wimo Delivery",
+    "slug": "wimo-delivery",
+    "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "nocidodelivery",
+    "scheme": "wimodelivery",
     "userInterfaceStyle": "light",
     "icon": "./assets/icon.png",
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "locales": {
       "fr": "./locales/fr.json",
       "ar": "./locales/ar.json",
       "en": "./locales/en.json"
     },
     "ios": {
-      "bundleIdentifier": "ma.nocido.delivery",
+      "bundleIdentifier": "ma.wimodelivery.app",
       "supportsTablet": false,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
@@ -24,10 +26,10 @@
       }
     },
     "android": {
-      "package": "ma.nocido.delivery",
+      "package": "ma.wimodelivery.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#F05A28"
+        "backgroundColor": "#FFFFFF"
       },
       "permissions": [
         "android.permission.CAMERA",
@@ -69,9 +71,9 @@
           "image": "./assets/splash.png",
           "imageWidth": 240,
           "resizeMode": "contain",
-          "backgroundColor": "#F05A28",
+          "backgroundColor": "#FFFFFF",
           "dark": {
-            "backgroundColor": "#0B0B0B"
+            "backgroundColor": "#0A1F44"
           }
         }
       ],
@@ -102,12 +104,12 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "95a670d2-1d83-4340-9003-9de4f43c44a6"
+        "projectId": "c7fdd057-8266-4951-afe1-b34f21a2a448"
       }
     },
-    "owner": "maaroufsalaheddines-team",
+    "owner": "maaroufsalaheddine",
     "updates": {
-      "url": "https://u.expo.dev/95a670d2-1d83-4340-9003-9de4f43c44a6",
+      "url": "https://u.expo.dev/c7fdd057-8266-4951-afe1-b34f21a2a448",
       "fallbackToCacheTimeout": 10000
     }
   }

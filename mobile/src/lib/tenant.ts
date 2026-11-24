@@ -66,7 +66,8 @@ export function apiBaseUrl(slug: string): string {
  * Voir `config/environment.ts` : c'est le canal natif qui tranche.
  */
 function originFor(slug: string): string {
-  if (APP_ENVIRONMENT === 'production') return PRODUCTION_API_ORIGIN;
+  // Wimo : l'hôte de l'API est une constante de build (`EXPO_PUBLIC_API_URL`, eas.json), quel que soit le canal.
+  if (APP_ENVIRONMENT === 'production' || PRODUCTION_API_ORIGIN) return PRODUCTION_API_ORIGIN;
 
   return developmentApiOverride() ?? `https://${normalizeSlug(slug)}.${PLATFORM_DOMAIN}`;
 }

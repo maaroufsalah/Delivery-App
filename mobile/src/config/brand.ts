@@ -24,7 +24,7 @@
  */
 
 /** Le sous-domaine servi, ou `null` pour redemander la société au lancement. */
-export const BRAND_TENANT: string | null = 'speedy';
+export const BRAND_TENANT: string | null = 'wimo';
 
 /** L'application sert-elle un seul transporteur ? */
 export const IS_SINGLE_TENANT = BRAND_TENANT !== null;
@@ -41,7 +41,7 @@ export const IS_SINGLE_TENANT = BRAND_TENANT !== null;
 export const BRAND_LOGO = require('../../assets/brand-logo.png') as number;
 
 /** Largeur / hauteur de `brand-logo.png` (480 × 167). */
-export const BRAND_LOGO_RATIO = 480 / 167;
+export const BRAND_LOGO_RATIO = 480 / 364;
 
 /**
  * LE NOM COURT DE REPLI — lot D, D2 (D-189).
@@ -51,4 +51,4 @@ export const BRAND_LOGO_RATIO = 480 / 167;
  * première réponse, et hors ligne sans cache, c'est celui-ci. Une constante du
  * binaire du tenant, comme `BRAND_TENANT` : elle part en OTA.
  */
-export const BRAND_SHORT_NAME = 'Speedy';
+export const BRAND_SHORT_NAME = 'Wimo';
