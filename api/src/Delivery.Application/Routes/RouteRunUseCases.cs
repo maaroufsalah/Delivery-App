@@ -39,7 +39,7 @@ internal sealed class DispatchRouteHandler(IAppDbContext db, ICurrentUser caller
 }
 
 /// <summary>`routeConfirmSchema` : le livreur rend compte d'un colis (en main, et son issue).</summary>
-public sealed record ConfirmRouteParcelCommand : IRequest<RouteDetailDto>
+public sealed record ConfirmRouteParcelCommand : RouteConfirmBody, IRequest<RouteDetailDto>
 {
     [JsonIgnore]
     public string Code { get; init; } = string.Empty;
@@ -49,7 +49,11 @@ public sealed record ConfirmRouteParcelCommand : IRequest<RouteDetailDto>
 
     [JsonIgnore]
     public bool AdminFieldRevision { get; init; }
+}
 
+/// <summary>Les champs de `routeConfirmSchema`, partagés par le bureau et le téléphone.</summary>
+public abstract record RouteConfirmBody
+{
     public bool? Confirmed { get; init; }
     public JsonElement? StatusId { get; init; }
     public string? ScheduledAt { get; init => field = Zod.Trim(value); }
@@ -68,9 +72,11 @@ public sealed record ConfirmRouteParcelCommand : IRequest<RouteDetailDto>
         RouteInputs.Number(Longitude), RouteInputs.Number(ChequeAmount), ChequeNumber, ChequeBank, ChequeDate);
 }
 
-public sealed class ConfirmRouteParcelValidator : ZodValidator<ConfirmRouteParcelCommand>
+public sealed class ConfirmRouteParcelValidator : RouteConfirmBodyValidator<ConfirmRouteParcelCommand>;
+
+public abstract class RouteConfirmBodyValidator<T> : ZodValidator<T> where T : RouteConfirmBody
 {
-    public ConfirmRouteParcelValidator()
+    protected RouteConfirmBodyValidator()
     {
         RuleFor(x => x.Comment).MaxLength(255);
         RuleFor(x => x.ChequeNumber).MaxLength(40);
@@ -78,7 +84,7 @@ public sealed class ConfirmRouteParcelValidator : ZodValidator<ConfirmRouteParce
         RuleFor(x => x.BlReference).MaxLength(60);
     }
 
-    protected override void Refine(ConfirmRouteParcelCommand value, Action<string, string> issue)
+    protected override void Refine(T value, Action<string, string> issue)
     {
         RouteInputs.PositiveInt(value.StatusId, "statusId", issue);
         RouteInputs.Amount(value.CollectedAmount, "collectedAmount", issue);

@@ -349,21 +349,21 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 
 ### `modules/courier/courier-parcels.controller.ts`
 
-- [ ] `GET /api/courier/parcels/:code/outcomes` — `outcomes` (L44) · gardes: CourierGuard · perm: parcels.read
-- [ ] `POST /api/courier/parcels/:code/status` — `report` (L54) · gardes: CourierGuard · perm: parcels.status · entrée: routeConfirmSchema
-- [ ] `POST /api/courier/parcels/:code/proof` — `proof` (L80) · gardes: CourierGuard · perm: parcels.status · entrée: proofPhotoSchema
+- [x] `GET /api/courier/parcels/:code/outcomes` — `outcomes` (L44) · gardes: CourierGuard · perm: parcels.read
+- [x] `POST /api/courier/parcels/:code/status` — `report` (L54) · gardes: CourierGuard · perm: parcels.status · entrée: routeConfirmSchema
+- [x] `POST /api/courier/parcels/:code/proof` — `proof` (L80) · gardes: CourierGuard · perm: parcels.status · entrée: proofPhotoSchema
 
 ### `modules/courier/courier.controller.ts`
 
-- [ ] `GET /api/courier/me/performance` — `performance` (L96) · gardes: CourierGuard · perm: parcels.read · entrée: courierPerformanceQuerySchema
-- [ ] `GET /api/courier/me/notes` — `notes` (L114) · gardes: CourierGuard · perm: routes.read · entrée: courierNotesQuerySchema
-- [ ] `GET /api/courier/me/routes` — `routes` (L205) · gardes: CourierGuard · perm: routes.read · entrée: courierRoutesQuerySchema
-- [ ] `GET /api/courier/me/deliveries` — `deliveries` (L218) · gardes: CourierGuard · perm: routes.read
-- [ ] `GET /api/courier/me/routes/:code` — `route` (L225) · gardes: CourierGuard · perm: routes.read
-- [ ] `POST /api/courier/me/scan` — `scan` (L242) · gardes: CourierGuard · perm: routes.scan · entrée: scanSchema
-- [ ] `DELETE /api/courier/me/routes/:code/parcels/:parcelId` — `removeParcel` (L264) · gardes: CourierGuard · perm: routes.scan
-- [ ] `POST /api/courier/me/routes/:code/dispatch` — `dispatch` (L305) · gardes: CourierGuard · perm: routes.confirm
-- [ ] `POST /api/courier/me/routes/:code/notes/:noteId/pickup` — `pickupNote` (L329) · gardes: CourierGuard · perm: routes.confirm · entrée: routeNotePickupSchema
+- [x] `GET /api/courier/me/performance` — `performance` (L96) · gardes: CourierGuard · perm: parcels.read · entrée: courierPerformanceQuerySchema
+- [x] `GET /api/courier/me/notes` — `notes` (L114) · gardes: CourierGuard · perm: routes.read · entrée: courierNotesQuerySchema
+- [x] `GET /api/courier/me/routes` — `routes` (L205) · gardes: CourierGuard · perm: routes.read · entrée: courierRoutesQuerySchema
+- [x] `GET /api/courier/me/deliveries` — `deliveries` (L218) · gardes: CourierGuard · perm: routes.read
+- [x] `GET /api/courier/me/routes/:code` — `route` (L225) · gardes: CourierGuard · perm: routes.read
+- [x] `POST /api/courier/me/scan` — `scan` (L242) · gardes: CourierGuard · perm: routes.scan · entrée: scanSchema
+- [x] `DELETE /api/courier/me/routes/:code/parcels/:parcelId` — `removeParcel` (L264) · gardes: CourierGuard · perm: routes.scan
+- [x] `POST /api/courier/me/routes/:code/dispatch` — `dispatch` (L305) · gardes: CourierGuard · perm: routes.confirm
+- [x] `POST /api/courier/me/routes/:code/notes/:noteId/pickup` — `pickupNote` (L329) · gardes: CourierGuard · perm: routes.confirm · entrée: routeNotePickupSchema
 
 ### `modules/courier-stock/courier-stock.controller.ts`
 
