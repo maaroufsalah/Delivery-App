@@ -101,6 +101,9 @@ public sealed class DeliveryNotesContractTests(ApiFactory factory)
         (await world.Seller.DeleteAsync($"/api/merchant/me/notes/{dropCode}")).StatusCode.ShouldBe(HttpStatusCode.OK);
         (await world.Seller.GetAsync($"/api/delivery-notes/{dropCode}")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
 
+        var pdf = await world.Seller.GetAsync($"/api/delivery-notes/{code}/pdf");
+        pdf.StatusCode.ShouldBe(HttpStatusCode.OK);
+        pdf.Content.Headers.ContentType!.MediaType.ShouldBe("application/pdf");
         var export = await world.Admin.GetAsync($"/api/delivery-notes/{code}/export");
         export.StatusCode.ShouldBe(HttpStatusCode.OK);
         (await world.Admin.GetAsync($"/api/bulk-jobs?target={code}")).StatusCode.ShouldBe(HttpStatusCode.OK);

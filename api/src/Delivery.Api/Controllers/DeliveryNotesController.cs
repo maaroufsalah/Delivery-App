@@ -40,6 +40,10 @@ public sealed class DeliveryNotesController(ISender sender) : ApiControllerBase(
     [RequirePermission("notes.read")]
     public Task<IActionResult> ExportParcels(string code) => FileOf(new ExportNoteParcelsQuery(code));
 
+    [HttpGet("{code}/pdf")]
+    [RequirePermission("notes.read")]
+    public Task<IActionResult> Pdf(string code) => FileOf(new Application.Routes.GetNotePdfQuery(code));
+
     [HttpPost("{code}/parcels")]
     [RequirePermission("notes.write")]
     public Task<IActionResult> AddParcels(string code, [FromBody] AddNoteParcelsCommand? body) => Created((body ?? new AddNoteParcelsCommand()) with { Code = code });

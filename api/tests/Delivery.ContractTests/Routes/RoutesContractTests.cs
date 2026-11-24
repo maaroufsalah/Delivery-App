@@ -386,6 +386,14 @@ public sealed class RoutesContractTests(ApiFactory factory)
         stats.GetProperty("parcels").GetInt32().ShouldBe(1);
         (await world.Admin.GetAsync("/api/routes/export")).StatusCode.ShouldBe(HttpStatusCode.OK);
         (await courierClient.GetAsync($"/api/routes/{code}/export")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var sheet = await world.Admin.GetAsync($"/api/routes/{code}/sheet");
+        sheet.StatusCode.ShouldBe(HttpStatusCode.OK);
+        sheet.Content.Headers.ContentType!.MediaType.ShouldBe("application/pdf");
+        sheet.Content.Headers.ContentDisposition!.FileName!.Trim('"').ShouldBe($"{code}.pdf");
+        var labels = await world.Admin.GetAsync($"/api/routes/{code}/labels?format=a4");
+        labels.StatusCode.ShouldBe(HttpStatusCode.OK);
+        labels.Content.Headers.ContentDisposition!.FileName!.Trim('"').ShouldBe($"{code}-etiquettes.pdf");
+        (await world.Admin.GetAsync($"/api/routes/{code}/labels?format=a5")).StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
 
         var (_, stranger) = await CourierAsync(factory, world.City.Id);
         (await stranger.GetAsync($"/api/routes/{code}")).StatusCode.ShouldBe(HttpStatusCode.NotFound);

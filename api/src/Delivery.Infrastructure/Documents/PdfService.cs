@@ -33,6 +33,8 @@ public sealed class PdfService : IPdfService
         {
             LabelSheet sheet => LabelDocuments.Render(sheet),
             StorageReceipt receipt => BusinessDocuments.StorageReceipt(receipt),
+            RouteSheet route => RouteDocumentsPdf.RouteSheet(route),
+            DeliveryNoteSheet note => RouteDocumentsPdf.DeliveryNote(note),
             _ => throw new NotSupportedException($"Document PDF inconnu : {document.GetType().Name}"),
         };
     }

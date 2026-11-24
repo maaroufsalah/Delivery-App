@@ -20,3 +20,13 @@ Même colis, mêmes données, deux moteurs :
 Reproduits de Speedy : Code 128 toujours en jeu B, 10 modules de marge ; QR niveau M en mode octet ;
 pointillés de découpe en A4 ; l'étiquette « A4 » à la marque sort sur une page carrée de 595,28 pt ;
 logo noirci sur la bande claire (`logoForLightBackground`).
+
+## Documents de gestion
+
+| Document | Écart |
+|---|---|
+| Bon de réception d'entreposage | identique (blocs, colonnes, cadre arrondi, pied à 20 pt du bas) |
+| Feuille de route (livraison, ramassage) | identique, sauf une adresse très longue : React-PDF rétrécit la colonne du code (flex-shrink) et garde l'adresse sur une ligne ; .NET garde les colonnes et passe à la ligne |
+| Bon de ramassage | identique, sauf une ligne « client corrigé » : chez Speedy le code chevauche le nom et les frais passent à la ligne (même effet flex-shrink) ; .NET garde les colonnes |
+
+Le texte arabe garde sa police ; dans ces tableaux, React-PDF le pose à gauche : .NET aussi.

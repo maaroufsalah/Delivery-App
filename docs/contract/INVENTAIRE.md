@@ -414,8 +414,8 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 - [x] `POST /api/routes/:code/parcels` — `addParcels` (L315) · perm: routes.write · entrée: routeParcelsSchema
 - [x] `DELETE /api/routes/:code/parcels/:parcelId` — `removeParcel` (L326) · perm: routes.write
 - [x] `GET /api/routes/:code/export` — `exportParcels` (L338) · perm: routes.read · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/routes/:code/sheet` — `sheet` (L357) · perm: routes.read · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/routes/:code/labels` — `labels` (L370) · perm: routes.read · entrée: labelQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/routes/:code/sheet` — `sheet` (L357) · perm: routes.read · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/routes/:code/labels` — `labels` (L370) · perm: routes.read · entrée: labelQuerySchema · sortie: `Promise<StreamableFile>`
 - [x] `POST /api/routes/:code/dispatch` — `dispatch` (L389) · perm: routes.write
 - [x] `POST /api/routes/:code/parcels/:parcelId/confirm` — `confirm` (L407) · perm: routes.confirm · entrée: routeConfirmSchema
 - [x] `POST /api/routes/:code/outcomes` — `confirmMany` (L422) · perm: routes.confirm · entrée: routeBulkConfirmSchema
@@ -426,7 +426,7 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 - [x] `POST /api/delivery-notes` — `create` (L544) · perm: notes.write · entrée: deliveryNoteSchema
 - [x] `GET /api/delivery-notes/:code` — `detail` (L554) · perm: notes.read
 - [x] `GET /api/delivery-notes/:code/export` — `exportParcels` (L566) · perm: notes.read · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/delivery-notes/:code/pdf` — `pdf` (L585) · perm: notes.read · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/delivery-notes/:code/pdf` — `pdf` (L585) · perm: notes.read · sortie: `Promise<StreamableFile>`
 - [x] `POST /api/delivery-notes/:code/parcels` — `addParcels` (L597) · perm: notes.write · entrée: deliveryNoteParcelsSchema
 - [x] `DELETE /api/delivery-notes/:code/parcels/:parcelId` — `removeParcel` (L608) · perm: notes.write
 - [x] `POST /api/delivery-notes/:code/validate` — `validate` (L622) · perm: notes.write

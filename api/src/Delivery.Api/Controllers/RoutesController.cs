@@ -84,6 +84,14 @@ public sealed class RoutesController(ISender sender) : ApiControllerBase(sender)
     [RequirePermission("routes.read")]
     public Task<IActionResult> ExportParcels(string code) => FileOf(new ExportRouteParcelsQuery(Uri.UnescapeDataString(code)));
 
+    [HttpGet("{code}/sheet")]
+    [RequirePermission("routes.read")]
+    public Task<IActionResult> Sheet(string code) => FileOf(new GetRouteSheetQuery(Uri.UnescapeDataString(code)));
+
+    [HttpGet("{code}/labels")]
+    [RequirePermission("routes.read")]
+    public Task<IActionResult> Labels(string code, [FromQuery] string? format) => FileOf(new GetRouteLabelsQuery(Uri.UnescapeDataString(code), format));
+
     [HttpPost("transfer")]
     [RequirePermission("routes.write")]
     [Guards(Guard.NotMerchant)]

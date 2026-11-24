@@ -53,6 +53,22 @@ public sealed class DocumentSnapshots
                 S(r, "decidedByName"), S(r, "refusalReason"), lines, r.GetProperty("lineCount").GetInt32(), r.GetProperty("totalQuantity").GetInt32());
             File.WriteAllBytes(Path.Combine(outDir, $"{name}.pdf"), pdf.Render(receipt));
         }
+        DateTime? Date(JsonElement e, string key) => S(e, key) is { } text ? DateTime.Parse(text, null, System.Globalization.DateTimeStyles.AdjustToUniversal) : null;
+        int? Int(JsonElement e, string key) => e.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.Number ? v.GetInt32() : null;
+        foreach (var (key, name) in new[] { ("route", "dotnet-route-sheet"), ("pickup", "dotnet-route-sheet-pickup") })
+        {
+            var r = sample.RootElement.GetProperty(key);
+            var parcels = r.GetProperty("parcels").EnumerateArray().Select(p => new RouteSheetParcel(S(p, "code")!, S(p, "recipientName")!, S(p, "recipientPhone")!, S(p, "deliveryAddress")!,
+                S(p, "destinationDistrictName"), S(p, "senderName")!, S(p, "senderPhone")!, S(p, "pickupAddress")!, S(p, "originCityName")!, p.GetProperty("codToCollect").GetInt64(),
+                p.GetProperty("quantity").GetInt32())).ToList();
+            File.WriteAllBytes(Path.Combine(outDir, $"{name}.pdf"), pdf.Render(new RouteSheet(company, S(r, "code")!, S(r, "kind")!, S(r, "courierName")!, S(r, "cityName")!, Date(r, "exitDate"),
+                parcels, Int(r, "doneCount"), Int(r, "removedCount"))));
+        }
+        var n = sample.RootElement.GetProperty("note");
+        var noteLines = n.GetProperty("parcels").EnumerateArray().Select(p => new DeliveryNoteSheetLine(S(p, "code")!, S(p, "recipientName")!, S(p, "destinationCityName")!, S(p, "destinationDistrictName"),
+            p.GetProperty("codAmount").GetInt64(), p.GetProperty("deliveryFee").GetInt64(), p.GetProperty("quantity").GetInt32(), S(p, "correction"))).ToList();
+        File.WriteAllBytes(Path.Combine(outDir, "dotnet-delivery-note.pdf"), pdf.Render(new DeliveryNoteSheet(company, S(n, "code")!, S(n, "kind")!, S(n, "clientName")!, S(n, "agencyName")!,
+            S(n, "cityName")!, Date(n, "createdAt")!.Value, Date(n, "validatedAt"), n.GetProperty("pickupWaived").GetBoolean(), noteLines, Int(n, "pickedCount"), Int(n, "removedCount"))));
     }
 
     private static byte[]? Bytes(string? dataUri) => dataUri is null ? null : Convert.FromBase64String(dataUri[(dataUri.IndexOf(',') + 1)..]);

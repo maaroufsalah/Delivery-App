@@ -12,6 +12,9 @@ internal static class BusinessDocuments
     private const string Ink = "#111111";
     private const string Muted = "#6B6B6B";
     private const string FooterInk = "#8A8A8A";
+
+    /// <summary>`styles.tableRow` : filet sous chaque ligne.</summary>
+    internal const string RowRule = "#DDDDDD";
     private static readonly PageSize A4 = new(595.28f, 841.89f);
 
     internal static void Page(IDocumentContainer container, PdfCompany company, string footerNote, Action<ColumnDescriptor> body)
@@ -105,7 +108,7 @@ internal static class BusinessDocuments
                 });
                 foreach (var line in receipt.Lines)
                 {
-                    IContainer Cell(IContainer c) => c.BorderBottom(0.4f).BorderColor("#CFCFCF").PaddingVertical(5).PaddingHorizontal(6);
+                    IContainer Cell(IContainer c) => c.BorderBottom(0.4f).BorderColor(RowRule).PaddingVertical(5).PaddingHorizontal(6);
                     table.Cell().Element(Cell).Text(line.Reference ?? "-");
                     table.Cell().Element(Cell).Text(PdfText.Truncate(line.Name, 42));
                     table.Cell().Element(Cell).AlignRight().Text(line.Quantity.ToString(System.Globalization.CultureInfo.InvariantCulture));
