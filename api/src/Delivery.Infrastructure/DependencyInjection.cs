@@ -20,6 +20,7 @@ public static class DependencyInjection
         services.AddScoped<AuditInterceptor>();
         services.AddSingleton<IJwtService, JwtService>();
         services.AddSingleton<IExcelService, ExcelService>();
+        services.AddSingleton<IPdfService, PdfService>();
         services.AddSingleton<IFileStorage, LocalFileStorage>();
         services.AddScoped<DatabaseSeeder>();
         services.AddScoped<ReferentialImporter>();

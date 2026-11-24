@@ -352,4 +352,76 @@ public sealed class ParcelsContractTests(ApiFactory factory)
         list.GetProperty("pageSize").GetInt32().ShouldBe(20);
         (await world.MerchantHttp.PostAsJsonAsync("/api/exchanges", new { originalParcelCode = code, returnedProduct = "a", newProduct = "b" })).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
+
+    [Fact]
+    public async Task Labels_render_as_pdf_now_or_through_a_job_and_tracking_is_public()
+    {
+        var world = await WorldAsync();
+        var first = await (await world.MerchantHttp.PostAsJsonAsync("/api/parcels", Body(world))).JsonAsync();
+        var code = first.GetProperty("code").GetString()!;
+        var second = (await (await world.MerchantHttp.PostAsJsonAsync("/api/parcels", Body(world))).JsonAsync()).GetProperty("code").GetString()!;
+
+        static async Task<byte[]> Pdf(HttpResponseMessage response)
+        {
+            response.StatusCode.ShouldBe(HttpStatusCode.OK);
+            response.Content.Headers.ContentType!.MediaType.ShouldBe("application/pdf");
+            var bytes = await response.Content.ReadAsByteArrayAsync();
+            System.Text.Encoding.ASCII.GetString(bytes, 0, 5).ShouldBe("%PDF-");
+            return bytes;
+        }
+
+        await Pdf(await world.MerchantHttp.GetAsync($"/api/parcels/{code}/label"));
+        await Pdf(await world.MerchantHttp.GetAsync($"/api/parcels/{code}/label?format=a4"));
+        (await world.MerchantHttp.GetAsync($"/api/parcels/{code}/label?format=a5")).StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        var batch = await world.MerchantHttp.GetAsync($"/api/parcels/labels?codes={code},{second}");
+        await Pdf(batch);
+        batch.Content.Headers.ContentDisposition!.FileName!.Trim('"').ShouldBe("etiquettes-2.pdf");
+        (await world.MerchantHttp.GetAsync("/api/parcels/labels?codes=,")).StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        (await world.MerchantHttp.PostAsJsonAsync("/api/parcels/labels", new { })).StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        await Pdf(await world.MerchantHttp.PostAsJsonAsync("/api/parcels/labels", new { all = true, exclude = new[] { second } }));
+
+        await factory.ExecuteDbAsync(async db =>
+        {
+            db.Settings.Add(new Setting { Id = "cmp-wimo:company:labels.template", Scope = SettingScope.COMPANY, Key = "labels.template", Value = "\"branded\"" });
+            await db.SaveChangesAsync();
+        });
+        try
+        {
+            await Pdf(await world.MerchantHttp.GetAsync($"/api/parcels/{code}/label"));
+        }
+        finally
+        {
+            await factory.ExecuteDbAsync(async db =>
+            {
+                db.Settings.Remove(await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.FirstAsync(db.Settings, x => x.Id == "cmp-wimo:company:labels.template"));
+                await db.SaveChangesAsync();
+            });
+        }
+
+        var job = await world.MerchantHttp.PostAsJsonAsync("/api/parcels/label-jobs", new { codes = new[] { code, second }, format = "a4" });
+        job.StatusCode.ShouldBe(HttpStatusCode.Accepted);
+        var jobId = (await job.JsonAsync()).GetProperty("id").GetString();
+        JsonElement state = default;
+        for (var i = 0; i < 50; i++)
+        {
+            state = await (await world.MerchantHttp.GetAsync($"/api/parcels/label-jobs/{jobId}")).JsonAsync();
+            if (state.GetProperty("status").GetString() is "ready" or "failed") break;
+            await Task.Delay(200);
+        }
+        state.GetProperty("status").GetString().ShouldBe("ready");
+        state.GetProperty("count").GetInt32().ShouldBe(2);
+        state.GetProperty("fileType").GetString().ShouldBe("pdf");
+        await Pdf(await world.MerchantHttp.GetAsync($"/api/parcels/label-jobs/{jobId}/file"));
+        (await (await world.MerchantHttp.GetAsync("/api/parcels/label-jobs")).JsonAsync()).GetArrayLength().ShouldBe(1);
+        (await world.Admin.GetAsync($"/api/parcels/label-jobs/{jobId}")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        var anonymous = factory.CreateClient();
+        var track = await anonymous.GetAsync($"/api/public/track/{code.ToLowerInvariant()}");
+        track.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var tracking = await track.JsonAsync();
+        tracking.GetProperty("code").GetString().ShouldBe(code);
+        tracking.GetProperty("group").GetString().ShouldBe("initial");
+        tracking.GetProperty("steps").GetArrayLength().ShouldBe(1);
+        (await anonymous.GetAsync("/api/public/track/NOPE")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
 }

@@ -32,6 +32,7 @@ public static class ApiSetup
         builder.Services.AddScoped<ICurrentUser, CurrentUser>();
         builder.Services.AddSingleton<PublicRateLimiter>();
         builder.Services.AddScoped<AccessFilter>();
+        builder.Services.AddHostedService<Background.LabelJobWorker>();
 
         builder.Services.ConfigureHttpJsonOptions(options => JsonDefaults.Apply(options.SerializerOptions));
         builder.Services

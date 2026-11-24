@@ -2,6 +2,7 @@ using Delivery.Api.Auth;
 using Delivery.Application.Exchanges.Commands;
 using Delivery.Application.Parcels;
 using Delivery.Application.Parcels.Commands;
+using Delivery.Application.Parcels.Labels;
 using Delivery.Application.Parcels.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -36,9 +37,46 @@ public sealed partial class ParcelsController(ISender sender) : ApiControllerBas
     public Task<IActionResult> Create([FromBody] CreateParcelCommand? body, [FromHeader(Name = "idempotency-key")] string? idempotencyKey) =>
         Created((body ?? new CreateParcelCommand()) with { IdempotencyKey = idempotencyKey });
 
+    [HttpGet("labels")]
+    [RequirePermission("parcels.read")]
+    public Task<IActionResult> LabelBatch([FromQuery] GetLabelBatchQuery query) => FileOf(query);
+
+    [HttpPost("labels")]
+    [RequirePermission("parcels.read")]
+    public Task<IActionResult> LabelSelection([FromBody] PrintLabelSelectionCommand? body) => FileOf(body ?? new PrintLabelSelectionCommand());
+
+    [HttpPost("label-jobs")]
+    [RequirePermission("parcels.read")]
+    public async Task<IActionResult> CreateLabelJob([FromBody] CreateLabelJobCommand? body) =>
+        StatusCode(StatusCodes.Status202Accepted, await Sender.Send(body ?? new CreateLabelJobCommand(), HttpContext.RequestAborted));
+
+    [HttpGet("label-jobs")]
+    [RequirePermission("parcels.read")]
+    public Task<IActionResult> LabelJobs()
+    {
+        Response.Headers.CacheControl = "private, no-store";
+        return Ok(new GetLabelJobsQuery());
+    }
+
+    [HttpGet("label-jobs/{id}")]
+    [RequirePermission("parcels.read")]
+    public Task<IActionResult> LabelJob(string id)
+    {
+        Response.Headers.CacheControl = "private, no-store";
+        return Ok(new GetLabelJobQuery(id));
+    }
+
+    [HttpGet("label-jobs/{id}/file")]
+    [RequirePermission("parcels.read")]
+    public Task<IActionResult> LabelJobFile(string id) => FileOf(new GetLabelJobFileQuery(id));
+
+    [HttpGet("{code}/label")]
+    [RequirePermission("parcels.read")]
+    public Task<IActionResult> Label(string code, [FromQuery] string? format) => FileOf(new GetParcelLabelQuery { Code = code, Format = format ?? "10x10" });
+
     [HttpGet("{code}")]
     [RequirePermission("parcels.read")]
-    public Task<IActionResult> Detail(string code, [FromQuery] string? deleted) => Ok(new GetParcelQuery(code, deleted == "true"));
+    public Task<IActionResult> Detail(string code, [FromQuery] string? deleted) => Ok(new GetParcelQuery(code, deleted is "1" or "true"));
 
     [HttpPost("{code}/events")]
     [RequirePermission("parcels.status")]
