@@ -33,9 +33,71 @@ public sealed class AccessFilter(IJwtService jwt, IAppDbContext db, PublicRateLi
 
         foreach (var guard in GuardsOf(action))
         {
-            Check(guard, user, http, action);
+            if (guard == Guard.ProviderToken) user = await ProviderAsync(http);
+            else Check(guard, user, http, action);
         }
     }
+
+    /// <summary>
+    /// `ProviderTokenGuard` : jeton actif (ou l'ancien pendant sa grâce), livreur et compte actifs, débit par minute,
+    /// permission `parcels.status`. Le débit se compte en base sur le journal des appels (plusieurs instances).
+    /// </summary>
+    private async Task<AuthenticatedUser> ProviderAsync(HttpContext http)
+    {
+        var token = ProviderBearer(http.Request.Headers.Authorization.ToString())
+                    ?? throw BusinessException.Unauthenticated("Jeton de prestataire absent ou mal formé.", new { reason = "provider-token-missing" });
+        var hash = Application.Providers.ProviderTokens.Hash(token);
+        var now = clock.UtcNow;
+        var row = await db.ProviderTokens.AsNoTracking()
+                      .Where(t => t.RevokedAt == null && (t.TokenHash == hash || (t.PreviousTokenHash == hash && t.PreviousExpiresAt > now)))
+                      .Select(t => new
+                      {
+                          t.Id, t.Name, t.Mode, t.StatusMap, t.RateLimitPerMinute, t.LastUsedAt, t.UserId, t.CourierId, CourierActive = t.Courier.IsActive, CourierDeleted = t.Courier.DeletedAt,
+                          CourierUserId = t.Courier.UserId, UserActive = t.User.IsActive, UserDeleted = t.User.DeletedAt, t.User.Email, t.User.Username, t.User.AgencyId,
+                          Roles = t.User.Roles.Select(r => r.Role).ToList(),
+                      }).FirstOrDefaultAsync(http.RequestAborted)
+                  ?? throw BusinessException.Unauthenticated("Jeton de prestataire invalide.", new { reason = "provider-token-invalid" });
+        if (!row.CourierActive || row.CourierDeleted is not null || row.CourierUserId != row.UserId || !row.UserActive || row.UserDeleted is not null)
+        {
+            throw BusinessException.Forbidden("Le livreur de ce prestataire est désactivé.", new { reason = "provider-courier-inactive" });
+        }
+        var windowStart = now.AddMinutes(-1);
+        var recent = await db.ProviderCalls.AsNoTracking().Where(c => c.TokenId == row.Id && c.At > windowStart).Select(c => c.At).OrderBy(at => at).ToListAsync(http.RequestAborted);
+        if (recent.Count >= row.RateLimitPerMinute)
+        {
+            var retryAfter = Math.Max(1, (int)Math.Ceiling((recent[recent.Count - row.RateLimitPerMinute] - windowStart).TotalSeconds));
+            db.ProviderCalls.Add(new Domain.Entities.ProviderCall
+            {
+                TokenId = row.Id, EventKey = Header(http, "idempotency-key"), ParcelCode = (http.Request.RouteValues["code"] as string ?? string.Empty) is var c && c.Length > 80 ? c[..80] : c,
+                ProviderStatus = 0, Mode = row.Mode, Outcome = ProviderCallOutcome.REJECTED, HttpStatus = 429, Reason = "rate-limited", RequestId = http.TraceIdentifier, At = now,
+            });
+            await db.SaveChangesAsync(http.RequestAborted);
+            throw BusinessException.TooManyRequests("Trop de requêtes. Réessayez dans une minute.", new { reason = "rate-limited", retryAfterSeconds = retryAfter });
+        }
+        var user = new AuthenticatedUser(row.UserId, null, row.Email ?? row.Username ?? row.Name, row.Roles, row.AgencyId, null, row.CourierId, false, false, null);
+        if (!user.Roles.Contains(RoleName.SUPER_ADMIN) && !(await db.EffectivePermissionsAsync(user.UserId, user.Roles, http.RequestAborted)).Contains("parcels.status"))
+        {
+            throw BusinessException.Forbidden("Le livreur de ce prestataire ne peut pas changer un statut.", new { reason = "provider-permission-missing", required = new[] { "parcels.status" } });
+        }
+        http.Items[CurrentUser.ItemKey] = user;
+        http.Items[ProviderItemKey] = new Application.Providers.ProviderContext(row.Id, row.Name, row.Mode, row.StatusMap);
+        if (row.LastUsedAt is null || (now - row.LastUsedAt.Value).TotalSeconds >= 60)
+        {
+            await db.ProviderTokens.Where(t => t.Id == row.Id).ExecuteUpdateAsync(s => s.SetProperty(t => t.LastUsedAt, now), http.RequestAborted);
+        }
+        return user;
+    }
+
+    public const string ProviderItemKey = "provider-token";
+
+    private static string? ProviderBearer(string? header)
+    {
+        var match = System.Text.RegularExpressions.Regex.Match(header?.Trim() ?? string.Empty, @"^Bearer\s+(\S+)$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        var token = match.Success ? match.Groups[1].Value.ToLowerInvariant() : null;
+        return token is not null && System.Text.RegularExpressions.Regex.IsMatch(token, "^[a-f0-9]{64}$") ? token : null;
+    }
+
+    private static string? Header(HttpContext http, string name) => http.Request.Headers.TryGetValue(name, out var value) && !string.IsNullOrWhiteSpace(value.ToString()) ? value.ToString().Trim() : null;
 
     private async Task<AuthenticatedUser?> AuthenticateAsync(HttpContext http)
     {

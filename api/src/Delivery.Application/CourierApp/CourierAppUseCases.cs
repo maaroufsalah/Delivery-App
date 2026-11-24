@@ -102,7 +102,7 @@ internal sealed class GetCourierRouteHandler(IAppDbContext db, ICurrentUser call
 }
 
 /// <summary>Où est ce colis pour ce livreur (`locate`) : sur une de ses tournées ouvertes, la plus récente.</summary>
-internal static class CourierParcels
+public static class CourierParcels
 {
     public sealed record Located(string ParcelId, string Code, int StatusId, string RouteCode, RouteKind RouteKind);
 
@@ -118,6 +118,33 @@ internal static class CourierParcels
         });
         return link ?? throw BusinessException.NotFound($"Le colis {code} n’est pas sur une de vos tournées.", new { reason = "parcel-not-mine", code });
     }
+    /// <summary>`CourierStatusService.report` : l'issue passe par le circuit du livreur (encaissement compris).</summary>
+    public static async Task<CourierRouteDto> ReportAsync(IAppDbContext db, ICurrentUser caller, ILogger logger, string code, RouteOutcome outcome, CancellationToken cancellationToken)
+    {
+        var located = await LocateAsync(db, caller, code, cancellationToken);
+        if (outcome.StatusId is not { } target) throw BusinessException.Validation("Aucune issue rapportée.");
+        if (StatusCatalog.IsLocked(located.StatusId))
+        {
+            throw BusinessException.Transition("Ce colis est livré : seule l’agence peut revenir sur ce statut.", new { reason = "parcel-locked", from = located.StatusId, to = target, allowed = Array.Empty<int>() });
+        }
+        var kind = Money.ToWire(located.RouteKind);
+        if (!StatusCatalog.CanCourierReport(located.StatusId, target, kind))
+        {
+            throw BusinessException.Transition($"Un livreur ne peut pas passer ce colis de {located.StatusId} à {target}.",
+                new { reason = "courier-transition-forbidden", from = located.StatusId, to = target, allowed = StatusCatalog.CourierOutcomesFor(located.StatusId, kind) });
+        }
+        await RouteParcelConfirm.RunAsync(db, caller, logger, located.RouteCode, located.ParcelId, outcome with { Confirmed = true }, false, cancellationToken);
+        // Le BL collecté à la livraison (`bl.collectOnDelivery`) se branche avec le module des retours et BL.
+        return await CourierRouteViews.RouteAsync(db, caller, located.RouteCode, cancellationToken, includeClosed: true);
+    }
+
+    /// <summary>`outcomes` : les issues que le livreur peut poser (aucune sur un colis remis sur un bon de retour).</summary>
+    public static async Task<IReadOnlyList<int>> OutcomesAsync(IAppDbContext db, ICurrentUser caller, string code, CancellationToken cancellationToken)
+    {
+        var located = await LocateAsync(db, caller, code, cancellationToken);
+        if (located.RouteKind == RouteKind.DELIVERY && await Returns.HandoverRelease.HandedOverOfAsync(db, located.ParcelId, cancellationToken) is not null) return [];
+        return StatusCatalog.CourierOutcomesFor(located.StatusId, Money.ToWire(located.RouteKind));
+    }
 }
 
 /// <summary>`GET /courier/parcels/:code/outcomes` : les issues que le livreur peut poser.</summary>
@@ -125,12 +152,7 @@ public sealed record GetCourierOutcomesQuery(string Code) : IRequest<IReadOnlyLi
 
 internal sealed class GetCourierOutcomesHandler(IAppDbContext db, ICurrentUser caller) : IRequestHandler<GetCourierOutcomesQuery, IReadOnlyList<int>>
 {
-    public async Task<IReadOnlyList<int>> Handle(GetCourierOutcomesQuery request, CancellationToken cancellationToken)
-    {
-        var located = await CourierParcels.LocateAsync(db, caller, request.Code, cancellationToken);
-        if (located.RouteKind == RouteKind.DELIVERY && await Returns.HandoverRelease.HandedOverOfAsync(db, located.ParcelId, cancellationToken) is not null) return [];
-        return StatusCatalog.CourierOutcomesFor(located.StatusId, Money.ToWire(located.RouteKind));
-    }
+    public Task<IReadOnlyList<int>> Handle(GetCourierOutcomesQuery request, CancellationToken cancellationToken) => CourierParcels.OutcomesAsync(db, caller, request.Code, cancellationToken);
 }
 
 /// <summary>`POST /courier/parcels/:code/status` (`routeConfirmSchema`) : le livreur rapporte une issue, rejouable par `Idempotency-Key`.</summary>
@@ -148,25 +170,8 @@ internal sealed class ReportCourierOutcomeHandler(IAppDbContext db, ICurrentUser
     public Task<object?> Handle(ReportCourierOutcomeCommand request, CancellationToken cancellationToken) =>
         IdempotentReplay.RunAsync(db, caller, request.IdempotencyKey, $"POST /courier/parcels/{request.Code}/status", () => ReportAsync(request, cancellationToken), cancellationToken);
 
-    private async Task<CourierRouteDto> ReportAsync(ReportCourierOutcomeCommand request, CancellationToken cancellationToken)
-    {
-        var located = await CourierParcels.LocateAsync(db, caller, request.Code, cancellationToken);
-        var outcome = request.ToOutcome() with { Confirmed = true };
-        if (outcome.StatusId is not { } target) throw BusinessException.Validation("Aucune issue rapportée.");
-        if (StatusCatalog.IsLocked(located.StatusId))
-        {
-            throw BusinessException.Transition("Ce colis est livré : seule l’agence peut revenir sur ce statut.", new { reason = "parcel-locked", from = located.StatusId, to = target, allowed = Array.Empty<int>() });
-        }
-        var kind = Money.ToWire(located.RouteKind);
-        if (!StatusCatalog.CanCourierReport(located.StatusId, target, kind))
-        {
-            throw BusinessException.Transition($"Un livreur ne peut pas passer ce colis de {located.StatusId} à {target}.",
-                new { reason = "courier-transition-forbidden", from = located.StatusId, to = target, allowed = StatusCatalog.CourierOutcomesFor(located.StatusId, kind) });
-        }
-        await RouteParcelConfirm.RunAsync(db, caller, logger, located.RouteCode, located.ParcelId, outcome, false, cancellationToken);
-        // Le BL collecté à la livraison (`bl.collectOnDelivery`) se branche avec le module des retours et BL.
-        return await CourierRouteViews.RouteAsync(db, caller, located.RouteCode, cancellationToken, includeClosed: true);
-    }
+    private Task<CourierRouteDto> ReportAsync(ReportCourierOutcomeCommand request, CancellationToken cancellationToken) =>
+        CourierParcels.ReportAsync(db, caller, logger, request.Code, request.ToOutcome() with { Confirmed = true }, cancellationToken);
 }
 
 public sealed class ReportCourierOutcomeValidator : RouteConfirmBodyValidator<ReportCourierOutcomeCommand>;

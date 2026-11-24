@@ -84,19 +84,20 @@ public static class StatusCorrection
         if (!caller.IsSuperAdmin()) throw BusinessException.Forbidden("Seul un administrateur corrige librement un statut.", new { reason = "correction-admin-only" });
     }
 
-    public static async Task<StatusCorrectionPreviewDto> PreviewAsync(IAppDbContext db, string code, CorrectionInput input, CancellationToken cancellationToken)
+    public static async Task<StatusCorrectionPreviewDto> PreviewAsync(IAppDbContext db, string code, CorrectionInput input, CancellationToken cancellationToken, bool keep = false)
     {
-        var plan = await PlanAsync(db, code, input, false, cancellationToken);
+        var plan = await PlanAsync(db, code, input, false, keep, cancellationToken);
         return new StatusCorrectionPreviewDto(plan.Parcel.Code, plan.From, plan.To, plan.Family, plan.Placement?.CourierId, plan.Placement?.Route?.Code, plan.NeedsCourier, plan.Couriers,
             plan.Routes, plan.Steps, plan.Fingerprint);
     }
 
+    /// <param name="keep">`keepAttachments` : le miroir d'un prestataire suit le statut sans détacher bons, circuits ni retours.</param>
     public static async Task<StatusCorrectionResultDto> ApplyAsync(IAppDbContext db, ICurrentUser caller, IClock clock, ILogger logger, string code, CorrectionInput input,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken, bool keep = false)
     {
         var reason = input.Reason.Trim();
         if (reason.Length == 0) throw BusinessException.Validation("Une correction de statut exige un motif.", new { reason = "reason-required", field = "reason" });
-        var first = await PlanAsync(db, code, input, false, cancellationToken);
+        var first = await PlanAsync(db, code, input, false, keep, cancellationToken);
         if (!string.IsNullOrEmpty(input.Fingerprint) && input.Fingerprint != first.Fingerprint)
         {
             throw BusinessException.Conflict("Le colis a changé depuis l’aperçu : relisez ce que la correction va faire avant de valider.", new { reason = "correction-plan-changed" });
@@ -116,7 +117,7 @@ public static class StatusCorrection
                 cancel = await DeliveryCancel.PlanAsync(db, code, cancellationToken);
                 var remittance = await DeliveryCancel.WriteAsync(db, caller, cancel, $"Correction du statut : {reason}", author, now, cancellationToken);
                 prefix.Add(Step("cancel-delivery", ("routeCode", cancel.Route?.Code), ("routeReopened", cancel.Reopen), ("remittanceCode", remittance)));
-                plan = await PlanAsync(db, code, input, true, cancellationToken);
+                plan = await PlanAsync(db, code, input, true, keep, cancellationToken);
             }
             else
             {
@@ -155,7 +156,7 @@ public static class StatusCorrection
         return step;
     }
 
-    private static async Task<Plan> PlanAsync(IAppDbContext db, string code, CorrectionInput input, bool afterCancel, CancellationToken cancellationToken)
+    private static async Task<Plan> PlanAsync(IAppDbContext db, string code, CorrectionInput input, bool afterCancel, bool keep, CancellationToken cancellationToken)
     {
         var loaded = await db.Parcels.AsNoTracking().Where(p => p.Code == code && p.DeletedAt == null)
                          .Select(p => new ParcelRow(p.Id, p.Code, p.StatusId, p.StatusAt, p.BillingState, p.FinancialStatus, p.ReimbursedByCourier, p.IsFailed, p.FailureFee, p.CourierId, p.AgencyId,
@@ -166,7 +167,7 @@ public static class StatusCorrection
         var to = input.StatusId;
         if (StatusCatalog.Find(to) is null) throw BusinessException.Validation($"Statut inconnu : {to}", new { reason = "unknown-status" });
         var family = CorrectionFamilies.FamilyOf(to);
-        if (family is null || !CorrectionFamilies.IsTarget(to))
+        if (family is null || (!CorrectionFamilies.IsTarget(to) && !keep))
         {
             var legacy = to is 21 or 5;
             throw BusinessException.Transition(legacy
@@ -203,22 +204,31 @@ public static class StatusCorrection
         var activeNotes = notes.Where(n => n.Status != DeliveryNoteStatus.VALIDATED).ToList();
         var activeItems = items.Where(i => HandoverActive.Contains(i.Status)).ToList();
         var receivedItems = items.Where(i => HandoverReceived.Contains(i.Status) && i.CorrectedAt is null).ToList();
-        if (to == PickedUpByCourier && lines.Any(l => l.Kind == RouteKind.PICKUP && l.Status == RouteStatus.CLOSED))
+        if (keep)
+        {
+            var handedOver = items.FirstOrDefault(i => i.CorrectedAt is null && (i.Status == ReturnHandoverStatus.AWAITING_RECEIPT || HandoverReceived.Contains(i.Status)));
+            if (handedOver is not null)
+            {
+                throw BusinessException.Conflict($"Ce colis est sur le bon de retour {handedOver.Code}, remis à l’agence : son statut ne suit plus le prestataire.",
+                    new { reason = "parcel-on-handover", handoverCode = handedOver.Code });
+            }
+        }
+        if (!keep && to == PickedUpByCourier && lines.Any(l => l.Kind == RouteKind.PICKUP && l.Status == RouteStatus.CLOSED))
         {
             throw BusinessException.Transition(
                 "« Ramassé par le livreur » ne se pose que sur un circuit de ramassage en cours : ce colis a déjà le sien, clôturé. Choisissez « Colis ramassé » ou « Attente de ramassage ».",
                 new { reason = "target-needs-route", to });
         }
         var onDelivery = family is "delivery" or "delivered";
-        var leaveNotes = family == "before-pickup" ? activeNotes.Select(n => new Ref(n.Id, n.Code)).ToList() : [];
-        var leaveHandovers = to == RouteStatusIds.ReturnPending ? [] : activeItems.Select(i => new Ref(i.Id, i.Code)).ToList();
-        var releaseHandovers = ReturnedIn.Contains(to) ? [] : receivedItems.Select(i => new Ref(i.Id, i.Code)).ToList();
+        var leaveNotes = !keep && family == "before-pickup" ? activeNotes.Select(n => new Ref(n.Id, n.Code)).ToList() : [];
+        var leaveHandovers = keep || to == RouteStatusIds.ReturnPending ? [] : activeItems.Select(i => new Ref(i.Id, i.Code)).ToList();
+        var releaseHandovers = keep || ReturnedIn.Contains(to) ? [] : receivedItems.Select(i => new Ref(i.Id, i.Code)).ToList();
         Placement? placement = null;
         var needsCourier = false;
         IReadOnlyList<CorrectionCourierDto> couriers = [];
         IReadOnlyList<CorrectionRouteDto> routeOptions = [];
         if (onDelivery) (placement, needsCourier, couriers, routeOptions) = await PlaceAsync(db, parcel, lines, input, cancellationToken);
-        var leaveRoutes = (to == RouteStatusIds.ReturnPending ? [] : openLines)
+        var leaveRoutes = (keep || to == RouteStatusIds.ReturnPending ? [] : openLines)
             .Where(l => !(placement is { Reuse: true } && l.RouteId == placement.Route?.Id))
             .Select(l => new Leave(l.RouteId, l.Code, l.Status, l.Kind)).ToList();
         var markRoutes = lines.Where(l => l.Status == RouteStatus.CLOSED && l.CorrectedAt is null).Select(l => new Ref(l.RouteId, l.Code)).ToList();
