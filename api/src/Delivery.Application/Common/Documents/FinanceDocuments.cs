@@ -27,6 +27,14 @@ public sealed record CourierStatementSheet(PdfCompany Company, string Code, stri
     DateOnly PeriodEnd, int LineCount, long BaseAmount, long CodCollected, long CommissionsTotal, long CommissionsDeducted, long VariableAmount, long TotalDue, string? ValidatedByName,
     IReadOnlyList<CourierStatementSheetLine> Lines);
 
+public sealed record CodPayoutSheetLine(string ParcelCode, string RecipientName, string DestinationCityName, long Amount);
+
+public sealed record CodPayoutSheetCheque(string Number, string? Bank, string ParcelCode, string Status, long Amount, bool IncludedInPayout);
+
+/// <summary>`CodPayoutDocument` : le bon de versement du COD à un e-commerçant professionnel.</summary>
+public sealed record CodPayoutSheet(PdfCompany Company, string? Footer, string Code, string Status, string AgencyName, string ClientName, string Method, string? BankAccountLabel, DateTime? PaidAt,
+    string? Reference, int ParcelCount, long Amount, string? Note, string? PaidByName, IReadOnlyList<CodPayoutSheetLine> Items, IReadOnlyList<CodPayoutSheetCheque> Cheques);
+
 public sealed record RemittanceSheetLine(string ParcelCode, string ClientName, string RecipientName, long Amount, long Commission);
 
 public sealed record RemittanceSheetCheque(string Number, string? Bank, string ParcelCode, long Amount);

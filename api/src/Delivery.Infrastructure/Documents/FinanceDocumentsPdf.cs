@@ -320,6 +320,112 @@ internal static class FinanceDocumentsPdf
         })).WithMetadata(new DocumentMetadata { Title = s.Code }).GeneratePdf();
     }
 
+    private static readonly Dictionary<string, string> PayoutStates = new() { ["draft"] = "Brouillon, non versé", ["paid"] = "Versé" };
+    private static readonly Dictionary<string, string> Methods = new() { ["cash"] = "Espèces", ["transfer"] = "Virement", ["check"] = "Chèque" };
+
+    private static string ChequeState(string status, PdfCompany company) => status switch
+    {
+        "recu-livreur" => "Reçu par le livreur",
+        "remis-admin" => $"Remis à {company.ShortText}",
+        "recu-admin" => $"Reçu par {company.ShortText}",
+        "transmis-vendeur" => "Transmis au vendeur",
+        "recu-vendeur" => "Réception confirmée par le vendeur",
+        "rejete" => "Rejeté",
+        "annule" => "Annulé",
+        _ => status,
+    };
+
+    public static byte[] CodPayout(CodPayoutSheet p)
+    {
+        var footer = string.IsNullOrWhiteSpace(p.Footer) ? "Montants figés au versement. Le COD d’un colis n’est versé qu’une seule fois." : p.Footer;
+        return Document.Create(container => BusinessDocuments.Page(container, p.Company, footer, column =>
+        {
+            ReturnDocumentsPdf.Header(column, p.Company, "Bon de versement", p.Code, p.AgencyName, null);
+            var method = Methods.GetValueOrDefault(p.Method, p.Method) + (p.BankAccountLabel is null ? string.Empty : $" — {PdfText.Truncate(p.BankAccountLabel, 20)}");
+            var when = (p.PaidAt is { } paid ? Exports.DateText(paid) : "Non versé") + (p.Reference is null ? string.Empty : $" · réf. {PdfText.Truncate(p.Reference, 24)}");
+            ReturnDocumentsPdf.Blocks(column,
+            [
+                (240, c => ReturnDocumentsPdf.Block(c, "E-commerçant", p.ClientName, PayoutStates.GetValueOrDefault(p.Status, p.Status))),
+                (240, c => ReturnDocumentsPdf.Block(c, "Versement", method, when)),
+            ]);
+            ReturnDocumentsPdf.Head(column, head =>
+            {
+                BusinessDocuments.Caption(head.ConstantItem(130), "Colis");
+                BusinessDocuments.Caption(head.RelativeItem(), "Destinataire");
+                BusinessDocuments.Caption(head.ConstantItem(110), "Ville");
+                BusinessDocuments.Caption(head.ConstantItem(80).AlignRight(), "Montant");
+            });
+            foreach (var item in p.Items)
+            {
+                ReturnDocumentsPdf.Line(column, row =>
+                {
+                    row.ConstantItem(130).Text(item.ParcelCode).Bold();
+                    row.RelativeItem().Text(PdfText.Truncate(item.RecipientName, 24));
+                    row.ConstantItem(110).Text(PdfText.Truncate(item.DestinationCityName, 18));
+                    row.ConstantItem(80).AlignRight().Text(PdfText.Amount(item.Amount));
+                });
+            }
+            if (p.Items.Count == 0) column.Item().PaddingTop(10).Text("Aucun colis sur ce bon.").FontColor(Muted);
+            column.Item().PaddingTop(14).Row(row =>
+            {
+                row.AutoItem().Text($"{p.ParcelCount} colis").Bold();
+                row.RelativeItem();
+                row.ConstantItem(250).Column(totals =>
+                {
+                    Between(totals, 0, "Total versé", PdfText.Amount(p.Amount), strong: true, valueSize: 12);
+                    totals.Item().PaddingTop(4).Text("COD encaissé en espèces, sans déduction de frais. Les chèques sont transmis séparément, non versés. Les frais de livraison font l’objet d’une facture distincte.")
+                        .FontColor(Muted);
+                });
+            });
+            if (p.Cheques.Count > 0)
+            {
+                column.Item().PaddingTop(16).Column(block =>
+                {
+                    block.Item().ShowEntire().Column(head =>
+                    {
+                        head.Item().Text($"Chèques reçus ({p.Cheques.Count})").Bold();
+                        head.Item().PaddingTop(2).Text(p.Cheques.Any(c => c.IncludedInPayout)
+                            ? "Pour information. Bon versé sous une règle antérieure (avant le 29/10/2026, ou chèque rejeté avant le 05/11/2026) : la part chèque des colis marqués * a été versée dans ce bon."
+                            : "Pour information. Les chèques sont remis séparément, ils ne sont pas inclus dans le montant versé.").FontColor(Muted);
+                        head.Item().PaddingTop(6).Background("#F1F1F1").PaddingVertical(5).PaddingHorizontal(6).Row(cells =>
+                        {
+                            BusinessDocuments.Caption(cells.ConstantItem(96), "N° chèque");
+                            BusinessDocuments.Caption(cells.ConstantItem(80), "Banque");
+                            BusinessDocuments.Caption(cells.ConstantItem(120), "Colis");
+                            BusinessDocuments.Caption(cells.RelativeItem(), "État");
+                            BusinessDocuments.Caption(cells.ConstantItem(80).AlignRight(), "Montant");
+                        });
+                    });
+                    foreach (var cheque in p.Cheques)
+                    {
+                        ReturnDocumentsPdf.Line(block, cells =>
+                        {
+                            cells.ConstantItem(96).Text($"{PdfText.Truncate(cheque.Number, 14)}{(cheque.IncludedInPayout ? " *" : string.Empty)}").Bold();
+                            cells.ConstantItem(80).Text(PdfText.Truncate(cheque.Bank ?? "—", 12));
+                            cells.ConstantItem(120).Text(cheque.ParcelCode);
+                            cells.RelativeItem().Text(ChequeState(cheque.Status, p.Company));
+                            cells.ConstantItem(80).AlignRight().Text(PdfText.Amount(cheque.Amount));
+                        });
+                    }
+                    Between(block, 6, "Total des chèques", PdfText.Amount(p.Cheques.Where(c => c.Status != "annule").Sum(c => c.Amount)), strong: true);
+                    foreach (var rejected in p.Cheques.Where(c => c.Status == "rejete"))
+                    {
+                        block.Item().PaddingTop(3).Text($"Chèque n° {PdfText.Truncate(rejected.Number, 20)} rejeté : rendu au vendeur, non payé par {p.Company.ShortText}").FontColor(Muted);
+                    }
+                });
+            }
+            if (!string.IsNullOrEmpty(p.Note))
+            {
+                column.Item().PaddingTop(12).Column(note =>
+                {
+                    BusinessDocuments.Caption(note.Item(), "Note");
+                    note.Item().PaddingTop(2).Text(PdfText.Truncate(p.Note, 200));
+                });
+            }
+            ReturnDocumentsPdf.Signatures(column, c => Signed(c, "L’agence", p.PaidByName), c => Signed(c, "L’e-commerçant", p.ClientName));
+        })).WithMetadata(new DocumentMetadata { Title = p.Code }).GeneratePdf();
+    }
+
     public static byte[] Remittance(RemittanceSheet r)
     {
         const string footer = "Montants figés à la confirmation. Le cash d’un colis ne remonte qu’une seule fois.";

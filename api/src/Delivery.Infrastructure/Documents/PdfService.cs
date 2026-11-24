@@ -43,6 +43,7 @@ public sealed class PdfService : IPdfService
             ChequeSlipSheet slip => FinanceDocumentsPdf.ChequeSlip(slip),
             PettyCashSheet pettyCash => FinanceDocumentsPdf.PettyCash(pettyCash),
             CourierStatementSheet statement => FinanceDocumentsPdf.CourierStatement(statement),
+            CodPayoutSheet payout => FinanceDocumentsPdf.CodPayout(payout),
             ChequeGroupSlipSheet slips => FinanceDocumentsPdf.ChequeGroupSlip(slips),
             _ => throw new NotSupportedException($"Document PDF inconnu : {document.GetType().Name}"),
         };
