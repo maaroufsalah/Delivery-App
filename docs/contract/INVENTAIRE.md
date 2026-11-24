@@ -275,21 +275,21 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 
 ### `modules/parcels/exchanges.controller.ts`
 
-- [ ] `GET /api/exchanges` — `list` (L37) · perm: parcels.read · entrée: exchangeListQuerySchema
-- [ ] `GET /api/exchanges/:code` — `detail` (L47) · perm: parcels.read
-- [ ] `POST /api/exchanges` — `create` (L60) · gardes: NotMerchantGuard · perm: parcels.write · entrée: exchangeCreateSchema
-- [ ] `POST /api/exchanges/:code/pickup` — `pickup` (L71) · gardes: NotMerchantGuard · perm: parcels.write · entrée: exchangeAdvanceSchema
-- [ ] `POST /api/exchanges/:code/deliver` — `deliver` (L83) · gardes: NotMerchantGuard · perm: parcels.write · entrée: exchangeAdvanceSchema
-- [ ] `POST /api/exchanges/:code/close` — `close` (L95) · gardes: NotMerchantGuard · perm: parcels.write · entrée: exchangeAdvanceSchema
-- [ ] `POST /api/exchanges/:code/cancel` — `cancel` (L107) · gardes: NotMerchantGuard · perm: parcels.write · entrée: exchangeAdvanceSchema
+- [x] `GET /api/exchanges` — `list` (L37) · perm: parcels.read · entrée: exchangeListQuerySchema
+- [x] `GET /api/exchanges/:code` — `detail` (L47) · perm: parcels.read
+- [x] `POST /api/exchanges` — `create` (L60) · gardes: NotMerchantGuard · perm: parcels.write · entrée: exchangeCreateSchema
+- [x] `POST /api/exchanges/:code/pickup` — `pickup` (L71) · gardes: NotMerchantGuard · perm: parcels.write · entrée: exchangeAdvanceSchema
+- [x] `POST /api/exchanges/:code/deliver` — `deliver` (L83) · gardes: NotMerchantGuard · perm: parcels.write · entrée: exchangeAdvanceSchema
+- [x] `POST /api/exchanges/:code/close` — `close` (L95) · gardes: NotMerchantGuard · perm: parcels.write · entrée: exchangeAdvanceSchema
+- [x] `POST /api/exchanges/:code/cancel` — `cancel` (L107) · gardes: NotMerchantGuard · perm: parcels.write · entrée: exchangeAdvanceSchema
 
 ### `modules/parcels/parcels.controller.ts`
 
-- [ ] `GET /api/parcels` — `list` (L175) · perm: parcels.read · entrée: parcelListQuerySchema
-- [ ] `GET /api/parcels/export` — `export` (L194) · perm: parcels.read · entrée: parcelListQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/parcels/stats` — `stats` (L217) · perm: parcels.read · entrée: parcelListQuerySchema
-- [ ] `GET /api/parcels/next-code` — `nextCode` (L227) · perm: parcels.write · entrée: nextCodeQuerySchema
-- [ ] `POST /api/parcels/quote` — `quote` (L239) · perm: parcels.write · entrée: quoteSchema
+- [x] `GET /api/parcels` — `list` (L175) · perm: parcels.read · entrée: parcelListQuerySchema
+- [x] `GET /api/parcels/export` — `export` (L194) · perm: parcels.read · entrée: parcelListQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/parcels/stats` — `stats` (L217) · perm: parcels.read · entrée: parcelListQuerySchema
+- [x] `GET /api/parcels/next-code` — `nextCode` (L227) · perm: parcels.write · entrée: nextCodeQuerySchema
+- [x] `POST /api/parcels/quote` — `quote` (L239) · perm: parcels.write · entrée: quoteSchema
 - [ ] `GET /api/parcels/import/template.xlsx` — `importTemplate` (L256) · perm: parcels.write · sortie: `Promise<StreamableFile>`
 - [ ] `POST /api/parcels/import/preview` — `previewImport` (L267) · perm: parcels.write · entrée: parcelImportSourceSchema
 - [ ] `POST /api/parcels/import/anomalies.xlsx` — `importAnomalies` (L284) · perm: parcels.write · entrée: parcelImportSourceSchema · sortie: `Promise<StreamableFile>`
@@ -302,21 +302,21 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 - [ ] `GET /api/parcels/label-jobs` — `labelJobList` (L414) · perm: parcels.read
 - [ ] `GET /api/parcels/label-jobs/:id` — `labelJob` (L422) · perm: parcels.read
 - [ ] `GET /api/parcels/label-jobs/:id/file` — `labelJobFile` (L430) · perm: parcels.read · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/parcels/:code` — `detail` (L446) · perm: parcels.read · query: deleted
+- [x] `GET /api/parcels/:code` — `detail` (L446) · perm: parcels.read · query: deleted
 - [ ] `GET /api/parcels/:code/label` — `label` (L463) · perm: parcels.read · entrée: labelQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/parcels` — `create` (L479) · perm: parcels.write · entrée: createParcelSchema · sortie: `l'appli envoie la * même clé au premier envoi et à chaque rejeu de sa file hors-ligne. * Bornée à 80 caractères imprimables ; autre chose est ignoré. */ @Headers('idempotency-key') idempotencyKey?: string, )`
-- [ ] `POST /api/parcels/:code/events` — `changeStatus` (L510) · gardes: NotMerchantGuard · perm: parcels.status · entrée: changeStatusBodySchema
-- [ ] `PATCH /api/parcels/:code/fees` — `editFees` (L534) · perm: parcels.editFees · entrée: editParcelFeesSchema
-- [ ] `PATCH /api/parcels/:code/destination` — `changeDestination` (L563) · gardes: NotMerchantGuard · perm: parcels.write · entrée: changeDestinationSchema
-- [ ] `PATCH /api/parcels/:code` — `updateBySeller` (L595) · gardes: MerchantGuard · perm: parcels.write · entrée: sellerParcelUpdateSchema
-- [ ] `DELETE /api/parcels/:code` — `removeBySeller` (L607) · gardes: MerchantGuard · perm: parcels.write
-- [ ] `POST /api/parcels/:code/admin-delete` — `removeByAdmin` (L621) · gardes: NotMerchantGuard · perm: parcels.write · entrée: parcelAdminDeleteSchema, parcelClientChangePreviewSchema · sortie: `Promise<ParcelClientChangePreview>`
-- [ ] `POST /api/parcels/:code/client/preview` — `previewClientChange` (L635) · gardes: NotMerchantGuard · perm: parcels.write · entrée: parcelClientChangePreviewSchema · sortie: `Promise<ParcelClientChangePreview>`
-- [ ] `POST /api/parcels/:code/client` — `changeClient` (L648) · gardes: NotMerchantGuard · perm: parcels.write · entrée: parcelClientChangeSchema · sortie: `Promise<ParcelClientChangeResult>`
-- [ ] `PATCH /api/parcels/:code/expected-payment` — `changeExpectedPayment` (L664) · gardes: NotMerchantGuard · perm: parcels.write · entrée: expectedPaymentChangeSchema
-- [ ] `PATCH /api/parcels/:code/bl` — `setBlRequested` (L675) · perm: parcels.write · entrée: parcelBlRequestSchema
-- [ ] `POST /api/parcels/:code/exchange` — `exchange` (L702) · perm: parcels.write · entrée: parcelExchangeSchema
-- [ ] `POST /api/parcels/:code/notes` — `addNote` (L715) · gardes: NotMerchantGuard · perm: parcels.write · entrée: addParcelNoteSchema
+- [x] `POST /api/parcels` — `create` (L479) · perm: parcels.write · entrée: createParcelSchema · sortie: `l'appli envoie la * même clé au premier envoi et à chaque rejeu de sa file hors-ligne. * Bornée à 80 caractères imprimables ; autre chose est ignoré. */ @Headers('idempotency-key') idempotencyKey?: string, )`
+- [x] `POST /api/parcels/:code/events` — `changeStatus` (L510) · gardes: NotMerchantGuard · perm: parcels.status · entrée: changeStatusBodySchema
+- [x] `PATCH /api/parcels/:code/fees` — `editFees` (L534) · perm: parcels.editFees · entrée: editParcelFeesSchema
+- [x] `PATCH /api/parcels/:code/destination` — `changeDestination` (L563) · gardes: NotMerchantGuard · perm: parcels.write · entrée: changeDestinationSchema
+- [x] `PATCH /api/parcels/:code` — `updateBySeller` (L595) · gardes: MerchantGuard · perm: parcels.write · entrée: sellerParcelUpdateSchema
+- [x] `DELETE /api/parcels/:code` — `removeBySeller` (L607) · gardes: MerchantGuard · perm: parcels.write
+- [x] `POST /api/parcels/:code/admin-delete` — `removeByAdmin` (L621) · gardes: NotMerchantGuard · perm: parcels.write · entrée: parcelAdminDeleteSchema, parcelClientChangePreviewSchema · sortie: `Promise<ParcelClientChangePreview>`
+- [x] `POST /api/parcels/:code/client/preview` — `previewClientChange` (L635) · gardes: NotMerchantGuard · perm: parcels.write · entrée: parcelClientChangePreviewSchema · sortie: `Promise<ParcelClientChangePreview>`
+- [x] `POST /api/parcels/:code/client` — `changeClient` (L648) · gardes: NotMerchantGuard · perm: parcels.write · entrée: parcelClientChangeSchema · sortie: `Promise<ParcelClientChangeResult>`
+- [x] `PATCH /api/parcels/:code/expected-payment` — `changeExpectedPayment` (L664) · gardes: NotMerchantGuard · perm: parcels.write · entrée: expectedPaymentChangeSchema
+- [x] `PATCH /api/parcels/:code/bl` — `setBlRequested` (L675) · perm: parcels.write · entrée: parcelBlRequestSchema
+- [x] `POST /api/parcels/:code/exchange` — `exchange` (L702) · perm: parcels.write · entrée: parcelExchangeSchema
+- [x] `POST /api/parcels/:code/notes` — `addNote` (L715) · gardes: NotMerchantGuard · perm: parcels.write · entrée: addParcelNoteSchema
 
 ### `modules/provider/provider-tokens.controller.ts`
 
