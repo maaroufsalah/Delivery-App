@@ -21,9 +21,12 @@ public sealed class CurrentUser(IHttpContextAccessor accessor) : ICurrentUser
 {
     public const string ItemKey = "Delivery.AuthenticatedUser";
 
+    /// <summary>L'identité rejouée hors requête HTTP (tâches de masse) : demandeur et identifiant de requête.</summary>
+    public static readonly AsyncLocal<(AuthenticatedUser User, string RequestId)?> Background = new();
+
     private HttpContext? Context => accessor.HttpContext;
 
-    private AuthenticatedUser? User => Context?.Items.TryGetValue(ItemKey, out var value) == true ? value as AuthenticatedUser : null;
+    private AuthenticatedUser? User => Background.Value?.User ?? (Context?.Items.TryGetValue(ItemKey, out var value) == true ? value as AuthenticatedUser : null);
 
     public bool IsAuthenticated => User is not null;
 
@@ -53,7 +56,7 @@ public sealed class CurrentUser(IHttpContextAccessor accessor) : ICurrentUser
 
     public bool IsMobileClient => string.Equals(Context?.Request.Headers["x-client"].FirstOrDefault()?.Trim(), "mobile", StringComparison.OrdinalIgnoreCase);
 
-    public string RequestId => Context?.TraceIdentifier ?? Guid.NewGuid().ToString();
+    public string RequestId => Background.Value?.RequestId ?? Context?.TraceIdentifier ?? Guid.NewGuid().ToString();
 
     public string? PreferredLocale
     {

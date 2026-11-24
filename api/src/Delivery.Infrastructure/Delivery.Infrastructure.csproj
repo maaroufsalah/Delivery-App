@@ -11,12 +11,14 @@
     <PackageReference Include="SkiaSharp" />
     <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" />
     <PackageReference Include="Svg.Skia" />
-    <PackageReference Include="ZXing.Net" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Documents\Fonts\*.ttf" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Delivery.Application\Delivery.Application.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Delivery.UnitTests" />
   </ItemGroup>
 </Project>

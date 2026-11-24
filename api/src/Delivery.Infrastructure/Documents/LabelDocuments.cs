@@ -11,6 +11,7 @@ internal static class LabelDocuments
     private const float LabelSide = 283.46f;
     private static readonly PageSize Label10 = new(LabelSide, LabelSide);
     private static readonly PageSize A4 = new(595.28f, 841.89f);
+    private static readonly PageSize BrandedA4 = new(595.28f, 595.28f);
     private const string Muted = "#6B6B6B";
 
     public static byte[] Render(LabelSheet sheet)
@@ -19,7 +20,7 @@ internal static class LabelDocuments
         var title = parcels.Select(p => p.Code).Distinct().Count() == 1 ? parcels[0].Code : "Étiquettes";
         var document = Document.Create(container =>
         {
-            if (sheet.Template == LabelSheet.Branded && sheet.Brand is { } brand) Branded(container, parcels, brand, sheet.Format);
+            if (sheet.Template == LabelSheet.Branded && sheet.Brand is { } brand) Branded(container, parcels, brand with { LogoOnLight = brand.LogoOnLight ?? LabelLogo.ForLightBackground(brand.Logo) }, sheet.Format);
             else Classic(container, parcels, sheet.CompanyName, sheet.Format);
         }).WithMetadata(new DocumentMetadata { Title = title });
         return document.GeneratePdf();
@@ -57,8 +58,12 @@ internal static class LabelDocuments
                         {
                             foreach (var parcel in pair)
                             {
-                                row.RelativeItem().Border(0.5f).BorderColor("#BDBDBD").Padding(10).ScaleToFit()
-                                    .Element(c => ClassicBody(c, parcel, company, compact: false));
+                                // Pointillés de découpe (`borderStyle: 'dashed'`), dessinés en calque SVG.
+                                row.RelativeItem().Layers(layers =>
+                                {
+                                    layers.Layer().Svg(size => DashedFrame(size.Width, size.Height));
+                                    layers.PrimaryLayer().Padding(10).ScaleToFit().Element(c => ClassicBody(c, parcel, company, compact: false));
+                                });
                             }
                             if (pair.Length == 1) row.RelativeItem();
                         });
@@ -67,6 +72,9 @@ internal static class LabelDocuments
             });
         }
     }
+
+    private static string DashedFrame(float width, float height) => string.Create(System.Globalization.CultureInfo.InvariantCulture,
+        $"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{width}\" height=\"{height}\"><rect x=\"0.25\" y=\"0.25\" width=\"{width - 0.5f}\" height=\"{height - 0.5f}\" fill=\"none\" stroke=\"#BDBDBD\" stroke-width=\"0.5\" stroke-dasharray=\"1 1\"/></svg>");
 
     private static void ClassicBody(IContainer container, LabelData parcel, string company, bool compact)
     {
@@ -98,18 +106,19 @@ internal static class LabelDocuments
                     sender.Item().Text("EXPÉDITEUR").FontSize(7).FontColor(Muted).LetterSpacing(0.08f);
                     sender.Item().Text(PdfText.Truncate(parcel.ClientName, 24));
                 });
+                // react-pdf : la colonne prend la largeur du montant et ses lignes partent à gauche (rendu Speedy).
                 row.AutoItem().Column(cod =>
                 {
-                    cod.Item().AlignRight().Text("À ENCAISSER").FontSize(7).FontColor(Muted).LetterSpacing(0.08f);
-                    cod.Item().AlignRight().Text(PdfText.Amount(parcel.CodToCollect)).FontSize(compact ? 16 : 15).Bold();
-                    if (parcel.ExpectedPaymentLabel is not null) cod.Item().AlignRight().Text(parcel.ExpectedPaymentLabel).FontSize(8).Bold();
-                    if (carton is not null) cod.Item().AlignRight().Text($"Carton {carton}").FontSize(8).Bold();
+                    cod.Item().Text("À ENCAISSER").FontSize(7).FontColor(Muted).LetterSpacing(0.08f);
+                    cod.Item().Text(PdfText.Amount(parcel.CodToCollect)).FontSize(compact ? 16 : 15).Bold();
+                    if (parcel.ExpectedPaymentLabel is not null) cod.Item().Text(parcel.ExpectedPaymentLabel).FontSize(8).Bold();
+                    if (carton is not null) cod.Item().Text($"Carton {carton}").FontSize(8).Bold();
                 });
             });
             if (!string.IsNullOrEmpty(parcel.Description)) column.Item().PaddingTop(4).Text(PdfText.Truncate(parcel.Description, 60)).FontSize(7).FontColor(Muted);
             if (!string.IsNullOrEmpty(parcel.ExternalCode))
             {
-                column.Item().PaddingTop(4).AlignCenter().Width(150).Height(18).Svg(PdfService.Barcode(parcel.ExternalCode));
+                column.Item().PaddingTop(4).AlignCenter().Width(150).Height(18).Image(PdfService.Barcode(parcel.ExternalCode)).FitUnproportionally();
                 column.Item().AlignCenter().Text($"Réf. {PdfText.Truncate(parcel.ExternalCode, 32)}").FontSize(7).LetterSpacing(0.03f);
             }
         });
@@ -122,11 +131,12 @@ internal static class LabelDocuments
         {
             container.Page(page =>
             {
-                page.Size(a4 ? A4 : Label10);
+                // Speedy (react-pdf) sort l'étiquette « A4 » à la marque sur une page CARRÉE de 595,28 pt : reproduit.
+                page.Size(a4 ? BrandedA4 : Label10);
                 page.Margin(a4 ? 40 : 10);
                 page.DefaultTextStyle(PdfService.Base(8));
                 var unit = a4 ? A4.Width - 80 : LabelSide - 20;
-                page.Content().AlignCenter().Width(unit).Height(unit).ScaleToFit().Element(c => BrandedBody(c, parcel, brand, unit));
+                page.Content().AlignCenter().Width(unit).Height(unit).Element(c => BrandedBody(c, parcel, brand, unit));
             });
         }
     }
@@ -141,44 +151,49 @@ internal static class LabelDocuments
         IContainer Band(IContainer c) => c.Border(0.7f).BorderColor(Colors.Black).Background(tint);
         IContainer Frame(IContainer c) => c.Border(0.7f).BorderColor(Colors.Black);
 
-        container.Column(column =>
+        // Comme la mise en page flex de Speedy : en-tête et pied à leur taille, le bloc du destinataire prend la place
+        // qui reste (`flexGrow` + `flexShrink`) : l'étiquette tient toujours dans son carré, sans réduction d'échelle.
+        container.Decoration(decoration =>
         {
-            column.Spacing(Pt(2.5f));
-            column.Item().Element(Band).Height(Pt(30)).PaddingHorizontal(Pt(8)).AlignCenter().AlignMiddle().Element(logo =>
+            decoration.Before().PaddingBottom(Pt(2.5f)).Column(column =>
             {
-                if (brand.Logo is { Length: > 0 } bytes) logo.Height(Pt(22)).Image(bytes).FitHeight();
-                else logo.Text(PdfText.Truncate(brand.Name, 22)).FontSize(Pt(14)).Bold();
-            });
-            column.Item().Row(row =>
-            {
-                Cell(row.RelativeItem(3), Pt, parcel.AgencyCode, tint, bordered: true);
-                Cell(row.RelativeItem(4), Pt, parcel.ZoneName, null, bordered: true);
-                Cell(row.RelativeItem(3), Pt, parcel.DestinationCityCode, tint, bordered: true);
-            });
-            column.Item().Row(row =>
-            {
-                row.Spacing(Pt(3));
-                row.RelativeItem().Column(left =>
+                column.Spacing(Pt(2.5f));
+                column.Item().Element(Band).Height(Pt(30)).PaddingHorizontal(Pt(8)).AlignCenter().AlignMiddle().Element(logo =>
                 {
-                    left.Spacing(Pt(2.5f));
-                    left.Item().Element(Band).PaddingVertical(Pt(2)).PaddingHorizontal(Pt(4)).Column(city =>
-                    {
-                        if (!string.IsNullOrEmpty(parcel.DestinationCityNameAr)) city.Item().AlignCenter().Text(parcel.DestinationCityNameAr).FontSize(Pt(13)).Bold().ClampLines(1);
-                        city.Item().AlignCenter().Text(parcel.DestinationCityName.ToUpperInvariant()).FontSize(Pt(11)).Bold().ClampLines(1);
-                    });
-                    left.Item().Element(Frame).PaddingVertical(Pt(2.5f)).PaddingHorizontal(Pt(4)).Column(sender =>
-                    {
-                        sender.Item().Text($"Expéditeur : {PdfText.Truncate(parcel.ClientName, 30)}").FontSize(Pt(7)).Bold().ClampLines(1);
-                        sender.Item().Text($"Téléphone : {parcel.ClientPhone}").FontSize(Pt(7)).ClampLines(1);
-                        sender.Item().Text($"Date : {parcel.CreatedAt}").FontSize(Pt(6.5f)).ClampLines(1);
-                    });
+                    if ((brand.LogoOnLight ?? brand.Logo) is { Length: > 0 } bytes) logo.Height(Pt(22)).Image(bytes).FitHeight();
+                    else logo.Text(PdfText.Truncate(brand.Name, 22)).FontSize(Pt(14)).Bold();
                 });
-                row.ConstantItem(side).Element(Frame).AlignCenter().AlignMiddle().Width(Pt(64)).Height(Pt(64)).Image(PdfService.Qr(parcel.Code));
+                column.Item().Row(row =>
+                {
+                    Cell(row.RelativeItem(3), Pt, parcel.AgencyCode, tint, bordered: true);
+                    Cell(row.RelativeItem(4), Pt, parcel.ZoneName, null, bordered: true);
+                    Cell(row.RelativeItem(3), Pt, parcel.DestinationCityCode, tint, bordered: true);
+                });
+                column.Item().Row(row =>
+                {
+                    row.Spacing(Pt(3));
+                    row.RelativeItem().Column(left =>
+                    {
+                        left.Spacing(Pt(2.5f));
+                        left.Item().Element(Band).PaddingVertical(Pt(2)).PaddingHorizontal(Pt(4)).Column(city =>
+                        {
+                            if (!string.IsNullOrEmpty(parcel.DestinationCityNameAr)) city.Item().AlignCenter().Text(parcel.DestinationCityNameAr).FontSize(Pt(13)).Bold().ClampLines(1);
+                            city.Item().AlignCenter().Text(parcel.DestinationCityName.ToUpperInvariant()).FontSize(Pt(11)).Bold().ClampLines(1);
+                        });
+                        left.Item().Element(Frame).PaddingVertical(Pt(2.5f)).PaddingHorizontal(Pt(4)).Column(sender =>
+                        {
+                            sender.Item().Text($"Expéditeur : {PdfText.Truncate(parcel.ClientName, 30)}").FontSize(Pt(7)).Bold().ClampLines(1);
+                            sender.Item().Text($"Téléphone : {parcel.ClientPhone}").FontSize(Pt(7)).ClampLines(1);
+                            sender.Item().Text($"Date : {parcel.CreatedAt}").FontSize(Pt(6.5f)).ClampLines(1);
+                        });
+                    });
+                    row.ConstantItem(side).Element(Frame).AlignCenter().AlignMiddle().Width(Pt(64)).Height(Pt(64)).Image(PdfService.Qr(parcel.Code));
+                });
             });
-            column.Item().Row(row =>
+            decoration.Content().Extend().Row(row =>
             {
                 row.Spacing(Pt(3));
-                row.RelativeItem().Element(Frame).PaddingVertical(Pt(2.5f)).PaddingHorizontal(Pt(4)).Column(fields =>
+                row.RelativeItem().Element(Frame).ExtendVertical().PaddingVertical(Pt(2.5f)).PaddingHorizontal(Pt(4)).Column(fields =>
                 {
                     fields.Spacing(Pt(1));
                     Field(fields, Pt, "Destinataire", parcel.RecipientName, strong: true);
@@ -188,12 +203,15 @@ internal static class LabelDocuments
                     if (!string.IsNullOrEmpty(parcel.Comment)) Field(fields, Pt, "Commentaire", PdfText.Truncate(parcel.Comment, 80));
                     Field(fields, Pt, "Nature du produit", PdfText.Truncate(parcel.Description ?? "—", 60));
                 });
-                row.ConstantItem(side).Column(right =>
+                row.ConstantItem(side).Decoration(right =>
                 {
-                    right.Spacing(Pt(2.5f));
-                    right.Item().Element(Band).PaddingVertical(Pt(2.5f)).PaddingHorizontal(Pt(3)).AlignCenter().Text(parcel.DeliveryModeLabel).FontSize(Pt(7.5f)).Bold().ClampLines(1);
-                    if (parcel.OpenOnDelivery) right.Item().Element(Band).PaddingVertical(Pt(2)).PaddingHorizontal(Pt(3)).AlignCenter().Text("يسمح بفتح الطلبية").FontSize(Pt(7)).ClampLines(1);
-                    right.Item().Element(Frame).PaddingVertical(Pt(2)).AlignCenter().Column(cod =>
+                    right.Before().Column(bands =>
+                    {
+                        bands.Spacing(Pt(2.5f));
+                        bands.Item().Element(Band).PaddingVertical(Pt(2.5f)).PaddingHorizontal(Pt(3)).AlignCenter().Text(parcel.DeliveryModeLabel).FontSize(Pt(7.5f)).Bold().ClampLines(1);
+                        if (parcel.OpenOnDelivery) bands.Item().Element(Band).PaddingVertical(Pt(2)).PaddingHorizontal(Pt(3)).AlignCenter().Text(OpenOnDeliveryAr).FontSize(Pt(7)).Bold().ClampLines(1);
+                    });
+                    right.Content().PaddingTop(Pt(2.5f)).Element(Frame).Extend().PaddingVertical(Pt(2)).AlignCenter().AlignMiddle().Column(cod =>
                     {
                         cod.Item().AlignCenter().Text("CRBT").FontSize(Pt(6.5f)).Bold();
                         cod.Item().AlignCenter().Text(PdfText.Amount(parcel.CodToCollect)).FontSize(Pt(10.5f)).Bold().ClampLines(1);
@@ -203,23 +221,30 @@ internal static class LabelDocuments
                     });
                 });
             });
-            if (!string.IsNullOrEmpty(brand.Banner))
+            decoration.After().PaddingTop(Pt(2.5f)).Column(column =>
             {
-                column.Item().Element(Band).PaddingVertical(Pt(2)).PaddingHorizontal(Pt(4)).AlignCenter().Text(brand.Banner).FontSize(Pt(7)).ClampLines(1);
-            }
-            column.Item().AlignCenter().Column(codes =>
-            {
-                codes.Item().Width(unit - Pt(8)).Height(Pt(22)).Svg(PdfService.Barcode(parcel.Code));
-                codes.Item().AlignCenter().Text(carton is null ? parcel.Code : $"{parcel.Code}  ·  {carton}").FontSize(Pt(8)).Bold().LetterSpacing(0.05f);
-                if (!string.IsNullOrEmpty(parcel.ExternalCode))
+                column.Spacing(Pt(2.5f));
+                if (!string.IsNullOrEmpty(brand.Banner))
                 {
-                    codes.Item().PaddingTop(Pt(1)).AlignCenter().Width(unit - Pt(24)).Height(Pt(12)).Svg(PdfService.Barcode(parcel.ExternalCode));
-                    codes.Item().AlignCenter().Text($"Réf. {PdfText.Truncate(parcel.ExternalCode, 32)}").FontSize(Pt(6)).LetterSpacing(0.03f);
+                    column.Item().Element(Band).PaddingVertical(Pt(2)).PaddingHorizontal(Pt(4)).AlignCenter().Text(brand.Banner).FontSize(Pt(7)).ClampLines(1);
                 }
-                codes.Item().AlignCenter().Text($"{PdfText.Truncate(parcel.ClientName, 28)} vous remercie pour votre confiance.").FontSize(Pt(6)).ClampLines(1);
+                column.Item().AlignCenter().Column(codes =>
+                {
+                    codes.Item().Width(unit - Pt(8)).Height(Pt(22)).Image(PdfService.Barcode(parcel.Code)).FitUnproportionally();
+                    codes.Item().AlignCenter().Text(carton is null ? parcel.Code : $"{parcel.Code}  ·  {carton}").FontSize(Pt(8)).Bold().LetterSpacing(0.05f);
+                    if (!string.IsNullOrEmpty(parcel.ExternalCode))
+                    {
+                        codes.Item().PaddingTop(Pt(1)).AlignCenter().Width(unit - Pt(24)).Height(Pt(12)).Image(PdfService.Barcode(parcel.ExternalCode)).FitUnproportionally();
+                        codes.Item().AlignCenter().Text($"Réf. {PdfText.Truncate(parcel.ExternalCode, 32)}").FontSize(Pt(6)).LetterSpacing(0.03f);
+                    }
+                    codes.Item().AlignCenter().Text($"{PdfText.Truncate(parcel.ClientName, 28)} vous remercie pour votre confiance.").FontSize(Pt(6)).ClampLines(1);
+                });
             });
         });
     }
+
+    /// <summary>« Ouverture autorisée », en arabe : le destinataire la lit au pas de porte.</summary>
+    private const string OpenOnDeliveryAr = "\u064A\u0633\u0645\u062D \u0628\u0641\u062A\u062D \u0627\u0644\u0637\u0644\u0628\u064A\u0629";
 
     private static void Cell(IContainer container, Func<float, float> pt, string text, string? background, bool bordered)
     {

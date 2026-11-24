@@ -79,7 +79,18 @@ internal sealed class ChangeParcelDestinationHandler(IAppDbContext db, ICurrentU
         await db.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
-        // La clôture automatique des circuits quittés (`replayAutoClose`) se branche avec les circuits.
+        // `replayAutoClose` : le circuit de livraison parti que le colis quitte peut être complet.
+        foreach (var routeId in outcome.Dropped.Where(d => d.Kind == RouteKind.DELIVERY && d.Status != RouteStatus.DRAFT).Select(d => d.RouteId).Distinct())
+        {
+            try
+            {
+                await Routes.RouteClosing.AutoCloseDeliveryAsync(db, caller, logger, routeId, cancellationToken);
+            }
+            catch (Exception error) when (error is not OperationCanceledException)
+            {
+                logger.LogWarning("Clôture automatique non rejouée après un changement de destination : {Message}", error.Message);
+            }
+        }
         if (parcel.CourierId is { } courierId && (outcome.Dropped.Count > 0 || outcome.Linked > 0))
         {
             try

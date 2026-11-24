@@ -24,6 +24,9 @@ public enum Guard
     Staff,
     TechnicalView,
     PublicRateLimit,
+
+    /// <summary>`ProviderTokenGuard` : un jeton de prestataire tient lieu de session (son livreur).</summary>
+    ProviderToken,
 }
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]

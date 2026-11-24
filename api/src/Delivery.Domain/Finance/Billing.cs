@@ -57,3 +57,33 @@ public static class Billing
         return CodCollected(parcel, deliveredStatusId) - chequePaid - fee - VatOn(fee, vatRate);
     }
 }
+
+/// <summary>Sommes des lignes colis d'une facture (centimes).</summary>
+public sealed record InvoiceLineSums(long Cod, long DeliveryFee, long FailureFee, long Vat, long Due);
+
+/// <summary>Totaux d'une facture.</summary>
+public sealed record InvoiceTotals(long Cod, long DeliveryFee, long FailureFee, long Adjustment, long Vat, long Due);
+
+/// <summary>`invoiceTotals`, `proInvoiceTotals`, `signedVat` d'`invoices.service.ts`.</summary>
+public static class InvoiceMath
+{
+    /// <summary>`signedVat` : la TVA garde le signe du montant.</summary>
+    public static long SignedVat(long amount, int vatRate) => Math.Sign(amount) * Billing.VatOn(Math.Abs(amount), vatRate);
+
+    /// <summary>`invoiceTotals` : les ajustements sont des frais, leur TTC se retranche du net.</summary>
+    public static InvoiceTotals Totals(InvoiceLineSums lines, IEnumerable<(long Amount, long VatAmount)> adjustments)
+    {
+        var list = adjustments.ToList();
+        var adjustment = list.Sum(a => a.Amount);
+        var adjustmentVat = list.Sum(a => a.VatAmount);
+        return new InvoiceTotals(lines.Cod, lines.DeliveryFee, lines.FailureFee, adjustment, lines.Vat + adjustmentVat, lines.Due - adjustment - adjustmentVat);
+    }
+
+    /// <summary>`proInvoiceTotals` : la TVA du client Pro se calcule sur le total HT des frais.</summary>
+    public static InvoiceTotals ProTotals(InvoiceLineSums lines, IEnumerable<long> adjustments, int vatRate)
+    {
+        var adjustment = adjustments.Sum();
+        var vat = Billing.VatOnTotal(lines.DeliveryFee + lines.FailureFee + adjustment, vatRate);
+        return new InvoiceTotals(lines.Cod, lines.DeliveryFee, lines.FailureFee, adjustment, vat, lines.Due + lines.Vat - adjustment - vat);
+    }
+}

@@ -343,99 +343,99 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 
 ### `modules/bulk-jobs/bulk-jobs.controller.ts`
 
-- [ ] `GET /api/bulk-jobs` — `latest` (L25) · gardes: NotMerchantGuard · perm: parcels.read · query: target · sortie: `Promise<BulkJob | null>`
-- [ ] `GET /api/bulk-jobs/:id` — `one` (L34) · gardes: NotMerchantGuard · perm: parcels.read · sortie: `Promise<BulkJob>`
-- [ ] `POST /api/bulk-jobs/:id/retry` — `retry` (L43) · gardes: NotMerchantGuard · perm: parcels.status · sortie: `Promise<BulkJob>`
+- [x] `GET /api/bulk-jobs` — `latest` (L25) · gardes: NotMerchantGuard · perm: parcels.read · query: target · sortie: `Promise<BulkJob | null>`
+- [x] `GET /api/bulk-jobs/:id` — `one` (L34) · gardes: NotMerchantGuard · perm: parcels.read · sortie: `Promise<BulkJob>`
+- [x] `POST /api/bulk-jobs/:id/retry` — `retry` (L43) · gardes: NotMerchantGuard · perm: parcels.status · sortie: `Promise<BulkJob>`
 
 ### `modules/courier/courier-parcels.controller.ts`
 
-- [ ] `GET /api/courier/parcels/:code/outcomes` — `outcomes` (L44) · gardes: CourierGuard · perm: parcels.read
-- [ ] `POST /api/courier/parcels/:code/status` — `report` (L54) · gardes: CourierGuard · perm: parcels.status · entrée: routeConfirmSchema
-- [ ] `POST /api/courier/parcels/:code/proof` — `proof` (L80) · gardes: CourierGuard · perm: parcels.status · entrée: proofPhotoSchema
+- [x] `GET /api/courier/parcels/:code/outcomes` — `outcomes` (L44) · gardes: CourierGuard · perm: parcels.read
+- [x] `POST /api/courier/parcels/:code/status` — `report` (L54) · gardes: CourierGuard · perm: parcels.status · entrée: routeConfirmSchema
+- [x] `POST /api/courier/parcels/:code/proof` — `proof` (L80) · gardes: CourierGuard · perm: parcels.status · entrée: proofPhotoSchema
 
 ### `modules/courier/courier.controller.ts`
 
-- [ ] `GET /api/courier/me/performance` — `performance` (L96) · gardes: CourierGuard · perm: parcels.read · entrée: courierPerformanceQuerySchema
-- [ ] `GET /api/courier/me/notes` — `notes` (L114) · gardes: CourierGuard · perm: routes.read · entrée: courierNotesQuerySchema
-- [ ] `GET /api/courier/me/routes` — `routes` (L205) · gardes: CourierGuard · perm: routes.read · entrée: courierRoutesQuerySchema
-- [ ] `GET /api/courier/me/deliveries` — `deliveries` (L218) · gardes: CourierGuard · perm: routes.read
-- [ ] `GET /api/courier/me/routes/:code` — `route` (L225) · gardes: CourierGuard · perm: routes.read
-- [ ] `POST /api/courier/me/scan` — `scan` (L242) · gardes: CourierGuard · perm: routes.scan · entrée: scanSchema
-- [ ] `DELETE /api/courier/me/routes/:code/parcels/:parcelId` — `removeParcel` (L264) · gardes: CourierGuard · perm: routes.scan
-- [ ] `POST /api/courier/me/routes/:code/dispatch` — `dispatch` (L305) · gardes: CourierGuard · perm: routes.confirm
-- [ ] `POST /api/courier/me/routes/:code/notes/:noteId/pickup` — `pickupNote` (L329) · gardes: CourierGuard · perm: routes.confirm · entrée: routeNotePickupSchema
+- [x] `GET /api/courier/me/performance` — `performance` (L96) · gardes: CourierGuard · perm: parcels.read · entrée: courierPerformanceQuerySchema
+- [x] `GET /api/courier/me/notes` — `notes` (L114) · gardes: CourierGuard · perm: routes.read · entrée: courierNotesQuerySchema
+- [x] `GET /api/courier/me/routes` — `routes` (L205) · gardes: CourierGuard · perm: routes.read · entrée: courierRoutesQuerySchema
+- [x] `GET /api/courier/me/deliveries` — `deliveries` (L218) · gardes: CourierGuard · perm: routes.read
+- [x] `GET /api/courier/me/routes/:code` — `route` (L225) · gardes: CourierGuard · perm: routes.read
+- [x] `POST /api/courier/me/scan` — `scan` (L242) · gardes: CourierGuard · perm: routes.scan · entrée: scanSchema
+- [x] `DELETE /api/courier/me/routes/:code/parcels/:parcelId` — `removeParcel` (L264) · gardes: CourierGuard · perm: routes.scan
+- [x] `POST /api/courier/me/routes/:code/dispatch` — `dispatch` (L305) · gardes: CourierGuard · perm: routes.confirm
+- [x] `POST /api/courier/me/routes/:code/notes/:noteId/pickup` — `pickupNote` (L329) · gardes: CourierGuard · perm: routes.confirm · entrée: routeNotePickupSchema
 
 ### `modules/courier-stock/courier-stock.controller.ts`
 
-- [ ] `GET /api/courier-stock` — `list` (L100) · perm: routes.stock · entrée: courierStockListQuerySchema
-- [ ] `GET /api/courier-stock/export` — `export` (L115) · perm: routes.stock · entrée: courierStockListQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/courier-stock/pdf` — `globalPdf` (L127) · perm: routes.stock · entrée: courierStockListQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/courier-stock/pdf-jobs` — `createPdfJob` (L142) · perm: routes.stock · entrée: courierStockPdfJobSchema
-- [ ] `GET /api/courier-stock/pdf-jobs/:id` — `pdfJob` (L153) · perm: routes.stock
-- [ ] `GET /api/courier-stock/pdf-jobs/:id/file` — `pdfJobFile` (L161) · perm: routes.stock · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/courier-stock/parcels/export` — `exportParcels` (L170) · perm: routes.stock · entrée: courierStockParcelExportQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/courier-stock/:courierId` — `detail` (L183) · perm: routes.stock · entrée: courierStockParcelQuerySchema
-- [ ] `GET /api/courier-stock/:courierId/pdf` — `courierPdf` (L195) · perm: routes.stock · entrée: courierStockParcelQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/courier-stock` — `list` (L100) · perm: routes.stock · entrée: courierStockListQuerySchema
+- [x] `GET /api/courier-stock/export` — `export` (L115) · perm: routes.stock · entrée: courierStockListQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/courier-stock/pdf` — `globalPdf` (L127) · perm: routes.stock · entrée: courierStockListQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/courier-stock/pdf-jobs` — `createPdfJob` (L142) · perm: routes.stock · entrée: courierStockPdfJobSchema
+- [x] `GET /api/courier-stock/pdf-jobs/:id` — `pdfJob` (L153) · perm: routes.stock
+- [x] `GET /api/courier-stock/pdf-jobs/:id/file` — `pdfJobFile` (L161) · perm: routes.stock · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/courier-stock/parcels/export` — `exportParcels` (L170) · perm: routes.stock · entrée: courierStockParcelExportQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/courier-stock/:courierId` — `detail` (L183) · perm: routes.stock · entrée: courierStockParcelQuerySchema
+- [x] `GET /api/courier-stock/:courierId/pdf` — `courierPdf` (L195) · perm: routes.stock · entrée: courierStockParcelQuerySchema · sortie: `Promise<StreamableFile>`
 
 ### `modules/merchant/merchant.controller.ts`
 
-- [ ] `POST /api/merchant/me/pickups` — `requestPickup` (L94) · gardes: MerchantGuard · perm: notes.request · entrée: pickupRequestSchema
-- [ ] `POST /api/merchant/me/dropoffs` — `requestDropoff` (L112) · gardes: MerchantGuard · perm: notes.request · entrée: pickupRequestSchema
-- [ ] `DELETE /api/merchant/me/notes/:code` — `cancelNote` (L129) · gardes: MerchantGuard · perm: notes.request
+- [x] `POST /api/merchant/me/pickups` — `requestPickup` (L94) · gardes: MerchantGuard · perm: notes.request · entrée: pickupRequestSchema
+- [x] `POST /api/merchant/me/dropoffs` — `requestDropoff` (L112) · gardes: MerchantGuard · perm: notes.request · entrée: pickupRequestSchema
+- [x] `DELETE /api/merchant/me/notes/:code` — `cancelNote` (L129) · gardes: MerchantGuard · perm: notes.request
 
 ### `modules/provider/provider.controller.ts`
 
-- [ ] `POST /api/provider/parcels/:code/status` — `report` (L52) · public · gardes: ProviderTokenGuard, NotMerchantGuard · perm: parcels.status · entrée: providerStatusSchema
+- [x] `POST /api/provider/parcels/:code/status` — `report` (L52) · public · gardes: ProviderTokenGuard, NotMerchantGuard · perm: parcels.status · entrée: providerStatusSchema
 
 ### `modules/routes/parcel-moves.controller.ts`
 
-- [ ] `POST /api/parcels/field-status` — `changeFieldStatus` (L75) · gardes: NotMerchantGuard · perm: parcels.status · entrée: adminFieldStatusSchema · sortie: `Promise<AdminFieldStatusResult>`
-- [ ] `POST /api/parcels/:code/correction/preview` — `previewCorrection` (L92) · gardes: NotMerchantGuard · perm: parcels.correctStatus · entrée: statusCorrectionSchema · sortie: `Promise<StatusCorrectionPreview>`
-- [ ] `POST /api/parcels/:code/correction` — `applyCorrection` (L105) · gardes: NotMerchantGuard · perm: parcels.correctStatus · entrée: statusCorrectionSchema · sortie: `Promise<StatusCorrectionResult>`
-- [ ] `POST /api/parcels/:code/cancel-delivery` — `cancelDelivery` (L118) · gardes: NotMerchantGuard · perm: parcels.status · entrée: cancelDeliverySchema
-- [ ] `POST /api/routes/transfer` — `transfer` (L142) · gardes: NotMerchantGuard · perm: routes.write · entrée: parcelTransferSchema
-- [ ] `POST /api/routes/transfer/options` — `transferOptions` (L162) · gardes: NotMerchantGuard · perm: routes.write · entrée: parcelTransferOptionsSchema
+- [x] `POST /api/parcels/field-status` — `changeFieldStatus` (L75) · gardes: NotMerchantGuard · perm: parcels.status · entrée: adminFieldStatusSchema · sortie: `Promise<AdminFieldStatusResult>`
+- [x] `POST /api/parcels/:code/correction/preview` — `previewCorrection` (L92) · gardes: NotMerchantGuard · perm: parcels.correctStatus · entrée: statusCorrectionSchema · sortie: `Promise<StatusCorrectionPreview>`
+- [x] `POST /api/parcels/:code/correction` — `applyCorrection` (L105) · gardes: NotMerchantGuard · perm: parcels.correctStatus · entrée: statusCorrectionSchema · sortie: `Promise<StatusCorrectionResult>`
+- [x] `POST /api/parcels/:code/cancel-delivery` — `cancelDelivery` (L118) · gardes: NotMerchantGuard · perm: parcels.status · entrée: cancelDeliverySchema
+- [x] `POST /api/routes/transfer` — `transfer` (L142) · gardes: NotMerchantGuard · perm: routes.write · entrée: parcelTransferSchema
+- [x] `POST /api/routes/transfer/options` — `transferOptions` (L162) · gardes: NotMerchantGuard · perm: routes.write · entrée: parcelTransferOptionsSchema
 
 ### `modules/routes/routes.controller.ts`
 
-- [ ] `GET /api/routes` — `list` (L129) · perm: routes.read · entrée: routeListQuerySchema
-- [ ] `GET /api/routes/stats` — `stats` (L143) · perm: routes.read · entrée: routeListQuerySchema
-- [ ] `GET /api/routes/export` — `export` (L160) · perm: routes.read · entrée: routeListQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/routes` — `create` (L175) · perm: routes.write · entrée: routeSchema
-- [ ] `POST /api/routes/auto-close-sweep` — `sweepAutoClose` (L189) · perm: routes.close
-- [ ] `GET /api/routes/:code` — `detail` (L196) · perm: routes.read
-- [ ] `PATCH /api/routes/:code` — `update` (L207) · perm: routes.write · entrée: routeUpdateSchema
-- [ ] `DELETE /api/routes/:code` — `remove` (L219) · perm: routes.write
-- [ ] `GET /api/routes/:code/candidates` — `candidates` (L228) · perm: routes.read · entrée: routeCandidatesQuerySchema
-- [ ] `GET /api/routes/:code/note-candidates` — `noteCandidates` (L256) · perm: routes.read · entrée: routeCandidatesQuerySchema
-- [ ] `POST /api/routes/:code/notes` — `addNotes` (L272) · perm: routes.write · entrée: routeNotesSchema
-- [ ] `DELETE /api/routes/:code/notes/:noteId` — `removeNote` (L283) · perm: routes.write
-- [ ] `POST /api/routes/:code/notes/:noteId/pickup` — `pickupNote` (L303) · perm: routes.confirm · entrée: routeNotePickupSchema
-- [ ] `POST /api/routes/:code/parcels` — `addParcels` (L315) · perm: routes.write · entrée: routeParcelsSchema
-- [ ] `DELETE /api/routes/:code/parcels/:parcelId` — `removeParcel` (L326) · perm: routes.write
-- [ ] `GET /api/routes/:code/export` — `exportParcels` (L338) · perm: routes.read · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/routes/:code/sheet` — `sheet` (L357) · perm: routes.read · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/routes/:code/labels` — `labels` (L370) · perm: routes.read · entrée: labelQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/routes/:code/dispatch` — `dispatch` (L389) · perm: routes.write
-- [ ] `POST /api/routes/:code/parcels/:parcelId/confirm` — `confirm` (L407) · perm: routes.confirm · entrée: routeConfirmSchema
-- [ ] `POST /api/routes/:code/outcomes` — `confirmMany` (L422) · perm: routes.confirm · entrée: routeBulkConfirmSchema
-- [ ] `POST /api/routes/:code/close` — `close` (L442) · perm: routes.close · entrée: routeCloseSchema
-- [ ] `GET /api/delivery-notes` — `list` (L503) · perm: notes.read · entrée: noteListQuerySchema
-- [ ] `GET /api/delivery-notes/stats` — `stats` (L513) · perm: notes.read · entrée: noteListQuerySchema
-- [ ] `GET /api/delivery-notes/export` — `export` (L530) · perm: notes.read · entrée: noteListQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/delivery-notes` — `create` (L544) · perm: notes.write · entrée: deliveryNoteSchema
-- [ ] `GET /api/delivery-notes/:code` — `detail` (L554) · perm: notes.read
-- [ ] `GET /api/delivery-notes/:code/export` — `exportParcels` (L566) · perm: notes.read · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/delivery-notes/:code/pdf` — `pdf` (L585) · perm: notes.read · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/delivery-notes/:code/parcels` — `addParcels` (L597) · perm: notes.write · entrée: deliveryNoteParcelsSchema
-- [ ] `DELETE /api/delivery-notes/:code/parcels/:parcelId` — `removeParcel` (L608) · perm: notes.write
-- [ ] `POST /api/delivery-notes/:code/validate` — `validate` (L622) · perm: notes.write
-- [ ] `POST /api/delivery-notes/:code/removed/:parcelId/restore` — `restoreRemoved` (L643) · perm: notes.write
-- [ ] `DELETE /api/delivery-notes/:code` — `remove` (L662) · perm: notes.write
+- [x] `GET /api/routes` — `list` (L129) · perm: routes.read · entrée: routeListQuerySchema
+- [x] `GET /api/routes/stats` — `stats` (L143) · perm: routes.read · entrée: routeListQuerySchema
+- [x] `GET /api/routes/export` — `export` (L160) · perm: routes.read · entrée: routeListQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/routes` — `create` (L175) · perm: routes.write · entrée: routeSchema
+- [x] `POST /api/routes/auto-close-sweep` — `sweepAutoClose` (L189) · perm: routes.close
+- [x] `GET /api/routes/:code` — `detail` (L196) · perm: routes.read
+- [x] `PATCH /api/routes/:code` — `update` (L207) · perm: routes.write · entrée: routeUpdateSchema
+- [x] `DELETE /api/routes/:code` — `remove` (L219) · perm: routes.write
+- [x] `GET /api/routes/:code/candidates` — `candidates` (L228) · perm: routes.read · entrée: routeCandidatesQuerySchema
+- [x] `GET /api/routes/:code/note-candidates` — `noteCandidates` (L256) · perm: routes.read · entrée: routeCandidatesQuerySchema
+- [x] `POST /api/routes/:code/notes` — `addNotes` (L272) · perm: routes.write · entrée: routeNotesSchema
+- [x] `DELETE /api/routes/:code/notes/:noteId` — `removeNote` (L283) · perm: routes.write
+- [x] `POST /api/routes/:code/notes/:noteId/pickup` — `pickupNote` (L303) · perm: routes.confirm · entrée: routeNotePickupSchema
+- [x] `POST /api/routes/:code/parcels` — `addParcels` (L315) · perm: routes.write · entrée: routeParcelsSchema
+- [x] `DELETE /api/routes/:code/parcels/:parcelId` — `removeParcel` (L326) · perm: routes.write
+- [x] `GET /api/routes/:code/export` — `exportParcels` (L338) · perm: routes.read · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/routes/:code/sheet` — `sheet` (L357) · perm: routes.read · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/routes/:code/labels` — `labels` (L370) · perm: routes.read · entrée: labelQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/routes/:code/dispatch` — `dispatch` (L389) · perm: routes.write
+- [x] `POST /api/routes/:code/parcels/:parcelId/confirm` — `confirm` (L407) · perm: routes.confirm · entrée: routeConfirmSchema
+- [x] `POST /api/routes/:code/outcomes` — `confirmMany` (L422) · perm: routes.confirm · entrée: routeBulkConfirmSchema
+- [x] `POST /api/routes/:code/close` — `close` (L442) · perm: routes.close · entrée: routeCloseSchema
+- [x] `GET /api/delivery-notes` — `list` (L503) · perm: notes.read · entrée: noteListQuerySchema
+- [x] `GET /api/delivery-notes/stats` — `stats` (L513) · perm: notes.read · entrée: noteListQuerySchema
+- [x] `GET /api/delivery-notes/export` — `export` (L530) · perm: notes.read · entrée: noteListQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/delivery-notes` — `create` (L544) · perm: notes.write · entrée: deliveryNoteSchema
+- [x] `GET /api/delivery-notes/:code` — `detail` (L554) · perm: notes.read
+- [x] `GET /api/delivery-notes/:code/export` — `exportParcels` (L566) · perm: notes.read · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/delivery-notes/:code/pdf` — `pdf` (L585) · perm: notes.read · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/delivery-notes/:code/parcels` — `addParcels` (L597) · perm: notes.write · entrée: deliveryNoteParcelsSchema
+- [x] `DELETE /api/delivery-notes/:code/parcels/:parcelId` — `removeParcel` (L608) · perm: notes.write
+- [x] `POST /api/delivery-notes/:code/validate` — `validate` (L622) · perm: notes.write
+- [x] `POST /api/delivery-notes/:code/removed/:parcelId/restore` — `restoreRemoved` (L643) · perm: notes.write
+- [x] `DELETE /api/delivery-notes/:code` — `remove` (L662) · perm: notes.write
 
 ### `modules/staff/staff.controller.ts`
 
-- [ ] `GET /api/staff/me/alerts` — `list` (L32) · gardes: StaffGuard · perm: parcels.read · query: agencyId
+- [x] `GET /api/staff/me/alerts` — `list` (L32) · gardes: StaffGuard · perm: parcels.read · query: agencyId
 
 ## Module 7 — Retours
 

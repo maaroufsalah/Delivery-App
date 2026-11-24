@@ -28,6 +28,6 @@ internal sealed class GetLabelJobFileHandler(IAppDbContext db, ICurrentUser call
         }
         var zip = row.StorageKey.EndsWith(".zip", StringComparison.Ordinal);
         var content = await storage.GetAsync(row.StorageKey, cancellationToken);
-        return new FileContent(content, zip ? "application/zip" : FileContent.Pdf, $"etiquettes-{row.ParcelCount}.{(zip ? "zip" : "pdf")}") { CacheControl = "private, no-store" };
+        return new FileContent(content, zip ? "application/zip" : FileContent.Pdf, row.Format == ParcelLabels.StockJobFormat ? $"situation-stock-livreur-{row.ParcelCount}.pdf" : $"etiquettes-{row.ParcelCount}.{(zip ? "zip" : "pdf")}") { CacheControl = "private, no-store" };
     }
 }

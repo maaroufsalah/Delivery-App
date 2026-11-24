@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Delivery.Application.Common.Security;
@@ -27,6 +28,9 @@ public static class TestData
         var city = new City { ZoneId = zone.Id, Name = name, Code = Code3() };
         await factory.ExecuteDbAsync(async db =>
         {
+            // Codes à 3 lettres uniques : la base de test s'accumule d'un passage à l'autre.
+            var taken = (await db.Cities.Select(c => c.Code).ToListAsync()).ToHashSet();
+            while (taken.Contains(city.Code)) city.Code = Code3();
             db.Zones.Add(zone);
             db.Cities.Add(city);
             await db.SaveChangesAsync();

@@ -69,6 +69,20 @@ public sealed class CouriersController(ISender sender) : ApiControllerBase(sende
 [Guards(Guard.Merchant)]
 public sealed class MerchantController(ISender sender) : ApiControllerBase(sender)
 {
+    [HttpPost("pickups")]
+    [RequirePermission("notes.request")]
+    public Task<IActionResult> RequestPickup([FromBody] Application.DeliveryNotes.RequestMerchantNoteCommand? body) =>
+        Ok((body ?? new Application.DeliveryNotes.RequestMerchantNoteCommand()) with { Kind = Domain.Enums.DeliveryNoteType.PICKUP });
+
+    [HttpPost("dropoffs")]
+    [RequirePermission("notes.request")]
+    public Task<IActionResult> RequestDropoff([FromBody] Application.DeliveryNotes.RequestMerchantNoteCommand? body) =>
+        Ok((body ?? new Application.DeliveryNotes.RequestMerchantNoteCommand()) with { Kind = Domain.Enums.DeliveryNoteType.DROPOFF });
+
+    [HttpDelete("notes/{code}")]
+    [RequirePermission("notes.request")]
+    public Task<IActionResult> CancelNote(string code) => Ok(new Application.DeliveryNotes.CancelMerchantNoteCommand(code));
+
     [HttpGet("summary")]
     [RequirePermission("parcels.read")]
     public Task<IActionResult> Summary() => Ok(new GetMerchantSummaryQuery());

@@ -25,6 +25,7 @@ public static class DependencyInjection
         services.AddAutoMapper(cfg => cfg.LicenseKey = licenseKey, assembly);
         services.AddSingleton<Identity.LoginThrottle>();
         services.AddSingleton<Parcels.Labels.LabelJobQueue>();
+        services.AddSingleton<BulkJobs.BulkJobQueue>();
         services.AddValidatorsFromAssembly(assembly, includeInternalTypes: true);
         ValidatorOptions.Global.DefaultClassLevelCascadeMode = CascadeMode.Continue;
         return services;

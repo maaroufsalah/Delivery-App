@@ -33,6 +33,7 @@ public static class ApiSetup
         builder.Services.AddSingleton<PublicRateLimiter>();
         builder.Services.AddScoped<AccessFilter>();
         builder.Services.AddHostedService<Background.LabelJobWorker>();
+        builder.Services.AddHostedService<Background.BulkJobWorker>();
 
         builder.Services.ConfigureHttpJsonOptions(options => JsonDefaults.Apply(options.SerializerOptions));
         builder.Services

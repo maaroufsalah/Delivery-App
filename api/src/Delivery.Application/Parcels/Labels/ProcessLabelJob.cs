@@ -30,10 +30,19 @@ internal sealed class ProcessLabelJobHandler(IAppDbContext db, IFileStorage stor
             job.Status = LabelJobStatus.RUNNING;
             job.StartedAt = startedAt;
             await db.SaveChangesAsync(cancellationToken);
-            var codes = work.Codes;
-            var parcels = ParcelLabels.InOrder(await ParcelLabels.LoadAsync(db.Parcels.AsNoTracking().Where(p => codes.Contains(p.Code)), cancellationToken), codes);
-            var sheet = await ParcelLabels.SheetAsync(db, storage, parcels, work.Format, cancellationToken);
-            var (content, zip) = ParcelLabels.Render(pdf, sheet);
+            byte[] content;
+            var zip = false;
+            if (work.Document is { } document)
+            {
+                content = pdf.Render(document);
+            }
+            else
+            {
+                var codes = work.Codes;
+                var parcels = ParcelLabels.InOrder(await ParcelLabels.LoadAsync(db.Parcels.AsNoTracking().Where(p => codes.Contains(p.Code)), cancellationToken), codes);
+                var sheet = await ParcelLabels.SheetAsync(db, storage, parcels, work.Format, cancellationToken);
+                (content, zip) = ParcelLabels.Render(pdf, sheet);
+            }
             var stored = await storage.PutAsync(work.Folder, content, zip ? "application/zip" : FileContent.Pdf, cancellationToken);
             var finishedAt = clock.UtcNow;
             job.Status = LabelJobStatus.READY;

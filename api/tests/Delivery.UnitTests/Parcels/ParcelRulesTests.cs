@@ -77,3 +77,13 @@ public sealed class ParcelRulesTests
         new PdfService().Render(sheet).Take(5).ShouldBe("%PDF-"u8.ToArray());
     }
 }
+
+public sealed class ExchangeAmountTests
+{
+    [Fact]
+    public void Exchange_parcel_cod_is_the_amount_in_dirhams_not_cents()
+    {
+        Delivery.Application.Exchanges.ExchangeWrites.CodMadOf(15_050).ShouldBe(150.50);
+        Delivery.Domain.Common.Money.FromMad(Delivery.Application.Exchanges.ExchangeWrites.CodMadOf(15_050)).ShouldBe(150.50m);
+    }
+}
