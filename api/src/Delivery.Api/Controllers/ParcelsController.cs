@@ -1,4 +1,5 @@
 using Delivery.Api.Auth;
+using Delivery.Application.Exchanges.Commands;
 using Delivery.Application.Parcels;
 using Delivery.Application.Parcels.Commands;
 using Delivery.Application.Parcels.Queries;
@@ -92,4 +93,8 @@ public sealed partial class ParcelsController(ISender sender) : ApiControllerBas
     [RequirePermission("parcels.write")]
     [Guards(Guard.NotMerchant)]
     public Task<IActionResult> ChangeDestination(string code, [FromBody] ChangeParcelDestinationCommand? body) => Ok((body ?? new ChangeParcelDestinationCommand()) with { Code = code });
+
+    [HttpPost("{code}/exchange")]
+    [RequirePermission("parcels.write")]
+    public Task<IActionResult> RequestExchange(string code, [FromBody] RequestParcelExchangeCommand? body) => Created((body ?? new RequestParcelExchangeCommand()) with { Code = code });
 }

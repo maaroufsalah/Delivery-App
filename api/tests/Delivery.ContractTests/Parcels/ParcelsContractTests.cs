@@ -299,4 +299,57 @@ public sealed class ParcelsContractTests(ApiFactory factory)
         (await world.Admin.PatchAsJsonAsync($"/api/parcels/{code}/destination", new { destinationCityId = rabat.Id, reason = "x" })).StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
         (await world.MerchantHttp.PatchAsJsonAsync($"/api/parcels/{code}/destination", new { deliveryAddress = "x", reason = "x" })).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
+
+    [Fact]
+    public async Task Exchange_from_a_delivered_parcel_creates_return_and_exchange_parcels()
+    {
+        var world = await WorldAsync();
+        var code = (await (await world.MerchantHttp.PostAsJsonAsync("/api/parcels", Body(world))).JsonAsync()).GetProperty("code").GetString()!;
+        var early = await world.MerchantHttp.PostAsJsonAsync($"/api/parcels/{code}/exchange", new { returnTarget = "home", exchangePickup = "initial" });
+        early.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        (await early.JsonAsync()).GetProperty("details").GetProperty("reason").GetString().ShouldBe("parcel-not-delivered");
+
+        await factory.ExecuteDbAsync(async db =>
+        {
+            var parcel = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.FirstAsync(db.Parcels, p => p.Code == code);
+            parcel.StatusId = 4;
+            await db.SaveChangesAsync();
+        });
+        var invalid = await world.MerchantHttp.PostAsJsonAsync($"/api/parcels/{code}/exchange", new { returnTarget = "agency", exchangePickup = "initial", alreadyPaid = true, price = 100 });
+        invalid.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+
+        var created = await world.MerchantHttp.PostAsJsonAsync($"/api/parcels/{code}/exchange", new { returnTarget = "home", exchangePickup = "initial", price = 5000, newProduct = "Taille 42" });
+        created.StatusCode.ShouldBe(HttpStatusCode.Created);
+        var exchange = await created.JsonAsync();
+        var exchangeCode = exchange.GetProperty("code").GetString()!;
+        Regex.IsMatch(exchangeCode, @"^ECH-\d{4}-\d{4}$").ShouldBeTrue(exchangeCode);
+        exchange.GetProperty("status").GetString().ShouldBe("nouveau-colis-cree");
+        exchange.GetProperty("newParcelCode").GetString().ShouldBe($"ECH-{code}");
+        exchange.GetProperty("amount").GetInt64().ShouldBe(5000);
+        exchange.GetProperty("pickupable").GetBoolean().ShouldBeFalse();
+        (await world.MerchantHttp.PostAsJsonAsync($"/api/parcels/{code}/exchange", new { returnTarget = "home", exchangePickup = "initial" })).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+        var ret = await (await world.MerchantHttp.GetAsync($"/api/parcels/RET-{code}")).JsonAsync();
+        ret.GetProperty("kind").GetString().ShouldBe("return");
+        ret.GetProperty("statusId").GetInt32().ShouldBe(20);
+        var ech = await (await world.MerchantHttp.GetAsync($"/api/parcels/ECH-{code}")).JsonAsync();
+        ech.GetProperty("kind").GetString().ShouldBe("exchange");
+        ech.GetProperty("codAmount").GetInt64().ShouldBe(5000);
+        ech.GetProperty("exchanges")[0].GetProperty("role").GetString().ShouldBe("new");
+
+        (await world.Admin.PostAsJsonAsync($"/api/exchanges/{exchangeCode}/deliver", new { })).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        var picked = await (await world.Admin.PostAsJsonAsync($"/api/exchanges/{exchangeCode}/pickup", new { comment = "ok" })).JsonAsync();
+        picked.GetProperty("status").GetString().ShouldBe("ancien-recupere");
+        picked.GetProperty("deliverable").GetBoolean().ShouldBeTrue();
+        await world.Admin.PostAsJsonAsync($"/api/exchanges/{exchangeCode}/deliver", new { });
+        (await world.Admin.PostAsJsonAsync($"/api/exchanges/{exchangeCode}/cancel", new { })).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        var closed = await (await world.Admin.PostAsJsonAsync($"/api/exchanges/{exchangeCode}/close", new { })).JsonAsync();
+        closed.GetProperty("status").GetString().ShouldBe("cloture");
+        closed.GetProperty("events").GetArrayLength().ShouldBe(5);
+
+        var list = await (await world.MerchantHttp.GetAsync("/api/exchanges?status=cloture")).JsonAsync();
+        list.GetProperty("total").GetInt32().ShouldBe(1);
+        list.GetProperty("pageSize").GetInt32().ShouldBe(20);
+        (await world.MerchantHttp.PostAsJsonAsync("/api/exchanges", new { originalParcelCode = code, returnedProduct = "a", newProduct = "b" })).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
 }
