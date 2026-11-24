@@ -47,7 +47,7 @@ public sealed class ListQueryParams
         };
     }
 
-    private static int Coerce(string? raw, int fallback, int min, int? max, string path, List<object> issues)
+    public static int Coerce(string? raw, int fallback, int min, int? max, string path, List<object> issues)
     {
         if (raw is null) return fallback;
         // Number('') vaut 0, Number(' 3 ') vaut 3.
