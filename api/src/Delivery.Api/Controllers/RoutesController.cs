@@ -84,6 +84,17 @@ public sealed class RoutesController(ISender sender) : ApiControllerBase(sender)
     [RequirePermission("routes.read")]
     public Task<IActionResult> ExportParcels(string code) => FileOf(new ExportRouteParcelsQuery(Uri.UnescapeDataString(code)));
 
+    [HttpPost("transfer")]
+    [RequirePermission("routes.write")]
+    [Guards(Guard.NotMerchant)]
+    public Task<IActionResult> Transfer([FromBody] TransferParcelsCommand? body, [FromHeader(Name = BulkJobsHeader.Name)] string? bulk) =>
+        Accepted((body ?? new TransferParcelsCommand()) with { Async = bulk == "1" }, StatusCodes.Status200OK);
+
+    [HttpPost("transfer/options")]
+    [RequirePermission("routes.write")]
+    [Guards(Guard.NotMerchant)]
+    public Task<IActionResult> TransferOptions([FromBody] TransferOptionsQuery? body) => Ok(body ?? new TransferOptionsQuery());
+
     [HttpPost("auto-close-sweep")]
     [RequirePermission("routes.close")]
     public Task<IActionResult> SweepAutoClose() => Ok(new SweepAutoCloseCommand());

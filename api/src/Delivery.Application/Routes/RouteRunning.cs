@@ -77,7 +77,7 @@ public static class RouteDispatch
             route.Status = RouteStatus.DISPATCHED;
             route.StatusAt = now;
             route.ExitDate ??= now;
-            if (route.Kind == RouteKind.DELIVERY) followed = await FollowExchangeReturnsAsync(db, caller, route, links.Select(l => l.Parcel).ToList(), author, now, cancellationToken);
+            if (route.Kind == RouteKind.DELIVERY) followed = await FollowExchangeReturnsAsync(db, caller, route.Code, route.CourierId, route.CityId, links.Select(l => l.Parcel).ToList(), author, now, cancellationToken);
             await db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
         }
@@ -91,10 +91,10 @@ public static class RouteDispatch
     }
 
     /// <summary>`followExchangeReturns` : le retour d'un échange suit le livreur qui porte l'échange, tant qu'il attend chez l'agence.</summary>
-    private static async Task<List<(string, string)>> FollowExchangeReturnsAsync(IAppDbContext db, ICurrentUser caller, Route route, IReadOnlyList<Parcel> parcels, string author, DateTime now,
+    internal static async Task<List<(string ReturnCode, string ExchangeCode)>> FollowExchangeReturnsAsync(IAppDbContext db, ICurrentUser caller, string routeCode, string courierId, string cityId, IReadOnlyList<Parcel> parcels, string author, DateTime now,
         CancellationToken cancellationToken)
     {
-        var followed = new List<(string, string)>();
+        var followed = new List<(string ReturnCode, string ExchangeCode)>();
         foreach (var exchange in parcels.Where(p => p.Kind == ParcelKind.EXCHANGE && p.ReferenceParcelId is not null))
         {
             var ret = await db.Parcels.Where(p => p.ReferenceParcelId == exchange.ReferenceParcelId && p.Kind == ParcelKind.RETURN && p.DeletedAt == null)
@@ -103,13 +103,13 @@ public static class RouteDispatch
                     p.Id, p.Code, p.StatusId, p.CourierId, Courier = p.Courier == null ? null : p.Courier.FirstName + " " + p.Courier.LastName,
                     Held = p.HandoverItems.Any(i => i.Handover.Status != ReturnHandoverStatus.CANCELLED),
                 }).FirstOrDefaultAsync(cancellationToken);
-            if (ret is null || ret.StatusId != RouteStatusIds.ReturnPending || ret.CourierId == route.CourierId || ret.Held) continue;
-            var courier = await db.Couriers.AsNoTracking().Where(c => c.Id == route.CourierId).Select(c => c.FirstName + " " + c.LastName).FirstOrDefaultAsync(cancellationToken);
-            var after = courier ?? route.CourierId;
-            var reason = $"Suit l'échange {exchange.Code} (circuit {route.Code})";
+            if (ret is null || ret.StatusId != RouteStatusIds.ReturnPending || ret.CourierId == courierId || ret.Held) continue;
+            var courier = await db.Couriers.AsNoTracking().Where(c => c.Id == courierId).Select(c => c.FirstName + " " + c.LastName).FirstOrDefaultAsync(cancellationToken);
+            var after = courier ?? courierId;
+            var reason = $"Suit l'échange {exchange.Code} (circuit {routeCode})";
             var tracked = await db.Parcels.FirstAsync(p => p.Id == ret.Id, cancellationToken);
-            tracked.CourierId = route.CourierId;
-            db.ParcelEvents.Add(new ParcelEvent { ParcelId = ret.Id, StatusId = ret.StatusId, Comment = $"Affecté à {after} : {reason}", AuthorId = caller.UserId, AuthorName = author, CityId = route.CityId, CreatedAt = now });
+            tracked.CourierId = courierId;
+            db.ParcelEvents.Add(new ParcelEvent { ParcelId = ret.Id, StatusId = ret.StatusId, Comment = $"Affecté à {after} : {reason}", AuthorId = caller.UserId, AuthorName = author, CityId = cityId, CreatedAt = now });
             ParcelJournal.Record(db, caller, ret.Id, "courierId", ret.Courier, after, reason, author, now);
             followed.Add((ret.Code, exchange.Code));
         }

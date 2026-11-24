@@ -271,6 +271,79 @@ public sealed class RoutesContractTests(ApiFactory factory)
         });
     }
 
+    private async Task<(string Code, (string Id, string Code) Parcel)> RunningRouteAsync(DeliveryNotesContractTests.World world, Courier courier)
+    {
+        await factory.ExecuteDbAsync(async db =>
+        {
+            db.CourierCities.Add(new CourierCity { CourierId = courier.Id, CityId = world.City.Id, DeliveryFee = 15m });
+            await db.SaveChangesAsync();
+        });
+        var parcel = await DeliveryNotesContractTests.ParcelAsync(world);
+        await ReadyAsync(factory, parcel.Id);
+        var code = (await (await world.Admin.PostAsJsonAsync("/api/routes", new { cityId = world.City.Id, courierId = courier.Id })).JsonAsync()).GetProperty("code").GetString()!;
+        await world.Admin.PostAsJsonAsync($"/api/routes/{code}/parcels", new { parcelIds = new[] { parcel.Id } });
+        (await world.Admin.PostAsync($"/api/routes/{code}/dispatch", null)).StatusCode.ShouldBe(HttpStatusCode.Created);
+        return (code, parcel);
+    }
+
+    [Fact]
+    public async Task Transfer_moves_an_out_for_delivery_parcel_to_another_courier_running_route()
+    {
+        var world = await DeliveryNotesContractTests.WorldAsync(factory);
+        var (first, _) = await CourierAsync(factory, world.City.Id);
+        var (second, _) = await CourierAsync(factory, world.City.Id);
+        var (fromCode, moved) = await RunningRouteAsync(world, first);
+        var (toCode, _) = await RunningRouteAsync(world, second);
+
+        var options = await (await world.Admin.PostAsJsonAsync("/api/routes/transfer/options", new { parcelIds = new[] { moved.Id }, courierId = second.Id })).JsonAsync();
+        options.GetProperty("keepCityId").GetString().ShouldBe(world.City.Id);
+        options.GetProperty("toReroute").GetInt32().ShouldBe(0);
+        (await world.Admin.PostAsJsonAsync("/api/routes/transfer", new { parcelIds = Array.Empty<string>(), courierId = second.Id })).StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+
+        var transferred = await world.Admin.PostAsJsonAsync("/api/routes/transfer", new { parcelIds = new[] { moved.Id }, courierId = second.Id, reason = "Secteur" });
+        transferred.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var result = await transferred.JsonAsync();
+        result.GetProperty("count").GetInt32().ShouldBe(1);
+        result.GetProperty("routeCode").GetString().ShouldBe(toCode);
+        result.GetProperty("routeCreated").GetBoolean().ShouldBeFalse();
+        result.TryGetProperty("rerouted", out _).ShouldBeFalse();
+        var again = await (await world.Admin.PostAsJsonAsync("/api/routes/transfer", new { parcelIds = new[] { moved.Id }, courierId = second.Id })).JsonAsync();
+        again.GetProperty("skipped").GetInt32().ShouldBe(1);
+
+        (await (await world.Admin.GetAsync($"/api/parcels/{moved.Code}")).JsonAsync()).GetProperty("courierId").GetString().ShouldBe(second.Id);
+        (await (await world.Admin.GetAsync($"/api/routes/{toCode}")).JsonAsync()).GetProperty("parcels").GetArrayLength().ShouldBe(2);
+        (await (await world.Admin.GetAsync($"/api/routes/{fromCode}")).JsonAsync()).GetProperty("parcels").GetArrayLength().ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task Admin_field_status_revises_the_courier_outcome_on_the_running_route()
+    {
+        var world = await DeliveryNotesContractTests.WorldAsync(factory);
+        var (courier, courierClient) = await CourierAsync(factory, world.City.Id);
+        var (code, parcel) = await RunningRouteAsync(world, courier);
+
+        // 13 n'est pas un statut de terrain : l'administrateur revoit une issue déjà posée par le livreur.
+        var onTheRoad = await (await world.Admin.PostAsJsonAsync("/api/parcels/field-status", new { codes = new[] { parcel.Code }, statusId = 8, comment = "Refus" })).JsonAsync();
+        onTheRoad.GetProperty("refused")[0].GetProperty("reason").GetString().ShouldBe("not-a-field-status");
+        (await courierClient.PostAsJsonAsync($"/api/routes/{code}/parcels/{parcel.Id}/confirm", new { statusId = 8 })).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        (await courierClient.PostAsJsonAsync("/api/parcels/field-status", new { codes = new[] { parcel.Code }, statusId = 9, comment = "Injoignable" })).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await world.Admin.PostAsJsonAsync("/api/parcels/field-status", new { codes = new[] { parcel.Code }, statusId = 4, comment = "Livré" })).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await world.Admin.PostAsJsonAsync("/api/parcels/field-status", new { statusId = 9, comment = "Injoignable" })).StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        var changed = await world.Admin.PostAsJsonAsync("/api/parcels/field-status", new { codes = new[] { parcel.Code }, statusId = 9, comment = "Injoignable en réalité" });
+        changed.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var result = await changed.JsonAsync();
+        result.GetProperty("refused").GetArrayLength().ShouldBe(0, result.ToString());
+        result.GetProperty("changed")[0].GetProperty("from").GetInt32().ShouldBe(8);
+        result.GetProperty("changed")[0].GetProperty("to").GetInt32().ShouldBe(9);
+        await factory.ExecuteDbAsync(async db =>
+        {
+            var link = await db.RouteParcels.AsNoTracking().SingleAsync(l => l.ParcelId == parcel.Id);
+            link.FinalStatusId.ShouldBe(9);
+            (await db.Parcels.AsNoTracking().SingleAsync(p => p.Id == parcel.Id)).StatusId.ShouldBe(9);
+        });
+    }
+
     [Fact]
     public async Task Draft_route_is_created_filled_emptied_and_deleted_within_courier_scope()
     {

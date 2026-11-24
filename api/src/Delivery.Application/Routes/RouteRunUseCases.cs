@@ -92,14 +92,23 @@ internal sealed class ConfirmRouteParcelHandler(IAppDbContext db, ICurrentUser c
 {
     public async Task<RouteDetailDto> Handle(ConfirmRouteParcelCommand input, CancellationToken cancellationToken)
     {
-        var route = await RouteConfirmation.RouteAsync(db, caller, input.Code, cancellationToken);
-        var link = await db.RouteParcels.Include(l => l.Parcel).FirstOrDefaultAsync(l => l.RouteId == route.Id && l.ParcelId == input.ParcelId, cancellationToken)
-                   ?? throw BusinessException.Validation($"Ce colis n'appartient pas au circuit {input.Code}.");
-        var outcome = input.ToOutcome();
+        await RouteParcelConfirm.RunAsync(db, caller, logger, input.Code, input.ParcelId, input.ToOutcome(), input.AdminFieldRevision, cancellationToken);
+        return await RouteRows.DetailAsync(db, caller, input.Code, cancellationToken);
+    }
+}
+
+/// <summary>`confirmParcel` sans la fiche : partagé avec le statut de terrain de l'administrateur.</summary>
+public static class RouteParcelConfirm
+{
+    public static async Task RunAsync(IAppDbContext db, ICurrentUser caller, ILogger logger, string code, string parcelId, RouteOutcome outcome, bool adminFieldRevision, CancellationToken cancellationToken)
+    {
+        var route = await RouteConfirmation.RouteAsync(db, caller, code, cancellationToken);
+        var link = await db.RouteParcels.Include(l => l.Parcel).FirstOrDefaultAsync(l => l.RouteId == route.Id && l.ParcelId == parcelId, cancellationToken)
+                   ?? throw BusinessException.Validation($"Ce colis n'appartient pas au circuit {code}.");
         var (from, clientId, parcelCode) = (link.Parcel.StatusId, link.Parcel.ClientId, link.Parcel.Code);
         await using (var transaction = await db.Database.BeginTransactionAsync(cancellationToken))
         {
-            await RouteConfirmation.ApplyAsync(db, caller, route, link, outcome, input.AdminFieldRevision, cancellationToken);
+            await RouteConfirmation.ApplyAsync(db, caller, route, link, outcome, adminFieldRevision, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
         }
         db.ChangeTracker.Clear();
@@ -108,7 +117,6 @@ internal sealed class ConfirmRouteParcelHandler(IAppDbContext db, ICurrentUser c
         {
             await ParcelStatusChange.NotifyMerchantOfStatusAsync(db, logger, clientId, parcelCode, to, string.IsNullOrEmpty(outcome.ScheduledAt) ? null : outcome.ScheduledAt, cancellationToken);
         }
-        return await RouteRows.DetailAsync(db, caller, input.Code, cancellationToken);
     }
 }
 

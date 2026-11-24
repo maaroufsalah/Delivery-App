@@ -389,12 +389,12 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 
 ### `modules/routes/parcel-moves.controller.ts`
 
-- [ ] `POST /api/parcels/field-status` — `changeFieldStatus` (L75) · gardes: NotMerchantGuard · perm: parcels.status · entrée: adminFieldStatusSchema · sortie: `Promise<AdminFieldStatusResult>`
+- [x] `POST /api/parcels/field-status` — `changeFieldStatus` (L75) · gardes: NotMerchantGuard · perm: parcels.status · entrée: adminFieldStatusSchema · sortie: `Promise<AdminFieldStatusResult>`
 - [x] `POST /api/parcels/:code/correction/preview` — `previewCorrection` (L92) · gardes: NotMerchantGuard · perm: parcels.correctStatus · entrée: statusCorrectionSchema · sortie: `Promise<StatusCorrectionPreview>`
 - [x] `POST /api/parcels/:code/correction` — `applyCorrection` (L105) · gardes: NotMerchantGuard · perm: parcels.correctStatus · entrée: statusCorrectionSchema · sortie: `Promise<StatusCorrectionResult>`
 - [x] `POST /api/parcels/:code/cancel-delivery` — `cancelDelivery` (L118) · gardes: NotMerchantGuard · perm: parcels.status · entrée: cancelDeliverySchema
-- [ ] `POST /api/routes/transfer` — `transfer` (L142) · gardes: NotMerchantGuard · perm: routes.write · entrée: parcelTransferSchema
-- [ ] `POST /api/routes/transfer/options` — `transferOptions` (L162) · gardes: NotMerchantGuard · perm: routes.write · entrée: parcelTransferOptionsSchema
+- [x] `POST /api/routes/transfer` — `transfer` (L142) · gardes: NotMerchantGuard · perm: routes.write · entrée: parcelTransferSchema
+- [x] `POST /api/routes/transfer/options` — `transferOptions` (L162) · gardes: NotMerchantGuard · perm: routes.write · entrée: parcelTransferOptionsSchema
 
 ### `modules/routes/routes.controller.ts`
 

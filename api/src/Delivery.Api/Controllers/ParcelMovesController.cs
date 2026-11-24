@@ -10,6 +10,10 @@ namespace Delivery.Api.Controllers;
 [Guards(Guard.NotMerchant)]
 public sealed class ParcelMovesController(ISender sender) : ApiControllerBase(sender)
 {
+    [HttpPost("field-status")]
+    [RequirePermission("parcels.status")]
+    public Task<IActionResult> FieldStatus([FromBody] AdminFieldStatusCommand? body) => Ok(body ?? new AdminFieldStatusCommand());
+
     [HttpPost("{code}/correction/preview")]
     [RequirePermission("parcels.correctStatus")]
     public Task<IActionResult> PreviewCorrection(string code, [FromBody] PreviewStatusCorrectionCommand? body) =>

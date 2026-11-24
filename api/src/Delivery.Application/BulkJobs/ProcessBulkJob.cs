@@ -18,7 +18,7 @@ namespace Delivery.Application.BulkJobs;
 /// </summary>
 public sealed record ProcessBulkJobCommand(string Id) : IRequest;
 
-internal sealed class ProcessBulkJobHandler(IAppDbContext db, ICurrentUser caller, ILogger<ProcessBulkJobHandler> logger) : IRequestHandler<ProcessBulkJobCommand>
+internal sealed class ProcessBulkJobHandler(IAppDbContext db, ICurrentUser caller, IClock clock, ILogger<ProcessBulkJobHandler> logger) : IRequestHandler<ProcessBulkJobCommand>
 {
     public async Task Handle(ProcessBulkJobCommand request, CancellationToken cancellationToken)
     {
@@ -26,7 +26,7 @@ internal sealed class ProcessBulkJobHandler(IAppDbContext db, ICurrentUser calle
         if (job is null || job.Status is not (BulkJobStatus.PENDING or BulkJobStatus.RUNNING)) return;
         using var input = JsonDocument.Parse(job.Input);
         var all = input.RootElement.TryGetProperty("parcelIds", out var ids) ? ids.EnumerateArray().Select(e => e.GetString()!).ToList() : [];
-        if (job.Kind is not (BulkJobKinds.NoteValidate or BulkJobKinds.RouteDispatch or BulkJobKinds.RouteOutcomes))
+        if (job.Kind is not (BulkJobKinds.NoteValidate or BulkJobKinds.RouteDispatch or BulkJobKinds.RouteOutcomes or BulkJobKinds.ParcelTransfer))
         {
             await StopAsync(job, "bulk-job-unknown-kind");
             return;
@@ -124,6 +124,12 @@ internal sealed class ProcessBulkJobHandler(IAppDbContext db, ICurrentUser calle
                     ScheduledAt = Text(input, "scheduledAt"), Comment = Text(input, "comment"),
                 }, cancellationToken);
                 return new() { ["count"] = outcomes.Count, ["cashExpected"] = outcomes.CashExpected };
+            case BulkJobKinds.ParcelTransfer:
+                var moved = (ParcelTransferResultDto)await ParcelTransfers.RunAsync(db, caller, clock, logger, null, new TransferParcelsCommand
+                {
+                    FromJob = true, ParcelIds = chunk, CourierId = Text(input, "courierId"), Reason = Text(input, "reason"), DestinationCityId = Text(input, "destinationCityId"),
+                }, new ParcelTransfers.Options(), cancellationToken);
+                return new() { ["count"] = moved.Count, ["skipped"] = moved.Skipped };
             default:
                 throw new InvalidOperationException($"Tâche inconnue : {job.Kind}");
         }
