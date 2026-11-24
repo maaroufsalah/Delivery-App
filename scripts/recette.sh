@@ -154,14 +154,13 @@ else
   [ "$code" = 200 ] && ok "page de connexion ($code)" || ko "page de connexion ($WEB/fr/login → $code)"
   code="$(curl -s -o "$TMP/home" -w '%{http_code}' "$WEB/fr")"
   [ "$code" = 200 ] && ok "accueil public rendu par le serveur ($code)" || ko "accueil public ($WEB/fr → $code)"
-  # Session navigateur : cookies httpOnly posés par l'API, relus par le serveur Next.
+  # Session navigateur : les cookies httpOnly `dp.at` / `dp.rt` que le serveur Next relit. Passés en en-tête,
+  # ils valent pour toute paire d'hôtes (localhost:3000 / :5080 comme new / api-new.wimodelivery.ma).
   for who in "admin:$ADMIN_EMAIL:$ADMIN_PASSWORD:/fr/dashboard" "vendeur:$MERCHANT_EMAIL:$PASSWORD:/fr/parcels" "livreur:$COURIER_EMAIL:$PASSWORD:/fr/me"; do
     IFS=: read -r name email password page <<<"$who"
-    jar="$TMP/$name.jar"
-    code="$(curl -s -c "$jar" -o /dev/null -w '%{http_code}' -H 'content-type: application/json' \
-      --data "{\"identifier\":\"$email\",\"password\":\"$password\"}" "$API/auth/login")"
-    [ "$code" = 200 ] || { ko "session web $name ($code)"; continue; }
-    code="$(curl -s -b "$jar" -o "$TMP/$name.html" -w '%{http_code} %{redirect_url}' "$WEB$page")"
+    call "session web $name" 200 POST /auth/login - "{\"identifier\":\"$email\",\"password\":\"$password\"}" >/dev/null || continue
+    cookie="dp.at=$(json 'j.accessToken'); dp.rt=$(json 'j.refreshToken')"
+    code="$(curl -s -H "Cookie: $cookie" -o "$TMP/$name.html" -w '%{http_code} %{redirect_url}' "$WEB$page")"
     case "$code" in 200*) ok "web $name : $page rendu ($code)";; *) ko "web $name : $page → $code";; esac
   done
 fi
