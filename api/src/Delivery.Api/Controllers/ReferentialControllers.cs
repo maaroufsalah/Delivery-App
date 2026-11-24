@@ -8,6 +8,9 @@ using Delivery.Application.DeliveryTypes.Commands;
 using Delivery.Application.DeliveryTypes.Queries;
 using Delivery.Application.Districts.Commands;
 using Delivery.Application.Districts.Queries;
+using Delivery.Application.Directory.Queries;
+using Delivery.Application.Pricing.Commands;
+using Delivery.Application.Pricing.Queries;
 using Delivery.Application.Zones.Commands;
 using Delivery.Application.Zones.Queries;
 using MediatR;
@@ -191,4 +194,77 @@ public sealed class AgenciesController(ISender sender) : ApiControllerBase(sende
     [HttpDelete("{id}")]
     [RequirePermission("accounts.write")]
     public Task<IActionResult> Remove(string id) => Ok(new RemoveAgencyCommand(id));
+}
+
+[Route("pricing-rules")]
+[Guards(Guard.NotMerchant)]
+public sealed class PricingRulesController(ISender sender) : ApiControllerBase(sender)
+{
+    [HttpGet]
+    [RequirePermission("directory.read")]
+    public Task<IActionResult> List([FromQuery] ListQueryParams query, [FromQuery] string? originCityId, [FromQuery] string? destinationCityId) =>
+        Ok(new GetPricingRulesQuery(query.ToQuery(), originCityId, destinationCityId));
+
+    [HttpGet("by-origin")]
+    [RequirePermission("directory.read")]
+    public Task<IActionResult> ByOrigin([FromQuery] ListQueryParams query, [FromQuery] string? originCityId, [FromQuery] string[]? zoneId) =>
+        Ok(new GetPricingByOriginQuery(query.ToQuery(), originCityId, MultiValue.AsList(zoneId)));
+
+    [HttpPut("by-origin/{originCityId}")]
+    [RequirePermission("directory.write")]
+    public Task<IActionResult> SaveOrigin(string originCityId, [FromBody] SavePricingOriginCommand? body) =>
+        Ok((body ?? new SavePricingOriginCommand()) with { OriginCityId = originCityId });
+
+    [HttpGet("by-origin/{originCityId}/export")]
+    [RequirePermission("directory.read")]
+    public Task<IActionResult> ExportOrigin(string originCityId) => FileOf(new ExportPricingOriginQuery(originCityId));
+
+    [HttpPost("by-origin/{originCityId}/import")]
+    [RequirePermission("directory.write")]
+    public Task<IActionResult> ImportOrigin(string originCityId, [FromBody] ImportPricingOriginCommand? body) =>
+        Created((body ?? new ImportPricingOriginCommand()) with { OriginCityId = originCityId });
+
+    [HttpPost]
+    [RequirePermission("directory.write")]
+    public Task<IActionResult> Create([FromBody] CreatePricingRuleCommand? body) => Created(body ?? new CreatePricingRuleCommand());
+
+    [HttpPatch("{id}")]
+    [RequirePermission("directory.write")]
+    public Task<IActionResult> Update(string id, [FromBody] UpdatePricingRuleCommand? body) => Ok((body ?? new UpdatePricingRuleCommand()) with { Id = id });
+
+    [HttpDelete("{id}")]
+    [RequirePermission("directory.write")]
+    public Task<IActionResult> Remove(string id) => Ok(new RemovePricingRuleCommand(id));
+}
+
+[Route("directory")]
+public sealed class DirectoryController(ISender sender) : ApiControllerBase(sender)
+{
+    [HttpGet("cities")]
+    [RequirePermission("directory.read")]
+    public Task<IActionResult> Cities([FromQuery] string? includeInactive) => Ok(new GetDirectoryCitiesQuery(includeInactive == "true"));
+
+    [HttpGet("zones")]
+    [RequirePermission("directory.read")]
+    public Task<IActionResult> Zones() => Ok(new GetDirectoryZonesQuery());
+
+    [HttpGet("districts")]
+    [RequirePermission("directory.read")]
+    public Task<IActionResult> Districts([FromQuery] string? cityId) => Ok(new GetDirectoryDistrictsQuery(cityId));
+
+    [HttpGet("clients")]
+    [RequirePermission("directory.read")]
+    public Task<IActionResult> Clients() => Ok(new GetDirectoryClientsQuery());
+
+    [HttpGet("couriers")]
+    [RequirePermission("directory.read")]
+    public Task<IActionResult> Couriers() => Ok(new GetDirectoryCouriersQuery());
+
+    [HttpGet("agencies")]
+    [RequirePermission("directory.read")]
+    public Task<IActionResult> Agencies() => Ok(new GetDirectoryAgenciesQuery());
+
+    [HttpGet("pending-counts")]
+    [RequirePermission("directory.read")]
+    public Task<IActionResult> PendingCounts() => Ok(new GetPendingCountsQuery());
 }
