@@ -343,9 +343,9 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 
 ### `modules/bulk-jobs/bulk-jobs.controller.ts`
 
-- [ ] `GET /api/bulk-jobs` — `latest` (L25) · gardes: NotMerchantGuard · perm: parcels.read · query: target · sortie: `Promise<BulkJob | null>`
-- [ ] `GET /api/bulk-jobs/:id` — `one` (L34) · gardes: NotMerchantGuard · perm: parcels.read · sortie: `Promise<BulkJob>`
-- [ ] `POST /api/bulk-jobs/:id/retry` — `retry` (L43) · gardes: NotMerchantGuard · perm: parcels.status · sortie: `Promise<BulkJob>`
+- [x] `GET /api/bulk-jobs` — `latest` (L25) · gardes: NotMerchantGuard · perm: parcels.read · query: target · sortie: `Promise<BulkJob | null>`
+- [x] `GET /api/bulk-jobs/:id` — `one` (L34) · gardes: NotMerchantGuard · perm: parcels.read · sortie: `Promise<BulkJob>`
+- [x] `POST /api/bulk-jobs/:id/retry` — `retry` (L43) · gardes: NotMerchantGuard · perm: parcels.status · sortie: `Promise<BulkJob>`
 
 ### `modules/courier/courier-parcels.controller.ts`
 
@@ -379,9 +379,9 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 
 ### `modules/merchant/merchant.controller.ts`
 
-- [ ] `POST /api/merchant/me/pickups` — `requestPickup` (L94) · gardes: MerchantGuard · perm: notes.request · entrée: pickupRequestSchema
-- [ ] `POST /api/merchant/me/dropoffs` — `requestDropoff` (L112) · gardes: MerchantGuard · perm: notes.request · entrée: pickupRequestSchema
-- [ ] `DELETE /api/merchant/me/notes/:code` — `cancelNote` (L129) · gardes: MerchantGuard · perm: notes.request
+- [x] `POST /api/merchant/me/pickups` — `requestPickup` (L94) · gardes: MerchantGuard · perm: notes.request · entrée: pickupRequestSchema
+- [x] `POST /api/merchant/me/dropoffs` — `requestDropoff` (L112) · gardes: MerchantGuard · perm: notes.request · entrée: pickupRequestSchema
+- [x] `DELETE /api/merchant/me/notes/:code` — `cancelNote` (L129) · gardes: MerchantGuard · perm: notes.request
 
 ### `modules/provider/provider.controller.ts`
 
@@ -398,40 +398,40 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 
 ### `modules/routes/routes.controller.ts`
 
-- [ ] `GET /api/routes` — `list` (L129) · perm: routes.read · entrée: routeListQuerySchema
-- [ ] `GET /api/routes/stats` — `stats` (L143) · perm: routes.read · entrée: routeListQuerySchema
-- [ ] `GET /api/routes/export` — `export` (L160) · perm: routes.read · entrée: routeListQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/routes` — `create` (L175) · perm: routes.write · entrée: routeSchema
+- [x] `GET /api/routes` — `list` (L129) · perm: routes.read · entrée: routeListQuerySchema
+- [x] `GET /api/routes/stats` — `stats` (L143) · perm: routes.read · entrée: routeListQuerySchema
+- [x] `GET /api/routes/export` — `export` (L160) · perm: routes.read · entrée: routeListQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/routes` — `create` (L175) · perm: routes.write · entrée: routeSchema
 - [ ] `POST /api/routes/auto-close-sweep` — `sweepAutoClose` (L189) · perm: routes.close
-- [ ] `GET /api/routes/:code` — `detail` (L196) · perm: routes.read
-- [ ] `PATCH /api/routes/:code` — `update` (L207) · perm: routes.write · entrée: routeUpdateSchema
-- [ ] `DELETE /api/routes/:code` — `remove` (L219) · perm: routes.write
-- [ ] `GET /api/routes/:code/candidates` — `candidates` (L228) · perm: routes.read · entrée: routeCandidatesQuerySchema
-- [ ] `GET /api/routes/:code/note-candidates` — `noteCandidates` (L256) · perm: routes.read · entrée: routeCandidatesQuerySchema
-- [ ] `POST /api/routes/:code/notes` — `addNotes` (L272) · perm: routes.write · entrée: routeNotesSchema
-- [ ] `DELETE /api/routes/:code/notes/:noteId` — `removeNote` (L283) · perm: routes.write
-- [ ] `POST /api/routes/:code/notes/:noteId/pickup` — `pickupNote` (L303) · perm: routes.confirm · entrée: routeNotePickupSchema
-- [ ] `POST /api/routes/:code/parcels` — `addParcels` (L315) · perm: routes.write · entrée: routeParcelsSchema
-- [ ] `DELETE /api/routes/:code/parcels/:parcelId` — `removeParcel` (L326) · perm: routes.write
-- [ ] `GET /api/routes/:code/export` — `exportParcels` (L338) · perm: routes.read · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/routes/:code` — `detail` (L196) · perm: routes.read
+- [x] `PATCH /api/routes/:code` — `update` (L207) · perm: routes.write · entrée: routeUpdateSchema
+- [x] `DELETE /api/routes/:code` — `remove` (L219) · perm: routes.write
+- [x] `GET /api/routes/:code/candidates` — `candidates` (L228) · perm: routes.read · entrée: routeCandidatesQuerySchema
+- [x] `GET /api/routes/:code/note-candidates` — `noteCandidates` (L256) · perm: routes.read · entrée: routeCandidatesQuerySchema
+- [x] `POST /api/routes/:code/notes` — `addNotes` (L272) · perm: routes.write · entrée: routeNotesSchema
+- [x] `DELETE /api/routes/:code/notes/:noteId` — `removeNote` (L283) · perm: routes.write
+- [x] `POST /api/routes/:code/notes/:noteId/pickup` — `pickupNote` (L303) · perm: routes.confirm · entrée: routeNotePickupSchema
+- [x] `POST /api/routes/:code/parcels` — `addParcels` (L315) · perm: routes.write · entrée: routeParcelsSchema
+- [x] `DELETE /api/routes/:code/parcels/:parcelId` — `removeParcel` (L326) · perm: routes.write
+- [x] `GET /api/routes/:code/export` — `exportParcels` (L338) · perm: routes.read · sortie: `Promise<StreamableFile>`
 - [ ] `GET /api/routes/:code/sheet` — `sheet` (L357) · perm: routes.read · sortie: `Promise<StreamableFile>`
 - [ ] `GET /api/routes/:code/labels` — `labels` (L370) · perm: routes.read · entrée: labelQuerySchema · sortie: `Promise<StreamableFile>`
 - [ ] `POST /api/routes/:code/dispatch` — `dispatch` (L389) · perm: routes.write
 - [ ] `POST /api/routes/:code/parcels/:parcelId/confirm` — `confirm` (L407) · perm: routes.confirm · entrée: routeConfirmSchema
 - [ ] `POST /api/routes/:code/outcomes` — `confirmMany` (L422) · perm: routes.confirm · entrée: routeBulkConfirmSchema
 - [ ] `POST /api/routes/:code/close` — `close` (L442) · perm: routes.close · entrée: routeCloseSchema
-- [ ] `GET /api/delivery-notes` — `list` (L503) · perm: notes.read · entrée: noteListQuerySchema
-- [ ] `GET /api/delivery-notes/stats` — `stats` (L513) · perm: notes.read · entrée: noteListQuerySchema
-- [ ] `GET /api/delivery-notes/export` — `export` (L530) · perm: notes.read · entrée: noteListQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/delivery-notes` — `create` (L544) · perm: notes.write · entrée: deliveryNoteSchema
-- [ ] `GET /api/delivery-notes/:code` — `detail` (L554) · perm: notes.read
-- [ ] `GET /api/delivery-notes/:code/export` — `exportParcels` (L566) · perm: notes.read · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/delivery-notes` — `list` (L503) · perm: notes.read · entrée: noteListQuerySchema
+- [x] `GET /api/delivery-notes/stats` — `stats` (L513) · perm: notes.read · entrée: noteListQuerySchema
+- [x] `GET /api/delivery-notes/export` — `export` (L530) · perm: notes.read · entrée: noteListQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/delivery-notes` — `create` (L544) · perm: notes.write · entrée: deliveryNoteSchema
+- [x] `GET /api/delivery-notes/:code` — `detail` (L554) · perm: notes.read
+- [x] `GET /api/delivery-notes/:code/export` — `exportParcels` (L566) · perm: notes.read · sortie: `Promise<StreamableFile>`
 - [ ] `GET /api/delivery-notes/:code/pdf` — `pdf` (L585) · perm: notes.read · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/delivery-notes/:code/parcels` — `addParcels` (L597) · perm: notes.write · entrée: deliveryNoteParcelsSchema
-- [ ] `DELETE /api/delivery-notes/:code/parcels/:parcelId` — `removeParcel` (L608) · perm: notes.write
-- [ ] `POST /api/delivery-notes/:code/validate` — `validate` (L622) · perm: notes.write
-- [ ] `POST /api/delivery-notes/:code/removed/:parcelId/restore` — `restoreRemoved` (L643) · perm: notes.write
-- [ ] `DELETE /api/delivery-notes/:code` — `remove` (L662) · perm: notes.write
+- [x] `POST /api/delivery-notes/:code/parcels` — `addParcels` (L597) · perm: notes.write · entrée: deliveryNoteParcelsSchema
+- [x] `DELETE /api/delivery-notes/:code/parcels/:parcelId` — `removeParcel` (L608) · perm: notes.write
+- [x] `POST /api/delivery-notes/:code/validate` — `validate` (L622) · perm: notes.write
+- [x] `POST /api/delivery-notes/:code/removed/:parcelId/restore` — `restoreRemoved` (L643) · perm: notes.write
+- [x] `DELETE /api/delivery-notes/:code` — `remove` (L662) · perm: notes.write
 
 ### `modules/staff/staff.controller.ts`
 
