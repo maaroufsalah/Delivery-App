@@ -33,7 +33,7 @@ public static class CourierStockPdfs
         var selection = await CourierStocks.SelectionAsync(db, caller, courierId, filter, cancellationToken);
         var data = await DocumentAsync(db, clock, storage, [new CourierStockSheetSection(selection.Courier.Name, selection.Courier.AgencyName, selection.Counters,
             selection.ByStatus.Select(l => new CourierStockSheetStatusLine(l.StatusId, l.Count, l.CodInCents)).ToList(), selection.Parcels.Select(p => ToPdf(p.View)).ToList())], null, cancellationToken);
-        return new Prepared(data, $"Stock-{Slug(selection.Courier.Name)}-{Stamp(data.GeneratedAt)}.pdf", selection.Parcels.Count);
+        return new Prepared(data, $"Stock-{Slug(selection.Courier.Name)}-{Stamp(data.ProducedAt)}.pdf", selection.Parcels.Count);
     }
 
     public static async Task<Prepared> GlobalAsync(IAppDbContext db, ICurrentUser caller, IClock clock, IFileStorage storage, CourierStockListFilter filter, CancellationToken cancellationToken)
@@ -53,7 +53,7 @@ public static class CourierStockPdfs
         if (filter.All == "true") filters.Add("Livreurs sans stock compris");
         var summary = new CourierStockSheetSummary(rows.Select(r => new CourierStockSheetRow(r.CourierName, r.AgencyName, r)).ToList(), totals, filters);
         var data = await DocumentAsync(db, clock, storage, sections, summary, cancellationToken);
-        return new Prepared(data, $"Stock-Livreurs-{Stamp(data.GeneratedAt)}.pdf", sections.Sum(s => s.Parcels.Count));
+        return new Prepared(data, $"Stock-Livreurs-{Stamp(data.ProducedAt)}.pdf", sections.Sum(s => s.Parcels.Count));
     }
 
     private static async Task<CourierStockSheet> DocumentAsync(IAppDbContext db, IClock clock, IFileStorage storage, IReadOnlyList<CourierStockSheetSection> sections,

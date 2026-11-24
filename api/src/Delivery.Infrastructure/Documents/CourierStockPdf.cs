@@ -18,7 +18,7 @@ internal static class CourierStockPdf
 
     public static byte[] Render(CourierStockSheet data)
     {
-        var generated = Exports.DateTimeText(data.GeneratedAt);
+        var generated = Exports.DateTimeText(data.ProducedAt);
         var footer = data.Company.Footer($"{CourierStockSheet.Title} au {generated} — colis et argent détenus par le livreur à cet instant.");
         return Document.Create(container =>
         {

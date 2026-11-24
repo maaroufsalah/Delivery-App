@@ -15,7 +15,7 @@ public sealed record CourierStockSheetRow(string CourierName, string? AgencyName
 public sealed record CourierStockSheetSummary(IReadOnlyList<CourierStockSheetRow> Rows, CourierStockCounters Totals, IReadOnlyList<string> Filters);
 
 /// <summary>`CourierStockPdfData` : « Situation du Stock Livreur », un récapitulatif (global) puis une section par livreur.</summary>
-public sealed record CourierStockSheet(PdfCompany Company, string? ShortName, byte[]? Logo, DateTime GeneratedAt, CourierStockSheetSummary? Summary,
+public sealed record CourierStockSheet(PdfCompany Company, string? ShortName, byte[]? Logo, DateTime ProducedAt, CourierStockSheetSummary? Summary,
     IReadOnlyList<CourierStockSheetSection> Sections)
 {
     public const string Title = "Situation du Stock Livreur";
