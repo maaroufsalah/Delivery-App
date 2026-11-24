@@ -46,7 +46,7 @@ public static class OutForDelivery
             new { reason = "transfer-city-required", cities, count });
     }
 
-    public static async Task<Plan> PrepareAsync(IAppDbContext db, ICurrentUser caller, string parcelId, string parcelCode, string destinationCityId, string? parcelCourierId, BillingState billingState,
+    public static async Task<Plan> PrepareAsync(IAppDbContext db, ICurrentUser caller, IClock clock, string parcelId, string parcelCode, string destinationCityId, string? parcelCourierId, BillingState billingState,
         string courierId, string? chosenCityId, CancellationToken cancellationToken)
     {
         var courier = await db.Couriers.AsNoTracking().Where(c => c.Id == courierId && c.DeletedAt == null)
@@ -86,7 +86,8 @@ public static class OutForDelivery
         {
             throw BusinessException.Conflict($"Ce colis est sur le circuit {foreign.Code}, qui n’est pas une livraison : retirez-le d’abord de ce circuit.", new { reason = "parcel-on-route", routeCode = foreign.Code });
         }
-        var dayStart = DateTime.UtcNow.Date;
+        // Le brouillon « du jour » : minuit à Casablanca, pas minuit UTC.
+        var dayStart = clock.TodayStartUtc();
         var running = await db.Routes.AsNoTracking()
             .Where(r => r.CourierId == courier.Id && r.Kind == RouteKind.DELIVERY && (r.Status == RouteStatus.DISPATCHED || r.Status == RouteStatus.DELIVERING))
             .OrderByDescending(r => r.StatusAt).Take(50).Select(r => new { r.Id, r.Code, r.CityId }).ToListAsync(cancellationToken);

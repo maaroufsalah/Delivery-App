@@ -42,6 +42,8 @@ internal sealed class CashRemittanceConfiguration : IEntityTypeConfiguration<Cas
         builder.HasIndex(e => e.Code).IsUnique();
         builder.HasIndex(e => e.Status);
         builder.HasIndex(e => new { e.CourierId, e.Status });
+        // Filet de sécurité du verrou consultatif : un seul retour de fonds ouvert par livreur.
+        builder.HasIndex(e => e.CourierId).IsUnique().HasFilter("\"status\" = 'DRAFT' AND \"courierClosedAt\" IS NULL").HasDatabaseName("cash_remittances_one_open_per_courier");
         builder.HasIndex(e => new { e.AgencyId, e.CreatedAt });
         builder.HasOne(e => e.City).WithMany(e => e.CashRemittances).HasForeignKey(e => e.CityId).OnDelete(DeleteBehavior.Restrict).IsRequired();
         builder.HasOne(e => e.Courier).WithMany(e => e.CashRemittances).HasForeignKey(e => e.CourierId).OnDelete(DeleteBehavior.Restrict).IsRequired();

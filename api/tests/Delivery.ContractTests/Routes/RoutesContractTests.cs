@@ -130,6 +130,44 @@ public sealed class RoutesContractTests(ApiFactory factory)
     }
 
     [Fact]
+    public async Task Simultaneous_deliveries_of_one_courier_open_a_single_remittance()
+    {
+        var world = await DeliveryNotesContractTests.WorldAsync(factory);
+        var (courier, courierClient) = await CourierAsync(factory, world.City.Id);
+        var parcels = new List<(string Id, string Code)>();
+        for (var i = 0; i < 4; i++)
+        {
+            var parcel = await DeliveryNotesContractTests.ParcelAsync(world, cod: 100 + i);
+            await ReadyAsync(factory, parcel.Id);
+            parcels.Add(parcel);
+        }
+        var code = (await (await world.Admin.PostAsJsonAsync("/api/routes", new { cityId = world.City.Id, courierId = courier.Id })).JsonAsync()).GetProperty("code").GetString()!;
+        (await world.Admin.PostAsJsonAsync($"/api/routes/{code}/parcels", new { parcelIds = parcels.Select(p => p.Id).ToArray() })).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await world.Admin.PostAsync($"/api/routes/{code}/dispatch", null)).StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        var answers = await Task.WhenAll(parcels.Select(p => courierClient.PostAsJsonAsync($"/api/routes/{code}/parcels/{p.Id}/confirm", new { statusId = 4 })));
+        answers.Select(a => a.StatusCode).ShouldAllBe(s => s == HttpStatusCode.Created);
+
+        await factory.ExecuteDbAsync(async db =>
+        {
+            var remittances = await db.CashRemittances.Include(r => r.Parcels).Where(r => r.CourierId == courier.Id).ToListAsync();
+            remittances.Count.ShouldBe(1);
+            remittances[0].Code.ShouldStartWith("RF-");
+            remittances[0].Parcels.Count.ShouldBe(4);
+            remittances[0].ExpectedCod.ShouldBe(406m);
+
+            // Le filet : un second RF- ouvert pour ce livreur est refusé par l'index partiel.
+            var remittance = remittances[0];
+            db.CashRemittances.Add(new CashRemittance
+            {
+                Code = "RF-TEST-" + Guid.NewGuid().ToString("N")[..6], Status = CashRemittanceStatus.DRAFT, Origin = RemittanceOrigin.MANUAL, CityId = remittance.CityId, CourierId = courier.Id,
+                AgencyId = remittance.AgencyId,
+            });
+            await Should.ThrowAsync<DbUpdateException>(() => db.SaveChangesAsync());
+        });
+    }
+
+    [Fact]
     public async Task Draft_route_is_created_filled_emptied_and_deleted_within_courier_scope()
     {
         var world = await DeliveryNotesContractTests.WorldAsync(factory);
