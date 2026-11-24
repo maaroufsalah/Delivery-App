@@ -33,7 +33,13 @@ public sealed record LabelData
 }
 
 /// <summary>`LabelBrand` : la marque de la société sur le modèle « branded ».</summary>
-public sealed record LabelBrand(string Name, string Color, byte[]? Logo, string? Banner);
+public sealed record LabelBrand(string Name, string Color, byte[]? Logo, string? Banner)
+{
+    public string? OnBrandColor { get; init; }
+
+    /// <summary>`logoOnLight` : le logo préparé pour la bande claire (un logo blanc y est noirci).</summary>
+    public byte[]? LogoOnLight { get; init; }
+}
 
 /// <summary>`LabelRenderPayload` : le document d'étiquettes à rendre.</summary>
 public sealed record LabelSheet(string Template, string Format, string CompanyName, LabelBrand? Brand, IReadOnlyList<LabelData> Parcels)
