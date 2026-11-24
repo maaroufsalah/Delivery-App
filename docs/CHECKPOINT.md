@@ -44,11 +44,24 @@ le COD du nouveau colis vaut désormais `amount / 100` MAD (`ExchangeWrites.CodM
 indisponible », comme Speedy sans `OutForDeliveryPlacer`) ; `replayAutoClose` après changement de
 destination. Module 10 : envoi push (Expo) des notifications.
 
+## En cours — module 6 « Bons et circuits » sur `feat/routes` (non poussée)
+
+Lots : (A) bons BR-/BD- + demandes vendeur + tâches de masse — FAIT (commit `feat(notes)…`) ;
+(B) circuits : liste, stats, export, fiche, création, modif, suppression, candidats, ajout/retrait de
+colis et de bons, ramassage d'un bon ; (C) départ, confirmation des issues (encaissement, commission,
+retour de fonds, chèque), clôture ; (D) statut 13 (`OutForDeliveryPlacer`, test de contrat qui prouve
+la fin du 500), correction de statut, annulation de livraison, `field-status`, transfert ;
+(E) `courier/*`, `courier-stock`, statut prestataire, `staff/me/alerts` ; (F) PDF fidèles (étiquettes,
+reçu d'entreposage, feuille de route, bon) comparés dans `docs/design/labels/`.
+Reste à faire au lot (A) : PDF du bon (`GET /delivery-notes/:code/pdf`, lot F) ; découper
+`NoteUseCases.cs` un fichier par cas d'usage.
+Décisions : frais de ramassage écrits sur la facture brouillon (`Invoices/InvoiceDrafts.cs`, totaux
+portés depuis `invoices.service.ts`) ; `GET /bulk-jobs` sans tâche = 200 corps vide (comme Nest) ;
+identité des tâches de masse rejouée par `CurrentUser.Background`.
+
 ## Prochaine action exacte
 
-1. CI verte puis fusion de la PR du module 5.
-2. Module 6 « Bons et circuits » sur `feat/routes` : `modules/routes/*`, `modules/courier/*` (statut,
-   scan, activité), `courier-stock`, `bulk-jobs`, `provider-status.service.ts`, notes de ramassage.
+1. Lot (B) : `routes.service.ts` l. 343-1019 (liste, fiche), 1076-1834 (écritures), 2420-2955 (bons du circuit).
 
 ## Blocages / décisions pour Salah
 
