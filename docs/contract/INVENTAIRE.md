@@ -504,25 +504,25 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 ### `modules/courier/courier.controller.ts`
 
 - [ ] `GET /api/courier/me/cheques` — `chequeList` (L130) · gardes: CourierGuard · perm: finance.read
-- [ ] `GET /api/courier/me/balance` — `balance` (L147) · gardes: CourierGuard · perm: finance.read
-- [ ] `GET /api/courier/me/remittance` — `openRemittance` (L168) · gardes: CourierGuard · perm: finance.read · sortie: `Promise<CourierOpenRemittance>`
-- [ ] `POST /api/courier/me/remittance/close` — `closeRemittance` (L189) · gardes: CourierGuard · perm: finance.read · sortie: `Promise<CourierOpenRemittance>`
+- [x] `GET /api/courier/me/balance` — `balance` (L147) · gardes: CourierGuard · perm: finance.read
+- [x] `GET /api/courier/me/remittance` — `openRemittance` (L168) · gardes: CourierGuard · perm: finance.read · sortie: `Promise<CourierOpenRemittance>`
+- [x] `POST /api/courier/me/remittance/close` — `closeRemittance` (L189) · gardes: CourierGuard · perm: finance.read · sortie: `Promise<CourierOpenRemittance>`
 - [ ] `POST /api/courier/me/cheques` — `cheque` (L294) · gardes: CourierGuard · perm: finance.read · entrée: courierChequeSchema
 
 ### `modules/finance/cheque-slip.controller.ts`
 
-- [ ] `POST /api/cheques/slip` — `groupSlip` (L34) · gardes: NotMerchantGuard · perm: finance.read · entrée: chequeGroupSlipSchema · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/cheques/:id/slip` — `slip` (L51) · gardes: NotMerchantGuard · perm: finance.read · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/cheques/slip` — `groupSlip` (L34) · gardes: NotMerchantGuard · perm: finance.read · entrée: chequeGroupSlipSchema · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/cheques/:id/slip` — `slip` (L51) · gardes: NotMerchantGuard · perm: finance.read · sortie: `Promise<StreamableFile>`
 
 ### `modules/finance/cheques.controller.ts`
 
-- [ ] `GET /api/cheques` — `list` (L97) · perm: finance.read · entrée: chequeListQuerySchema
-- [ ] `GET /api/cheques/export` — `export` (L114) · perm: finance.read · entrée: chequeListQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/cheques/:id` — `detail` (L128) · perm: finance.read
-- [ ] `POST /api/cheques/bulk-advance` — `bulkAdvance` (L144) · gardes: NotMerchantGuard · perm: finance.read · entrée: chequeBulkSchema
-- [ ] `POST /api/cheques/:id/advance` — `advance` (L163) · gardes: NotMerchantGuard · perm: finance.read · entrée: chequeAdvanceSchema
-- [ ] `POST /api/cheques/:id/reject` — `reject` (L175) · gardes: NotMerchantGuard · perm: finance.read · entrée: chequeAdvanceSchema
-- [ ] `POST /api/cheques/:id/cancel` — `cancel` (L187) · gardes: NotMerchantGuard · perm: finance.read · entrée: chequeAdvanceSchema
+- [x] `GET /api/cheques` — `list` (L97) · perm: finance.read · entrée: chequeListQuerySchema
+- [x] `GET /api/cheques/export` — `export` (L114) · perm: finance.read · entrée: chequeListQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/cheques/:id` — `detail` (L128) · perm: finance.read
+- [x] `POST /api/cheques/bulk-advance` — `bulkAdvance` (L144) · gardes: NotMerchantGuard · perm: finance.read · entrée: chequeBulkSchema
+- [x] `POST /api/cheques/:id/advance` — `advance` (L163) · gardes: NotMerchantGuard · perm: finance.read · entrée: chequeAdvanceSchema
+- [x] `POST /api/cheques/:id/reject` — `reject` (L175) · gardes: NotMerchantGuard · perm: finance.read · entrée: chequeAdvanceSchema
+- [x] `POST /api/cheques/:id/cancel` — `cancel` (L187) · gardes: NotMerchantGuard · perm: finance.read · entrée: chequeAdvanceSchema
 
 ### `modules/finance/finance.controller.ts`
 
@@ -530,54 +530,54 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 - [ ] `GET /api/payments/export` — `export` (L481) · perm: finance.read · entrée: paymentListQuerySchema · sortie: `Promise<StreamableFile>`
 - [ ] `POST /api/payments` — `create` (L495) · perm: finance.pay · entrée: paymentSchema
 - [ ] `DELETE /api/payments/:id` — `remove` (L504) · perm: finance.pay
-- [ ] `GET /api/remittances` — `list` (L588) · gardes: NotMerchantGuard · perm: finance.read · entrée: remittanceListQuerySchema
-- [ ] `GET /api/remittances/export` — `export` (L599) · gardes: NotMerchantGuard · perm: finance.read · entrée: remittanceListQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/remittances/candidates` — `candidates` (L613) · gardes: NotMerchantGuard · perm: finance.read · entrée: remittanceCandidateQuerySchema
-- [ ] `GET /api/remittances/summary` — `remittanceSummary` (L627) · gardes: NotMerchantGuard · perm: finance.read · entrée: remittanceSummaryQuerySchema
-- [ ] `GET /api/remittances/:code` — `detail` (L637) · gardes: NotMerchantGuard · perm: finance.read
-- [ ] `POST /api/remittances` — `create` (L644) · gardes: NotMerchantGuard · perm: finance.write · entrée: remittanceCreateSchema
-- [ ] `POST /api/remittances/:code/parcels` — `addParcels` (L654) · gardes: NotMerchantGuard · perm: finance.write · entrée: remittanceParcelsSchema
-- [ ] `DELETE /api/remittances/:code/parcels/:parcelId` — `removeParcel` (L665) · gardes: NotMerchantGuard · perm: finance.write
-- [ ] `PATCH /api/remittances/:code/count` — `count` (L678) · gardes: NotMerchantGuard · perm: finance.write · entrée: remittanceCountSchema
-- [ ] `GET /api/remittances/:code/export` — `exportParcels` (L694) · gardes: NotMerchantGuard · perm: finance.read · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/remittances/:code/pdf` — `pdf` (L717) · gardes: NotMerchantGuard · perm: finance.read · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/remittances/:code/confirm` — `confirm` (L729) · gardes: NotMerchantGuard · perm: finance.confirm
-- [ ] `POST /api/remittances/:code/reopen` — `reopen` (L742) · gardes: NotMerchantGuard · perm: finance.confirm
-- [ ] `DELETE /api/remittances/:code` — `remove` (L749) · gardes: NotMerchantGuard · perm: finance.write
-- [ ] `GET /api/finance/dashboard` — `get` (L956) · gardes: NotMerchantGuard · perm: finance.read · entrée: dashboardQuerySchema
-- [ ] `GET /api/finance/overview` — `overviewGet` (L973) · gardes: NotMerchantGuard · perm: finance.read · entrée: financeOverviewQuerySchema
-- [ ] `GET /api/banks` — `listBanks` (L1189) · perm: finance.read
-- [ ] `GET /api/bank-accounts` — `listAccounts` (L1198) · gardes: NotMerchantGuard · perm: finance.read
-- [ ] `GET /api/couriers/:id/balance` — `balance` (L1220) · gardes: NotMerchantGuard · perm: finance.read
-- [ ] `POST /api/couriers/:id/balance/settlements` — `settle` (L1227) · gardes: NotMerchantGuard · perm: finance.pay · entrée: courierSettlementSchema
+- [x] `GET /api/remittances` — `list` (L588) · gardes: NotMerchantGuard · perm: finance.read · entrée: remittanceListQuerySchema
+- [x] `GET /api/remittances/export` — `export` (L599) · gardes: NotMerchantGuard · perm: finance.read · entrée: remittanceListQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/remittances/candidates` — `candidates` (L613) · gardes: NotMerchantGuard · perm: finance.read · entrée: remittanceCandidateQuerySchema
+- [x] `GET /api/remittances/summary` — `remittanceSummary` (L627) · gardes: NotMerchantGuard · perm: finance.read · entrée: remittanceSummaryQuerySchema
+- [x] `GET /api/remittances/:code` — `detail` (L637) · gardes: NotMerchantGuard · perm: finance.read
+- [x] `POST /api/remittances` — `create` (L644) · gardes: NotMerchantGuard · perm: finance.write · entrée: remittanceCreateSchema
+- [x] `POST /api/remittances/:code/parcels` — `addParcels` (L654) · gardes: NotMerchantGuard · perm: finance.write · entrée: remittanceParcelsSchema
+- [x] `DELETE /api/remittances/:code/parcels/:parcelId` — `removeParcel` (L665) · gardes: NotMerchantGuard · perm: finance.write
+- [x] `PATCH /api/remittances/:code/count` — `count` (L678) · gardes: NotMerchantGuard · perm: finance.write · entrée: remittanceCountSchema
+- [x] `GET /api/remittances/:code/export` — `exportParcels` (L694) · gardes: NotMerchantGuard · perm: finance.read · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/remittances/:code/pdf` — `pdf` (L717) · gardes: NotMerchantGuard · perm: finance.read · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/remittances/:code/confirm` — `confirm` (L729) · gardes: NotMerchantGuard · perm: finance.confirm
+- [x] `POST /api/remittances/:code/reopen` — `reopen` (L742) · gardes: NotMerchantGuard · perm: finance.confirm
+- [x] `DELETE /api/remittances/:code` — `remove` (L749) · gardes: NotMerchantGuard · perm: finance.write
+- [x] `GET /api/finance/dashboard` — `get` (L956) · gardes: NotMerchantGuard · perm: finance.read · entrée: dashboardQuerySchema
+- [x] `GET /api/finance/overview` — `overviewGet` (L973) · gardes: NotMerchantGuard · perm: finance.read · entrée: financeOverviewQuerySchema
+- [x] `GET /api/banks` — `listBanks` (L1189) · perm: finance.read
+- [x] `GET /api/bank-accounts` — `listAccounts` (L1198) · gardes: NotMerchantGuard · perm: finance.read
+- [x] `GET /api/couriers/:id/balance` — `balance` (L1220) · gardes: NotMerchantGuard · perm: finance.read
+- [x] `POST /api/couriers/:id/balance/settlements` — `settle` (L1227) · gardes: NotMerchantGuard · perm: finance.pay · entrée: courierSettlementSchema
 
 ### `modules/petty-cash/petty-cash-courier.controller.ts`
 
-- [ ] `GET /api/courier/me/petty-cash` — `list` (L93) · gardes: CourierGuard · perm: pettycash.courier · entrée: pettyCashCourierListQuerySchema
-- [ ] `GET /api/courier/me/petty-cash/export` — `export` (L109) · gardes: CourierGuard · perm: pettycash.courier · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/courier/me/petty-cash` — `create` (L120) · gardes: CourierGuard · perm: pettycash.courier · entrée: pettyCashCourierExpenseSchema
-- [ ] `PATCH /api/courier/me/petty-cash/:id` — `update` (L133) · gardes: CourierGuard · perm: pettycash.courier · entrée: pettyCashCourierExpenseSchema
-- [ ] `DELETE /api/courier/me/petty-cash/:id` — `remove` (L145) · gardes: CourierGuard · perm: pettycash.courier · sortie: `Promise<void>`
+- [x] `GET /api/courier/me/petty-cash` — `list` (L93) · gardes: CourierGuard · perm: pettycash.courier · entrée: pettyCashCourierListQuerySchema
+- [x] `GET /api/courier/me/petty-cash/export` — `export` (L109) · gardes: CourierGuard · perm: pettycash.courier · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/courier/me/petty-cash` — `create` (L120) · gardes: CourierGuard · perm: pettycash.courier · entrée: pettyCashCourierExpenseSchema
+- [x] `PATCH /api/courier/me/petty-cash/:id` — `update` (L133) · gardes: CourierGuard · perm: pettycash.courier · entrée: pettyCashCourierExpenseSchema
+- [x] `DELETE /api/courier/me/petty-cash/:id` — `remove` (L145) · gardes: CourierGuard · perm: pettycash.courier · sortie: `Promise<void>`
 
 ### `modules/petty-cash/petty-cash.controller.ts`
 
-- [ ] `GET /api/petty-cash` — `list` (L105) · perm: pettycash.read · entrée: pettyCashListFilterSchema
-- [ ] `GET /api/petty-cash/meta` — `meta` (L116) · perm: pettycash.read
-- [ ] `PUT /api/petty-cash/categories` — `setCategories` (L123) · perm: pettycash.write · entrée: pettyCashCategoriesSchema
-- [ ] `GET /api/petty-cash/export` — `export` (L135) · perm: pettycash.read · entrée: pettyCashListFilterSchema · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/petty-cash/pdf` — `pdf` (L150) · perm: pettycash.read · entrée: pettyCashListFilterSchema · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/petty-cash/days` — `days` (L167) · perm: pettycash.read · entrée: pettyCashDaysQuerySchema
-- [ ] `GET /api/petty-cash/days/:day` — `day` (L177) · perm: pettycash.read · entrée: pettyCashDayParamSchema, pettyCashDayCloseSchema
-- [ ] `POST /api/petty-cash/days/:day/close` — `closeDay` (L189) · perm: pettycash.write · entrée: pettyCashDayParamSchema, pettyCashDayCloseSchema
-- [ ] `POST /api/petty-cash/days/:day/reopen` — `reopenDay` (L201) · perm: pettycash.write · entrée: pettyCashDayParamSchema, pettyCashDayReopenSchema
-- [ ] `GET /api/petty-cash/days/:day/export` — `exportDay` (L214) · perm: pettycash.read · entrée: pettyCashDayParamSchema, pettyCashDayCloseSchema · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/petty-cash/days/:day/pdf` — `pdfDay` (L233) · perm: pettycash.read · entrée: pettyCashDayParamSchema, pettyCashDayCloseSchema · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/petty-cash` — `create` (L250) · perm: pettycash.write · entrée: pettyCashMovementSchema
-- [ ] `PATCH /api/petty-cash/:id` — `update` (L260) · perm: pettycash.write · entrée: pettyCashMovementSchema
-- [ ] `DELETE /api/petty-cash/:id` — `remove` (L272) · perm: pettycash.write · sortie: `Promise<void>`
-- [ ] `PATCH /api/petty-cash/:id/validate` — `validate` (L284) · perm: pettycash.write
-- [ ] `PATCH /api/petty-cash/:id/refuse` — `refuse` (L291) · perm: pettycash.write · entrée: pettyCashRefuseSchema
-- [ ] `GET /api/petty-cash/:id/proof` — `proof` (L303) · perm: pettycash.read · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/petty-cash` — `list` (L105) · perm: pettycash.read · entrée: pettyCashListFilterSchema
+- [x] `GET /api/petty-cash/meta` — `meta` (L116) · perm: pettycash.read
+- [x] `PUT /api/petty-cash/categories` — `setCategories` (L123) · perm: pettycash.write · entrée: pettyCashCategoriesSchema
+- [x] `GET /api/petty-cash/export` — `export` (L135) · perm: pettycash.read · entrée: pettyCashListFilterSchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/petty-cash/pdf` — `pdf` (L150) · perm: pettycash.read · entrée: pettyCashListFilterSchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/petty-cash/days` — `days` (L167) · perm: pettycash.read · entrée: pettyCashDaysQuerySchema
+- [x] `GET /api/petty-cash/days/:day` — `day` (L177) · perm: pettycash.read · entrée: pettyCashDayParamSchema, pettyCashDayCloseSchema
+- [x] `POST /api/petty-cash/days/:day/close` — `closeDay` (L189) · perm: pettycash.write · entrée: pettyCashDayParamSchema, pettyCashDayCloseSchema
+- [x] `POST /api/petty-cash/days/:day/reopen` — `reopenDay` (L201) · perm: pettycash.write · entrée: pettyCashDayParamSchema, pettyCashDayReopenSchema
+- [x] `GET /api/petty-cash/days/:day/export` — `exportDay` (L214) · perm: pettycash.read · entrée: pettyCashDayParamSchema, pettyCashDayCloseSchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/petty-cash/days/:day/pdf` — `pdfDay` (L233) · perm: pettycash.read · entrée: pettyCashDayParamSchema, pettyCashDayCloseSchema · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/petty-cash` — `create` (L250) · perm: pettycash.write · entrée: pettyCashMovementSchema
+- [x] `PATCH /api/petty-cash/:id` — `update` (L260) · perm: pettycash.write · entrée: pettyCashMovementSchema
+- [x] `DELETE /api/petty-cash/:id` — `remove` (L272) · perm: pettycash.write · sortie: `Promise<void>`
+- [x] `PATCH /api/petty-cash/:id/validate` — `validate` (L284) · perm: pettycash.write
+- [x] `PATCH /api/petty-cash/:id/refuse` — `refuse` (L291) · perm: pettycash.write · entrée: pettyCashRefuseSchema
+- [x] `GET /api/petty-cash/:id/proof` — `proof` (L303) · perm: pettycash.read · sortie: `Promise<StreamableFile>`
 
 ## Module 9 — Facturation
 

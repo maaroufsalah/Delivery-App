@@ -26,6 +26,14 @@ public abstract class ApiControllerBase(ISender sender) : ControllerBase
 
     protected async Task<IActionResult> FileOf(IRequest<FileContent> request) => FileResult(await Sender.Send(request, HttpContext.RequestAborted));
 
+    /// <summary>Un fichier rendu par un `@Post` Nest sans `@HttpCode` : 201, comme toute création.</summary>
+    protected async Task<IActionResult> CreatedFile(IRequest<FileContent> request)
+    {
+        var result = FileResult(await Sender.Send(request, HttpContext.RequestAborted));
+        Response.StatusCode = StatusCodes.Status201Created;
+        return result;
+    }
+
     protected IActionResult FileResult(FileContent file)
     {
         var disposition = file.Inline ? "inline" : "attachment";

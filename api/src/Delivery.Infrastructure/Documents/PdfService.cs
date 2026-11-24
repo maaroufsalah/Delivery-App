@@ -39,6 +39,10 @@ public sealed class PdfService : IPdfService
             BlNoteSheet note => ReturnDocumentsPdf.BlNote(note),
             ReturnHandoverSheet handover => ReturnDocumentsPdf.ReturnHandover(handover),
             ReturnSlipSheet slip => ReturnDocumentsPdf.ReturnSlip(slip),
+            RemittanceSheet remittance => FinanceDocumentsPdf.Remittance(remittance),
+            ChequeSlipSheet slip => FinanceDocumentsPdf.ChequeSlip(slip),
+            PettyCashSheet pettyCash => FinanceDocumentsPdf.PettyCash(pettyCash),
+            ChequeGroupSlipSheet slips => FinanceDocumentsPdf.ChequeGroupSlip(slips),
             _ => throw new NotSupportedException($"Document PDF inconnu : {document.GetType().Name}"),
         };
     }
