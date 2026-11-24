@@ -435,7 +435,7 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 
 ### `modules/staff/staff.controller.ts`
 
-- [ ] `GET /api/staff/me/alerts` — `list` (L32) · gardes: StaffGuard · perm: parcels.read · query: agencyId
+- [x] `GET /api/staff/me/alerts` — `list` (L32) · gardes: StaffGuard · perm: parcels.read · query: agencyId
 
 ## Module 7 — Retours
 
