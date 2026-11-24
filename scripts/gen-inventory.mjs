@@ -34,6 +34,8 @@ const ROUTE_MODULE = [
   [/^\/api\/public\/(company|logo|rates|mobile-config|cities)/, 3],
   [/^\/api\/public\/track/, 5],
   [/^\/api\/staff\/me\/alerts/, 6],
+  [/^\/api\/merchant\/me\/summary/, 5],
+  [/^\/api\/merchant\/me\/(pickups|dropoffs|notes)/, 6],
 ];
 
 const VERBS = ['Get', 'Post', 'Put', 'Patch', 'Delete'];

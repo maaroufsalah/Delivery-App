@@ -172,51 +172,47 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 
 ### `modules/clients/clients.controller.ts`
 
-- [ ] `GET /api/clients` — `list` (L85) · gardes: NotMerchantGuard · perm: directory.read · entrée: listQuerySchema · query: agencyId, validated
-- [ ] `GET /api/clients/export` — `export` (L104) · gardes: NotMerchantGuard · perm: directory.read · entrée: listQuerySchema · query: agencyId, validated · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/clients/:id` — `detail` (L120) · gardes: NotMerchantGuard · perm: directory.read
-- [ ] `POST /api/clients` — `create` (L127) · gardes: NotMerchantGuard · perm: directory.write · entrée: clientSchema
-- [ ] `PATCH /api/clients/:id` — `update` (L142) · gardes: NotMerchantGuard · perm: directory.write · entrée: clientPatchSchema
-- [ ] `PATCH /api/clients/:id/vat-rate` — `setVatRate` (L154) · gardes: NotMerchantGuard · perm: finance.validate · entrée: clientVatRateSchema
-- [ ] `PATCH /api/clients/:id/pickup-terms` — `setPickupTerms` (L166) · gardes: NotMerchantGuard · perm: finance.validate · entrée: clientPickupTermsSchema
-- [ ] `PATCH /api/clients/:id/active` — `setActive` (L177) · gardes: NotMerchantGuard · perm: directory.write · entrée: toggleActiveSchema
-- [ ] `PATCH /api/clients/:id/validation` — `setValidated` (L189) · gardes: NotMerchantGuard · perm: directory.write · entrée: toggleActiveSchema
-- [ ] `POST /api/clients/:id/validate` — `validate` (L208) · gardes: NotMerchantGuard · perm: directory.write · entrée: validateAccountSchema
-- [ ] `POST /api/clients/:id/reject` — `reject` (L220) · gardes: NotMerchantGuard · perm: directory.write · entrée: rejectAccountSchema
-- [ ] `POST /api/clients/:id/account` — `createAccount` (L233) · gardes: NotMerchantGuard · perm: accounts.write · entrée: createUserSchema
-- [ ] `DELETE /api/clients/:id` — `remove` (L244) · gardes: NotMerchantGuard · perm: directory.write
-- [ ] `POST /api/clients/:id/discounts` — `addDiscount` (L253) · gardes: NotMerchantGuard · perm: directory.write · entrée: clientDiscountSchema
-- [ ] `PATCH /api/clients/:id/discounts/:discountId` — `updateDiscount` (L264) · gardes: NotMerchantGuard · perm: directory.write · entrée: clientDiscountSchema
-- [ ] `DELETE /api/clients/:id/discounts/:discountId` — `removeDiscount` (L276) · gardes: NotMerchantGuard · perm: directory.write
-- [ ] `POST /api/clients/:id/pickup-addresses` — `addPickupAddress` (L289) · gardes: NotMerchantGuard · perm: directory.write · entrée: clientPickupAddressSchema
-- [ ] `DELETE /api/clients/:id/pickup-addresses/:addressId` — `removePickupAddress` (L300) · gardes: NotMerchantGuard · perm: directory.write
-- [ ] `POST /api/clients/:id/documents` — `addDocument` (L313) · gardes: NotMerchantGuard · perm: directory.write · entrée: clientDocumentSchema
-- [ ] `GET /api/clients/:id/documents/:documentId` — `readDocument` (L325) · gardes: NotMerchantGuard · perm: directory.read · sortie: `Promise<StreamableFile>`
-- [ ] `DELETE /api/clients/:id/documents/:documentId` — `removeDocument` (L343) · gardes: NotMerchantGuard · perm: directory.write
+- [x] `GET /api/clients` — `list` (L85) · gardes: NotMerchantGuard · perm: directory.read · entrée: listQuerySchema · query: agencyId, validated
+- [x] `GET /api/clients/export` — `export` (L104) · gardes: NotMerchantGuard · perm: directory.read · entrée: listQuerySchema · query: agencyId, validated · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/clients/:id` — `detail` (L120) · gardes: NotMerchantGuard · perm: directory.read
+- [x] `POST /api/clients` — `create` (L127) · gardes: NotMerchantGuard · perm: directory.write · entrée: clientSchema
+- [x] `PATCH /api/clients/:id` — `update` (L142) · gardes: NotMerchantGuard · perm: directory.write · entrée: clientPatchSchema
+- [x] `PATCH /api/clients/:id/vat-rate` — `setVatRate` (L154) · gardes: NotMerchantGuard · perm: finance.validate · entrée: clientVatRateSchema
+- [x] `PATCH /api/clients/:id/pickup-terms` — `setPickupTerms` (L166) · gardes: NotMerchantGuard · perm: finance.validate · entrée: clientPickupTermsSchema
+- [x] `PATCH /api/clients/:id/active` — `setActive` (L177) · gardes: NotMerchantGuard · perm: directory.write · entrée: toggleActiveSchema
+- [x] `PATCH /api/clients/:id/validation` — `setValidated` (L189) · gardes: NotMerchantGuard · perm: directory.write · entrée: toggleActiveSchema
+- [x] `POST /api/clients/:id/validate` — `validate` (L208) · gardes: NotMerchantGuard · perm: directory.write · entrée: validateAccountSchema
+- [x] `POST /api/clients/:id/reject` — `reject` (L220) · gardes: NotMerchantGuard · perm: directory.write · entrée: rejectAccountSchema
+- [x] `POST /api/clients/:id/account` — `createAccount` (L233) · gardes: NotMerchantGuard · perm: accounts.write · entrée: createUserSchema
+- [x] `DELETE /api/clients/:id` — `remove` (L244) · gardes: NotMerchantGuard · perm: directory.write
+- [x] `POST /api/clients/:id/discounts` — `addDiscount` (L253) · gardes: NotMerchantGuard · perm: directory.write · entrée: clientDiscountSchema
+- [x] `PATCH /api/clients/:id/discounts/:discountId` — `updateDiscount` (L264) · gardes: NotMerchantGuard · perm: directory.write · entrée: clientDiscountSchema
+- [x] `DELETE /api/clients/:id/discounts/:discountId` — `removeDiscount` (L276) · gardes: NotMerchantGuard · perm: directory.write
+- [x] `POST /api/clients/:id/pickup-addresses` — `addPickupAddress` (L289) · gardes: NotMerchantGuard · perm: directory.write · entrée: clientPickupAddressSchema
+- [x] `DELETE /api/clients/:id/pickup-addresses/:addressId` — `removePickupAddress` (L300) · gardes: NotMerchantGuard · perm: directory.write
+- [x] `POST /api/clients/:id/documents` — `addDocument` (L313) · gardes: NotMerchantGuard · perm: directory.write · entrée: clientDocumentSchema
+- [x] `GET /api/clients/:id/documents/:documentId` — `readDocument` (L325) · gardes: NotMerchantGuard · perm: directory.read · sortie: `Promise<StreamableFile>`
+- [x] `DELETE /api/clients/:id/documents/:documentId` — `removeDocument` (L343) · gardes: NotMerchantGuard · perm: directory.write
 
 ### `modules/couriers/couriers.controller.ts`
 
-- [ ] `GET /api/couriers` — `list` (L74) · gardes: NotMerchantGuard · perm: directory.read · entrée: listQuerySchema · query: agencyId, cityId, validated
-- [ ] `GET /api/couriers/export` — `export` (L94) · gardes: NotMerchantGuard · perm: directory.read · entrée: listQuerySchema · query: agencyId, cityId, validated · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/couriers/:id` — `detail` (L111) · gardes: NotMerchantGuard · perm: directory.read
-- [ ] `POST /api/couriers` — `create` (L118) · gardes: NotMerchantGuard · perm: directory.write · entrée: courierSchema
-- [ ] `PATCH /api/couriers/:id` — `update` (L125) · gardes: NotMerchantGuard · perm: directory.write · entrée: courierSchema
-- [ ] `PATCH /api/couriers/:id/active` — `setActive` (L136) · gardes: NotMerchantGuard · perm: directory.write · entrée: toggleActiveSchema
-- [ ] `PATCH /api/couriers/:id/validation` — `setValidated` (L147) · gardes: NotMerchantGuard · perm: directory.write · entrée: toggleActiveSchema
-- [ ] `PUT /api/couriers/:id/cities` — `setCities` (L159) · gardes: NotMerchantGuard · perm: directory.write · entrée: courierCitiesSchema
-- [ ] `POST /api/couriers/:id/validate` — `validate` (L178) · gardes: NotMerchantGuard · perm: directory.write · entrée: validateAccountSchema
-- [ ] `POST /api/couriers/:id/reject` — `reject` (L190) · gardes: NotMerchantGuard · perm: directory.write · entrée: rejectAccountSchema
-- [ ] `POST /api/couriers/:id/account` — `createAccount` (L201) · gardes: NotMerchantGuard · perm: accounts.write · entrée: createUserSchema
-- [ ] `DELETE /api/couriers/:id` — `remove` (L212) · gardes: NotMerchantGuard · perm: directory.write
+- [x] `GET /api/couriers` — `list` (L74) · gardes: NotMerchantGuard · perm: directory.read · entrée: listQuerySchema · query: agencyId, cityId, validated
+- [x] `GET /api/couriers/export` — `export` (L94) · gardes: NotMerchantGuard · perm: directory.read · entrée: listQuerySchema · query: agencyId, cityId, validated · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/couriers/:id` — `detail` (L111) · gardes: NotMerchantGuard · perm: directory.read
+- [x] `POST /api/couriers` — `create` (L118) · gardes: NotMerchantGuard · perm: directory.write · entrée: courierSchema
+- [x] `PATCH /api/couriers/:id` — `update` (L125) · gardes: NotMerchantGuard · perm: directory.write · entrée: courierSchema
+- [x] `PATCH /api/couriers/:id/active` — `setActive` (L136) · gardes: NotMerchantGuard · perm: directory.write · entrée: toggleActiveSchema
+- [x] `PATCH /api/couriers/:id/validation` — `setValidated` (L147) · gardes: NotMerchantGuard · perm: directory.write · entrée: toggleActiveSchema
+- [x] `PUT /api/couriers/:id/cities` — `setCities` (L159) · gardes: NotMerchantGuard · perm: directory.write · entrée: courierCitiesSchema
+- [x] `POST /api/couriers/:id/validate` — `validate` (L178) · gardes: NotMerchantGuard · perm: directory.write · entrée: validateAccountSchema
+- [x] `POST /api/couriers/:id/reject` — `reject` (L190) · gardes: NotMerchantGuard · perm: directory.write · entrée: rejectAccountSchema
+- [x] `POST /api/couriers/:id/account` — `createAccount` (L201) · gardes: NotMerchantGuard · perm: accounts.write · entrée: createUserSchema
+- [x] `DELETE /api/couriers/:id` — `remove` (L212) · gardes: NotMerchantGuard · perm: directory.write
 
 ### `modules/merchant/merchant.controller.ts`
 
-- [ ] `GET /api/merchant/me/summary` — `summary` (L50) · gardes: MerchantGuard · perm: parcels.read
-- [ ] `GET /api/merchant/me/company` — `company` (L77) · gardes: MerchantGuard · perm: directory.read
-- [ ] `PATCH /api/merchant/me/company` — `updateCompany` (L83) · gardes: MerchantGuard · entrée: merchantCompanySchema
-- [ ] `POST /api/merchant/me/pickups` — `requestPickup` (L94) · gardes: MerchantGuard · perm: notes.request · entrée: pickupRequestSchema
-- [ ] `POST /api/merchant/me/dropoffs` — `requestDropoff` (L112) · gardes: MerchantGuard · perm: notes.request · entrée: pickupRequestSchema
-- [ ] `DELETE /api/merchant/me/notes/:code` — `cancelNote` (L129) · gardes: MerchantGuard · perm: notes.request
+- [x] `GET /api/merchant/me/company` — `company` (L77) · gardes: MerchantGuard · perm: directory.read
+- [x] `PATCH /api/merchant/me/company` — `updateCompany` (L83) · gardes: MerchantGuard · entrée: merchantCompanySchema
 
 ## Module 5 — Colis
 
@@ -272,6 +268,10 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 - [ ] `GET /api/courier-stock/parcels/export` — `exportParcels` (L170) · perm: routes.stock · entrée: courierStockParcelExportQuerySchema · sortie: `Promise<StreamableFile>`
 - [ ] `GET /api/courier-stock/:courierId` — `detail` (L183) · perm: routes.stock · entrée: courierStockParcelQuerySchema
 - [ ] `GET /api/courier-stock/:courierId/pdf` — `courierPdf` (L195) · perm: routes.stock · entrée: courierStockParcelQuerySchema · sortie: `Promise<StreamableFile>`
+
+### `modules/merchant/merchant.controller.ts`
+
+- [ ] `GET /api/merchant/me/summary` — `summary` (L50) · gardes: MerchantGuard · perm: parcels.read
 
 ### `modules/parcels/exchanges.controller.ts`
 
@@ -382,6 +382,12 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 - [ ] `DELETE /api/storage-requests/:code` — `remove` (L137) · perm: warehouse.write
 
 ## Module 6 — Bons et circuits
+
+### `modules/merchant/merchant.controller.ts`
+
+- [ ] `POST /api/merchant/me/pickups` — `requestPickup` (L94) · gardes: MerchantGuard · perm: notes.request · entrée: pickupRequestSchema
+- [ ] `POST /api/merchant/me/dropoffs` — `requestDropoff` (L112) · gardes: MerchantGuard · perm: notes.request · entrée: pickupRequestSchema
+- [ ] `DELETE /api/merchant/me/notes/:code` — `cancelNote` (L129) · gardes: MerchantGuard · perm: notes.request
 
 ### `modules/routes/parcel-moves.controller.ts`
 

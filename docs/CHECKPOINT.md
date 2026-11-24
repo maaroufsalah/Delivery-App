@@ -12,23 +12,25 @@ Rapport final : `docs/chantiers/delivery-app-dotnet.md` (en fin de chantier). Ch
   `dp.at`/`dp.rt`, comptes, rôles, écarts, inscription publique, frein, health). 20 tests unitaires,
   45 tests de contrat verts. Seed : société `cmp-wimo`, permissions, super-admin `SEED_ADMIN_*`.
 
-## En cours — module 3 « Société et référentiel », PR ouverte depuis `feat/referential`
+## Fait (suite)
 
-68/68 routes : villes, zones (+ tarifs inter-zones), quartiers, agences (siège), types de
-livraison, `pricing-rules` (grille par origine, import/export xlsx), `directory/*`,
-`settings/*` (société, business, finance, logo SkiaSharp, thème + instantanés),
-`public/company|logo|rates|mobile-config|cities`. Seed : statuts + transitions
-(`scripts/ts/dump-statuses.mjs`), paramètres Wimo, « Livraison normale », zone/ville/agence
-Casablanca. Import CSV idempotent : `scripts/import-referential.sh <dossier>` (format dans
-`ReferentialImporter.cs`). Mobile : `PRODUCTION_API_ORIGIN` lu dans `EXPO_PUBLIC_API_URL`
-(eas.json production = `https://api-new.wimodelivery.ma`).
+- **PR 3 référentiel** (#3, fusionnée) : 68 routes (villes, zones, quartiers, agences, types, tarifs,
+  directory, settings, public), seed statuts/Casablanca, import CSV, logo SkiaSharp.
+
+## En cours — module 4 « Clients et livreurs », PR ouverte depuis `feat/accounts`
+
+35 routes : `/clients` (fiche, patch partiel, TVA Pro, frais de ramassage, validation/refus des
+inscriptions, compte, remises sans doublon, adresses, documents), `/couriers` (fiche, grille de paie
+par ville auditée, validation/refus, compte), `/merchant/me/company`. Rangées ailleurs :
+`/merchant/me/summary` → module 5, `/merchant/me/pickups|dropoffs|notes` → module 6.
 
 ## Prochaine action exacte
 
-1. Fusionner la PR du module 3 une fois la CI verte.
-2. Module 4 « Clients et livreurs » sur `feat/accounts` : lire `modules/clients`, `modules/couriers`,
-   `modules/merchant` de Speedy (inventaire section Module 4, 39 routes) ; y porter aussi la
-   validation/le refus des inscriptions et le masque livreur (`common/scope/courier-mask.ts`).
+1. Fusionner la PR du module 4 une fois la CI verte.
+2. Module 5 « Colis » sur `feat/parcels` (inventaire section Module 5) : commencer par
+   `modules/parcels/parcels.service.ts` (création, code colis, tarification), puis statuts/historique,
+   journal d'audit générique (`common/audit/audit.extension.ts`), masque livreur pour les vendeurs
+   (`common/scope/courier-mask.ts`), échanges, import Excel, étiquettes PDF.
 
 ## Blocages / décisions pour Salah
 
