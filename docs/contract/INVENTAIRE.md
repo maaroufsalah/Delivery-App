@@ -648,49 +648,49 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 
 ### `modules/announcements/announcements.controller.ts`
 
-- [ ] `GET /api/announcements` — `list` (L42) · perm: announcements.write · entrée: announcementFiltersSchema
-- [ ] `GET /api/announcements/feed` — `feed` (L56) · query: limit
-- [ ] `GET /api/announcements/:id` — `detail` (L62)
-- [ ] `GET /api/announcements/:id/image` — `image` (L69) · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/announcements` — `create` (L82) · perm: announcements.write · entrée: announcementSchema
-- [ ] `PATCH /api/announcements/:id` — `update` (L92) · perm: announcements.write · entrée: announcementSchema
-- [ ] `DELETE /api/announcements/:id` — `remove` (L103) · perm: announcements.write
+- [x] `GET /api/announcements` — `list` (L42) · perm: announcements.write · entrée: announcementFiltersSchema
+- [x] `GET /api/announcements/feed` — `feed` (L56) · query: limit
+- [x] `GET /api/announcements/:id` — `detail` (L62)
+- [x] `GET /api/announcements/:id/image` — `image` (L69) · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/announcements` — `create` (L82) · perm: announcements.write · entrée: announcementSchema
+- [x] `PATCH /api/announcements/:id` — `update` (L92) · perm: announcements.write · entrée: announcementSchema
+- [x] `DELETE /api/announcements/:id` — `remove` (L103) · perm: announcements.write
 
 ### `modules/claims/claims.controller.ts`
 
-- [ ] `GET /api/claims` — `list` (L64) · perm: claims.read · entrée: claimListQuerySchema
-- [ ] `GET /api/claims/export` — `export` (L80) · perm: claims.read · entrée: claimListQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/claims/counters` — `counters` (L95) · perm: claims.read
-- [ ] `GET /api/claims/types` — `listTypes` (L102) · perm: claims.read
-- [ ] `POST /api/claims/types` — `createType` (L109) · perm: settings.write · entrée: claimTypeSchema
-- [ ] `PATCH /api/claims/types/:id` — `updateType` (L116) · perm: settings.write · entrée: claimTypeSchema
-- [ ] `DELETE /api/claims/types/:id` — `removeType` (L127) · perm: settings.write
-- [ ] `POST /api/claims` — `create` (L134) · perm: claims.write · entrée: createClaimSchema
-- [ ] `GET /api/claims/:code` — `detail` (L141) · perm: claims.read
-- [ ] `POST /api/claims/:code/events` — `reply` (L150) · perm: claims.write · entrée: replyClaimSchema
-- [ ] `PATCH /api/claims/:code/assignee` — `assign` (L161) · perm: claims.handle · entrée: assignClaimSchema
-- [ ] `GET /api/claims/:code/attachments/:id` — `attachment` (L173) · perm: claims.read · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/claims` — `list` (L64) · perm: claims.read · entrée: claimListQuerySchema
+- [x] `GET /api/claims/export` — `export` (L80) · perm: claims.read · entrée: claimListQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/claims/counters` — `counters` (L95) · perm: claims.read
+- [x] `GET /api/claims/types` — `listTypes` (L102) · perm: claims.read
+- [x] `POST /api/claims/types` — `createType` (L109) · perm: settings.write · entrée: claimTypeSchema
+- [x] `PATCH /api/claims/types/:id` — `updateType` (L116) · perm: settings.write · entrée: claimTypeSchema
+- [x] `DELETE /api/claims/types/:id` — `removeType` (L127) · perm: settings.write
+- [x] `POST /api/claims` — `create` (L134) · perm: claims.write · entrée: createClaimSchema
+- [x] `GET /api/claims/:code` — `detail` (L141) · perm: claims.read
+- [x] `POST /api/claims/:code/events` — `reply` (L150) · perm: claims.write · entrée: replyClaimSchema
+- [x] `PATCH /api/claims/:code/assignee` — `assign` (L161) · perm: claims.handle · entrée: assignClaimSchema
+- [x] `GET /api/claims/:code/attachments/:id` — `attachment` (L173) · perm: claims.read · sortie: `Promise<StreamableFile>`
 
 ### `modules/dashboard/dashboard.controller.ts`
 
-- [ ] `GET /api/dashboard` — `get` (L81) · gardes: NotMerchantGuard, StaffGuard · perm: parcels.read · entrée: dashboardFiltersSchema
-- [ ] `GET /api/dashboard/series` — `series` (L94) · gardes: NotMerchantGuard, StaffGuard · perm: parcels.read · entrée: dashboardSeriesSchema
-- [ ] `GET /api/dashboard/couriers` — `couriers` (L105) · gardes: NotMerchantGuard, StaffGuard · perm: parcels.read · entrée: dashboardCouriersSchema
-- [ ] `GET /api/dashboard/cities` — `cities` (L116) · gardes: NotMerchantGuard, StaffGuard · perm: parcels.read · entrée: dashboardCitiesSchema
-- [ ] `GET /api/dashboard/clients` — `clients` (L133) · gardes: NotMerchantGuard, StaffGuard · perm: parcels.read · entrée: dashboardClientsSchema
-- [ ] `GET /api/dashboard/clients/:id` — `clientDetail` (L143) · gardes: NotMerchantGuard, StaffGuard · perm: parcels.read · entrée: dashboardFiltersSchema
-- [ ] `GET /api/dashboard/finance` — `finance` (L157) · gardes: NotMerchantGuard, StaffGuard · perm: finance.read · entrée: dashboardFiltersSchema
-- [ ] `GET /api/dashboard/routes` — `routes` (L167) · gardes: NotMerchantGuard, StaffGuard · perm: parcels.read · entrée: dashboardFiltersSchema
-- [ ] `GET /api/dashboard/delays` — `delays` (L177) · gardes: NotMerchantGuard, StaffGuard · perm: parcels.read · entrée: dashboardFiltersSchema
-- [ ] `GET /api/dashboard/alerts` — `alerts` (L187) · gardes: NotMerchantGuard, StaffGuard · perm: parcels.read · entrée: dashboardFiltersSchema
-- [ ] `GET /api/dashboard/export` — `export` (L204) · gardes: NotMerchantGuard, StaffGuard · perm: parcels.read · entrée: dashboardExportSchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/dashboard` — `get` (L81) · gardes: NotMerchantGuard, StaffGuard · perm: parcels.read · entrée: dashboardFiltersSchema
+- [x] `GET /api/dashboard/series` — `series` (L94) · gardes: NotMerchantGuard, StaffGuard · perm: parcels.read · entrée: dashboardSeriesSchema
+- [x] `GET /api/dashboard/couriers` — `couriers` (L105) · gardes: NotMerchantGuard, StaffGuard · perm: parcels.read · entrée: dashboardCouriersSchema
+- [x] `GET /api/dashboard/cities` — `cities` (L116) · gardes: NotMerchantGuard, StaffGuard · perm: parcels.read · entrée: dashboardCitiesSchema
+- [x] `GET /api/dashboard/clients` — `clients` (L133) · gardes: NotMerchantGuard, StaffGuard · perm: parcels.read · entrée: dashboardClientsSchema
+- [x] `GET /api/dashboard/clients/:id` — `clientDetail` (L143) · gardes: NotMerchantGuard, StaffGuard · perm: parcels.read · entrée: dashboardFiltersSchema
+- [x] `GET /api/dashboard/finance` — `finance` (L157) · gardes: NotMerchantGuard, StaffGuard · perm: finance.read · entrée: dashboardFiltersSchema
+- [x] `GET /api/dashboard/routes` — `routes` (L167) · gardes: NotMerchantGuard, StaffGuard · perm: parcels.read · entrée: dashboardFiltersSchema
+- [x] `GET /api/dashboard/delays` — `delays` (L177) · gardes: NotMerchantGuard, StaffGuard · perm: parcels.read · entrée: dashboardFiltersSchema
+- [x] `GET /api/dashboard/alerts` — `alerts` (L187) · gardes: NotMerchantGuard, StaffGuard · perm: parcels.read · entrée: dashboardFiltersSchema
+- [x] `GET /api/dashboard/export` — `export` (L204) · gardes: NotMerchantGuard, StaffGuard · perm: parcels.read · entrée: dashboardExportSchema · sortie: `Promise<StreamableFile>`
 
 ### `modules/notifications/notifications.controller.ts`
 
-- [ ] `POST /api/me/push-token` — `register` (L48) · entrée: pushTokenSchema
-- [ ] `DELETE /api/me/push-token` — `forget` (L55) · entrée: forgetTokenSchema
-- [ ] `GET /api/me/notification-feed` — `feed` (L73)
-- [ ] `POST /api/me/notification-feed/:id/read` — `markRead` (L81)
-- [ ] `POST /api/me/notification-feed/read-all` — `markAllRead` (L89)
-- [ ] `GET /api/me/notifications` — `settings` (L95)
-- [ ] `PATCH /api/me/notifications` — `setPreference` (L101) · entrée: notificationPreferenceSchema
+- [x] `POST /api/me/push-token` — `register` (L48) · entrée: pushTokenSchema
+- [x] `DELETE /api/me/push-token` — `forget` (L55) · entrée: forgetTokenSchema
+- [x] `GET /api/me/notification-feed` — `feed` (L73)
+- [x] `POST /api/me/notification-feed/:id/read` — `markRead` (L81)
+- [x] `POST /api/me/notification-feed/read-all` — `markAllRead` (L89)
+- [x] `GET /api/me/notifications` — `settings` (L95)
+- [x] `PATCH /api/me/notifications` — `setPreference` (L101) · entrée: notificationPreferenceSchema

@@ -36,6 +36,7 @@ public static class ApiSetup
         builder.Services.AddHostedService<Background.LabelJobWorker>();
         builder.Services.AddHostedService<Background.BulkJobWorker>();
         builder.Services.AddHostedService<Background.PettyCashSweepWorker>();
+        builder.Services.AddHostedService<Background.PushWorker>();
 
         builder.Services.ConfigureHttpJsonOptions(options => JsonDefaults.Apply(options.SerializerOptions));
         builder.Services

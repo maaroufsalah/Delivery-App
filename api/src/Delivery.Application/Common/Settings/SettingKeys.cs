@@ -47,6 +47,12 @@ public static class SettingKeys
     public const string SessionWebDays = "session.webDays";
     public const string SessionRememberDays = "session.rememberDays";
     public const string SessionMobileDays = "session.mobileDays";
+    public const string DashboardCodLateHours = "dashboard.codLateHours";
+    public const string DashboardStuckParcelDays = "dashboard.stuckParcelDays";
+    public const string DashboardCourierReturnRate = "dashboard.courierReturnRate";
+    public const string DashboardCityFailureRate = "dashboard.cityFailureRate";
+    public const string DashboardPerformanceDropPts = "dashboard.performanceDropPts";
+    public const string DashboardAlertMinParcels = "dashboard.alertMinParcels";
 }
 
 /// <summary>Lecture des paramètres société, surchargés par l'agence (`AppSettingsService.all`).</summary>

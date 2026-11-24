@@ -144,10 +144,32 @@ d'usage (`scripts/split-module.py`) ; balayage de portée `RoutesScopeSweepContr
   la liste des candidats et l'ajout manuel. Test `Bulk_invoice_skips_a_cod_already_paid_out_for_a_normal_client`.
 - Reproduit : `unpaidOnly=false` vaut « vrai » (`z.coerce.boolean`), frontière de mois en UTC.
 
+## Module 10 « Réclamations, notifications, tableaux de bord » sur `feat/engagement`
+
+37 routes ; 494/494 cochées. 66 tests unitaires, 127 de contrat.
+- Notifications (`me`) : jeton Expo (forme vérifiée), centre de notifications (50 dernières, non lues,
+  affectation d'un circuit clos masquée au livreur), réglages par sujet (critiques verrouillés).
+  Push : chaque `Notification` écrite part en file (intercepteur EF), un worker l'envoie à Expo
+  (lots de 100, 10 s, texte dans la langue de l'appareil, jetons `DeviceNotRegistered` supprimés).
+  Écart assumé : Speedy pousse dans la requête ; ici hors requête, et rien ne part si la transaction
+  est annulée. Worker inactif en environnement « Testing ».
+- Actualités : rédaction (brouillon, publication, image 1600 px), lecture par audience, retrait logique.
+- Réclamations RCL- : types, liste / export / compteurs, ouverture (vendeur, livreur sur colis confié,
+  agence pour un vendeur), fil (notes internes, transitions, pièces jointes), assignation.
+- Tableaux de bord (11 routes) : vue d'ensemble, séries, classements livreurs / villes / vendeurs,
+  fiche vendeur, finance, circuits, délais, alertes, export xlsx / csv (Speedy n'a pas de pdf).
+- Reproduit : réclamations non restreintes à l'agence pour le personnel ; `late=false` vaut vrai ;
+  statuts de réclamation non traduits à l'export ; `dashboard/clients/:id` lit le nom sans portée ;
+  agent sans agence : règlements, OV, écarts et solde livreur à l'échelle de la société ; alertes
+  « en retard » en heures depuis maintenant (UTC) ; nom du fichier csv à la date UTC.
+- Non reproduit à l'identique : date `from`/`to` hors calendrier (2026-02-30) recalée comme `Date.UTC`
+  mais renvoyée corrigée ; requêtes du tableau de bord en série (un seul DbContext).
+
 ## Prochaine action exacte
 
-1. Ouvrir la PR du module 9 (`feat/billing`), attendre la CI, fusionner, puis module 10 (réclamations,
-   annonces, notifications, tableaux de bord : 37 routes).
+1. PR du module 10, CI, fusion. Puis module 11 : `scripts/recette.sh` (curl, parcours admin /
+   vendeur / livreur) ; Docker absent du PC → jouable contre une pile locale (`API`, `WEB`) et en CI
+   (docker compose api + web + postgres). Puis rapport `docs/chantiers/delivery-app-dotnet.md`.
 
 ## Blocages / décisions pour Salah
 

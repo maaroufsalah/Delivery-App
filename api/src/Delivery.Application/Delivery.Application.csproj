@@ -13,6 +13,9 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Notifications\Resources\*.json" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Delivery.Domain\Delivery.Domain.csproj" />
   </ItemGroup>
 </Project>
