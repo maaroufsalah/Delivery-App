@@ -1,6 +1,7 @@
 using Delivery.Api.Auth;
 using Delivery.Application.Common.Models;
 using Delivery.Application.Warehouse.Products;
+using Delivery.Application.Warehouse.Imports;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -33,6 +34,10 @@ public sealed class ProductsController(ISender sender) : ApiControllerBase(sende
     [HttpPost("attributes/values")]
     [RequirePermission("warehouse.write")]
     public Task<IActionResult> CreateAttributeValue([FromBody] CreateProductAttributeValueCommand? body) => Created(body ?? new CreateProductAttributeValueCommand());
+
+    [HttpPost("import")]
+    [RequirePermission("warehouse.write")]
+    public Task<IActionResult> Import([FromBody] ImportProductsCommand? body) => Created(body ?? new ImportProductsCommand());
 
     [HttpGet("{id}")]
     [RequirePermission("warehouse.read")]
