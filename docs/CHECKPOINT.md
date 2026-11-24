@@ -22,23 +22,21 @@ Rapport final : `docs/chantiers/delivery-app-dotnet.md` (en fin de chantier). Ch
 
 ## En cours — module 5 « Colis » sur `feat/parcels` (non poussée)
 
-Fait (commit `feat(parcels): list, export, stats, detail…`) : `GET /parcels`, `/export`, `/stats`,
-`/:code` (fiche complète : événements, notes, journal, échanges, circuits, finance), `/next-code`,
-`POST /quote`, `POST /parcels` (idempotence, code réservé, tarif, quartier, agence). 4 tests verts.
-En cours, non commité : `POST /:code/events` (`ChangeParcelStatus.cs`), `FailureFees` (Domain),
-`Notifications/Notifier.cs` (lignes en base, préférences ; l'envoi push viendra au module 10).
+Fait et commité : liste, export, stats, fiche, next-code, quote, création (idempotence), changement
+de statut (gardes terminal/contestation/argent/circuit), fees, expected-payment, bl, notes, PATCH/DELETE
+vendeur, admin-delete (échange annulé avec), client (+preview, empreinte). 7 tests de contrat verts.
+`Notifications/Notifier.cs` : lignes en base + préférences ; l'envoi push viendra au module 10.
 
-**Reste au module 5** : fees, destination, PATCH/DELETE vendeur, admin-delete, client(+preview),
-expected-payment, bl, exchange, notes ; échanges ; import Excel ; étiquettes PDF + label-jobs ;
-bulk-jobs ; audit ; entrepôt (products, stock, storage-requests, orders) ; provider tokens + API ;
-courier/me ; public/track ; merchant/me/summary ; masque livreur.
+**Reste au module 5** : destination ; exchange + `/exchanges` ; import Excel ; étiquettes PDF +
+label-jobs ; bulk-jobs ; audit ; entrepôt (products, stock, storage-requests, orders) ; provider tokens
++ API ; courier/me ; public/track ; merchant/me/summary ; masque livreur.
 
 **Dettes à solder au module 6** : statut 13 « En cours de livraison » lève 500 « Mise en circuit
 indisponible » (comme Speedy sans `OutForDeliveryPlacer`) — brancher la mise en circuit.
 
 ## Prochaine action exacte
 
-1. Tests du changement de statut, commit, puis les écritures colis restantes (liste ci-dessus).
+1. `PATCH /parcels/:code/destination` (`parcels.service.ts` l. 2095-2471), puis la suite de la liste.
 
 ## Blocages / décisions pour Salah
 

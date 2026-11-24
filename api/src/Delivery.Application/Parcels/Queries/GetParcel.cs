@@ -25,7 +25,11 @@ public sealed class GetParcelHandler(IAppDbContext db, ICurrentUser caller, IMap
     public Task<ParcelDetailDto> Handle(GetParcelQuery request, CancellationToken cancellationToken) => LoadAsync(db, caller, mapper, request, cancellationToken);
 
     /// <summary>`detail` : relu aussi par les écritures qui rendent la fiche.</summary>
-    public static async Task<ParcelDetailDto> LoadAsync(IAppDbContext db, ICurrentUser caller, IMapper mapper, GetParcelQuery request, CancellationToken cancellationToken)
+    public static Task<ParcelDetailDto> LoadAsync(IAppDbContext db, ICurrentUser caller, IMapper mapper, GetParcelQuery request, CancellationToken cancellationToken) =>
+        LoadAsync<ParcelDetailDto>(db, caller, mapper, request, cancellationToken);
+
+    public static async Task<T> LoadAsync<T>(IAppDbContext db, ICurrentUser caller, IMapper mapper, GetParcelQuery request, CancellationToken cancellationToken)
+        where T : ParcelDetailDto, new()
     {
         var scoped = request.IncludeDeleted
             ? ParcelFilters.ScopedIncludingDeleted(db.Parcels.AsNoTracking(), caller)
@@ -72,7 +76,7 @@ public sealed class GetParcelHandler(IAppDbContext db, ICurrentUser caller, IMap
             .Select(i => new ParcelItemDto(i.ProductId, i.Product.Name, i.Product.Reference, i.Quantity)).ToListAsync(cancellationToken);
 
         var policy = await db.PricingPolicyAsync(cancellationToken, row.AgencyId);
-        var detail = ParcelViews.Fill(new ParcelDetailDto(), row, caller);
+        var detail = ParcelViews.Fill(new T(), row, caller);
         ParcelViews.Label(detail, row);
         detail.DeletedAt = row.DeletedAt;
         detail.ReturnFee = row.OriginCityId == row.DestinationCityId ? policy.FailureFeeSameCity : policy.FailureFeeCrossCity;

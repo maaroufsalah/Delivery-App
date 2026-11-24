@@ -269,4 +269,34 @@ public sealed class ParcelsContractTests(ApiFactory factory)
         detail.GetProperty("fieldChanges").EnumerateArray().Select(c => c.GetProperty("field").GetString()).ShouldContain("deletedAt");
         detail.GetProperty("fieldChanges").EnumerateArray().First(c => c.GetProperty("field").GetString() == "clientId").GetProperty("newLabel").GetString().ShouldBe(other.Name);
     }
+
+    [Fact]
+    public async Task Destination_change_reprices_and_journals()
+    {
+        var world = await WorldAsync();
+        var code = (await (await world.MerchantHttp.PostAsJsonAsync("/api/parcels", Body(world))).JsonAsync()).GetProperty("code").GetString();
+        var (_, rabat) = await TestData.CityAsync(factory, "Rabat");
+
+        var empty = await world.Admin.PatchAsJsonAsync($"/api/parcels/{code}/destination", new { reason = "x" });
+        empty.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        (await empty.JsonAsync()).GetProperty("details").GetProperty("issues")[0].GetProperty("path").GetString().ShouldBe("deliveryAddress");
+
+        var moved = await world.Admin.PatchAsJsonAsync($"/api/parcels/{code}/destination", new { destinationCityId = rabat.Id, destinationDistrictName = "Agdal", instructions = "Sonner", reason = "Client déménagé" });
+        moved.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var detail = await moved.JsonAsync();
+        detail.GetProperty("destinationCityId").GetString().ShouldBe(rabat.Id);
+        detail.GetProperty("destinationDistrictName").GetString().ShouldBe("Agdal");
+        detail.GetProperty("repricedFrom").GetInt64().ShouldBe(2000);
+        detail.GetProperty("repricedTo").GetInt64().ShouldBe(3000);
+        detail.GetProperty("deliveryFee").GetInt64().ShouldBe(3000);
+        detail.GetProperty("droppedFromRoutes").GetArrayLength().ShouldBe(0);
+        detail.GetProperty("notes")[0].GetProperty("body").GetString().ShouldBe("Sonner");
+        var fields = detail.GetProperty("fieldChanges").EnumerateArray().Select(c => c.GetProperty("field").GetString()).ToList();
+        fields.ShouldContain("destinationCityId");
+        fields.ShouldContain("deliveryFee");
+        detail.GetProperty("fieldChanges").EnumerateArray().First(c => c.GetProperty("field").GetString() == "destinationCityId").GetProperty("newLabel").GetString().ShouldBe("Rabat");
+
+        (await world.Admin.PatchAsJsonAsync($"/api/parcels/{code}/destination", new { destinationCityId = rabat.Id, reason = "x" })).StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        (await world.MerchantHttp.PatchAsJsonAsync($"/api/parcels/{code}/destination", new { deliveryAddress = "x", reason = "x" })).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
 }

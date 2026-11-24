@@ -87,4 +87,9 @@ public sealed partial class ParcelsController(ISender sender) : ApiControllerBas
     [RequirePermission("parcels.write")]
     [Guards(Guard.NotMerchant)]
     public Task<IActionResult> ChangeClient(string code, [FromBody] ChangeParcelClientCommand? body) => Ok((body ?? new ChangeParcelClientCommand()) with { Code = code });
+
+    [HttpPatch("{code}/destination")]
+    [RequirePermission("parcels.write")]
+    [Guards(Guard.NotMerchant)]
+    public Task<IActionResult> ChangeDestination(string code, [FromBody] ChangeParcelDestinationCommand? body) => Ok((body ?? new ChangeParcelDestinationCommand()) with { Code = code });
 }

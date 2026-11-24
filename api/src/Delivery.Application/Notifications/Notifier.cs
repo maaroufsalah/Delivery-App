@@ -51,6 +51,13 @@ public static class Notifier
         await DispatchAsync(db, userId is null ? [] : [userId], topic, parameters, data, cancellationToken);
     }
 
+    public static async Task NotifyCourierAsync(IAppDbContext db, string courierId, string topic, IReadOnlyDictionary<string, object> parameters, IReadOnlyDictionary<string, string> data, CancellationToken cancellationToken)
+    {
+        var userId = await db.Users.AsNoTracking().Where(u => u.Courier != null && u.Courier.Id == courierId && u.IsActive && u.DeletedAt == null)
+            .Select(u => u.Id).FirstOrDefaultAsync(cancellationToken);
+        await DispatchAsync(db, userId is null ? [] : [userId], topic, parameters, data, cancellationToken);
+    }
+
     public static async Task DispatchAsync(IAppDbContext db, IReadOnlyList<string> userIds, string topic, IReadOnlyDictionary<string, object> parameters, IReadOnlyDictionary<string, string> data, CancellationToken cancellationToken)
     {
         var definition = Find(topic);

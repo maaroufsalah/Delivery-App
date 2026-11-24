@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 namespace Delivery.Application.Parcels.Dtos;
 
 /// <summary>`ParcelDetail` : la fiche complète d'un colis.</summary>
-public sealed class ParcelDetailDto : ParcelListItemDto
+public class ParcelDetailDto : ParcelListItemDto
 {
     [JsonPropertyOrder(2)]
     public DateTime? DeletedAt { get; set; }
@@ -50,6 +50,19 @@ public sealed class ParcelDetailDto : ParcelListItemDto
 
     [JsonPropertyOrder(2)]
     public List<ParcelItemDto> Items { get; set; } = [];
+}
+
+/// <summary>Réponse de `PATCH /parcels/:code/destination` : la fiche, les circuits quittés, le nouveau tarif.</summary>
+public sealed class ParcelDestinationResultDto : ParcelDetailDto
+{
+    [JsonPropertyOrder(3)]
+    public List<string> DroppedFromRoutes { get; set; } = [];
+
+    [JsonPropertyOrder(3)]
+    public long? RepricedFrom { get; set; }
+
+    [JsonPropertyOrder(3)]
+    public long? RepricedTo { get; set; }
 }
 
 public sealed record ParcelCollectedDto(long Amount, long Cash, long Cheque);
