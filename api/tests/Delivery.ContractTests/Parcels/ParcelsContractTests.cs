@@ -490,4 +490,37 @@ public sealed class ParcelsContractTests(ApiFactory factory)
         var again = await (await world.MerchantHttp.PostAsJsonAsync("/api/parcels/import/preview", new { rows = new[] { rows[0] } })).JsonAsync();
         again.GetProperty("items")[0].GetProperty("errors")[0].GetProperty("code").GetString().ShouldBe("duplicate-external-code");
     }
+
+    [Fact]
+    public async Task Merchant_summary_and_courier_profile()
+    {
+        var world = await WorldAsync();
+        await world.MerchantHttp.PostAsJsonAsync("/api/parcels", Body(world));
+        var summary = await world.MerchantHttp.GetAsync("/api/merchant/me/summary");
+        summary.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var body = await summary.JsonAsync();
+        body.GetProperty("createdToday").GetInt32().ShouldBe(1);
+        body.GetProperty("parcelsTotal").GetInt32().ShouldBe(1);
+        body.GetProperty("parcels").GetProperty("awaiting").GetInt32().ShouldBe(1);
+        body.GetProperty("parcels").GetProperty("cancelled").GetInt32().ShouldBe(0);
+        body.GetProperty("billingType").GetString().ShouldBe("normal");
+        body.GetProperty("activity").GetArrayLength().ShouldBe(1);
+        body.GetProperty("codToReceive").GetInt64().ShouldBe(0);
+        (await world.Admin.GetAsync("/api/merchant/me/summary")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        var user = await TestData.UserAsync(factory, RoleName.COURIER);
+        var courier = new Courier { UserId = user.Id, FirstName = "Hamid", LastName = "B", Phone = "0600000009", CityId = world.City.Id };
+        await factory.ExecuteDbAsync(async db =>
+        {
+            db.Couriers.Add(courier);
+            await db.SaveChangesAsync();
+        });
+        var courierHttp = await TestData.ClientForAsync(factory, user);
+        var me = await (await courierHttp.GetAsync("/api/courier/me")).JsonAsync();
+        me.GetProperty("id").GetString().ShouldBe(courier.Id);
+        me.GetProperty("agencyId").GetString().ShouldBe(world.Agency.Id);
+        me.GetProperty("agencyName").GetString().ShouldBe(world.Agency.Name);
+        me.GetProperty("vehicleType").GetString().ShouldNotBeNullOrEmpty();
+        (await world.MerchantHttp.GetAsync("/api/courier/me")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
 }

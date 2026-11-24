@@ -42,6 +42,10 @@ const ROUTE_MODULE = [
   [/^\/api\/courier-stock/, 6],
   // Le statut poussé par un prestataire passe par les issues de circuit et la correction de statut.
   [/^\/api\/provider\/parcels/, 6],
+  // Les tâches de masse ne naissent que des circuits ; issues et performance lisent les circuits.
+  [/^\/api\/bulk-jobs/, 6],
+  [/^\/api\/courier\/parcels\/:code\/outcomes/, 6],
+  [/^\/api\/courier\/me\/performance/, 6],
   // Sa caisse (chèques, solde, retour de fonds) : avec la caisse.
   [/^\/api\/courier\/me\/(cheques|balance|remittance)/, 8],
 ];

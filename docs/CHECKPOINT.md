@@ -20,29 +20,30 @@ Rapport final : `docs/chantiers/delivery-app-dotnet.md` (en fin de chantier). Ch
 - **PR 4 comptes** (#4, fusionnée) : 35 routes clients/livreurs/merchant company. Journal d'audit
   générique (`AuditInterceptor`, 64 entités) commité en tête de `feat/parcels`.
 
-## En cours — module 5 « Colis » sur `feat/parcels` (non poussée)
+## En cours — module 5 « Colis », PR ouverte depuis `feat/parcels`
 
-Fait et commité : liste, export, stats, fiche, next-code, quote, création (idempotence), statut,
-fees, expected-payment, bl, notes, PATCH/DELETE vendeur, admin-delete, client (+preview), destination
-(retarification, sortie des circuits), échanges (`/exchanges` + `POST /parcels/:code/exchange`, RET-/ECH-),
-étiquettes PDF QuestPDF (classique et à la marque, Noto copiées de Speedy, QR, Code 128), label-jobs
-(file en mémoire + `LabelJobWorker`), suivi public, import Excel (modèle, aperçu, anomalies, historique,
-rapport ; tables générées par `scripts/ts/dump-import.mjs`). 12 tests de contrat colis, 74 au total.
+90 routes (220/494 cochées) : colis (liste, fiche, création idempotente, statut, frais, destination,
+vendeur, admin, client, BL, notes), échanges, étiquettes PDF + label-jobs, suivi public, import Excel,
+entrepôt (produits, stock, entreposages + bon de réception PDF, commandes, imports), jetons
+prestataires, audit technique + journal métier, merchant/me/summary, courier/me. 78 tests de contrat,
+44 unitaires. Rangées au module 6 (remap `gen-inventory.mjs`) : `courier/me/{notes,routes,deliveries,
+scan,performance}`, `courier/parcels/:code/*`, `courier-stock`, `provider/parcels/:code/status`,
+`bulk-jobs` ; au module 8 : `courier/me/{cheques,balance,remittance}`.
 
-**Reste au module 5** : entrepôt (products, stock, storage-requests, orders) ; provider tokens + API ;
-audit + journal ; bulk-jobs ; merchant/me/summary ; courier/parcels/:code/outcomes, courier/me,
-performance ; masque livreur. Les routes `courier/me/*` liées aux circuits (routes, scan, dispatch,
-notes, deliveries, removeParcel, pickupNote, `courier/parcels/:code/status|proof`) et `courier-stock`
-→ module 6 ; `courier/me/cheques|balance|remittance` → module 8 (remap `gen-inventory.mjs`).
+**Écarts à reporter dans le rapport final** : journal sans la reprise des anciens `UPDATE_MANY`
+(aucune ligne de ce type n'est écrite ici) ; mise en page des étiquettes et du bon de réception
+reprise à l'identique en contenu, rendu QuestPDF (à vérifier en recette) ; logo de marque non
+« assombri » (`logoForLightBackground`) ; `POST /exchanges` reproduit le COD ×100 de Speedy.
 
-**Dettes à solder au module 6** : statut 13 « En cours de livraison » lève 500 « Mise en circuit
-indisponible » (comme Speedy sans `OutForDeliveryPlacer`) — brancher la mise en circuit ; rejouer la
-clôture automatique des circuits quittés après un changement de destination (`replayAutoClose`).
-Module 10 : envoi push des notifications (Expo).
+**Dettes à solder au module 6** : statut 13 « En cours de livraison » (500 « Mise en circuit
+indisponible », comme Speedy sans `OutForDeliveryPlacer`) ; `replayAutoClose` après changement de
+destination. Module 10 : envoi push (Expo) des notifications.
 
 ## Prochaine action exacte
 
-1. Entrepôt (`modules/warehouse/*`), puis la suite de la liste « Reste au module 5 ».
+1. CI verte puis fusion de la PR du module 5.
+2. Module 6 « Bons et circuits » sur `feat/routes` : `modules/routes/*`, `modules/courier/*` (statut,
+   scan, activité), `courier-stock`, `bulk-jobs`, `provider-status.service.ts`, notes de ramassage.
 
 ## Blocages / décisions pour Salah
 

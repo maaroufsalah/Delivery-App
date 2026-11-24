@@ -69,6 +69,10 @@ public sealed class CouriersController(ISender sender) : ApiControllerBase(sende
 [Guards(Guard.Merchant)]
 public sealed class MerchantController(ISender sender) : ApiControllerBase(sender)
 {
+    [HttpGet("summary")]
+    [RequirePermission("parcels.read")]
+    public Task<IActionResult> Summary() => Ok(new GetMerchantSummaryQuery());
+
     [HttpGet("company")]
     [RequirePermission("directory.read")]
     public Task<IActionResult> Company() => Ok(new GetMerchantCompanyQuery());
