@@ -38,6 +38,138 @@ internal static class FinanceDocumentsPdf
         c.Item().PaddingTop(16).LineHorizontal(0.6f).LineColor(Ink);
     });
 
+    /// <summary>`SlipHeader` : logo assombri (36 pt de haut), raison sociale, code, date d'impression et QR.</summary>
+    private static void SlipHeader(ColumnDescriptor column, PdfCompany company, byte[]? logo, string subtitle, string code, DateTime printedAt)
+    {
+        column.Item().Row(row =>
+        {
+            row.RelativeItem().Column(head =>
+            {
+                if (LabelLogo.ForLightBackground(logo) is { } image) head.Item().PaddingBottom(6).Height(36).MaxWidth(160).AlignLeft().Image(image).FitArea();
+                head.Item().Text(PdfText.Truncate(company.Title, 34)).FontSize(15).Bold();
+                head.Item().PaddingTop(2).Text(subtitle).FontColor(Muted);
+                foreach (var line in company.HeaderLines()) head.Item().Text(PdfText.Truncate(line, 52)).FontColor(Muted);
+            });
+            row.AutoItem().Column(right =>
+            {
+                right.Item().AlignRight().Text(code).FontSize(14).Bold().LetterSpacing(0.04f);
+                right.Item().AlignRight().Text($"Le {Exports.DateTimeText(printedAt)}").FontColor(Muted);
+                right.Item().AlignRight().PaddingTop(4).Width(62).Height(62).Image(PdfService.Qr(code));
+            });
+        });
+        BusinessDocuments.Rule(column);
+    }
+
+    /// <summary>`SignatureBox` : cadre de 240 pt, nom sur la première ligne, filets gris pour la date et la signature.</summary>
+    private static void SignatureBox(IContainer container, string title, string name, IReadOnlyList<string> lines) =>
+        container.Width(240).MinHeight(150).Border(0.8f).BorderColor(Ink).Padding(10).Column(box =>
+        {
+            BusinessDocuments.Caption(box.Item(), title);
+            for (var i = 0; i < lines.Count; i++)
+            {
+                var last = i == lines.Count - 1;
+                box.Item().PaddingTop(last ? 14 : 10).Column(entry =>
+                {
+                    entry.Item().Text(text =>
+                    {
+                        text.Span($"{lines[i]} : ").FontColor(Muted);
+                        if (i == 0) text.Span(name).FontColor(Ink);
+                    });
+                    if (i > 0) entry.Item().PaddingTop(last ? 34 : 12).LineHorizontal(0.4f).LineColor("#999999");
+                });
+            }
+        });
+
+    private static void SlipSignatures(ColumnDescriptor column, float top, string courierName, string clientName, string courierLast)
+    {
+        column.Item().PaddingTop(top).Row(row =>
+        {
+            SignatureBox(row.AutoItem(), "Remis par (livreur)", courierName, ["Nom", "Date", courierLast]);
+            row.RelativeItem();
+            SignatureBox(row.AutoItem(), "Reçu par le vendeur", clientName, ["Nom", "Date", "Signature et cachet"]);
+        });
+    }
+
+    public static byte[] ChequeSlip(ChequeSlipSheet s)
+    {
+        const string footer = "Ce bon atteste la remise du chèque au vendeur ; il ne change pas son statut.";
+        (string Label, string Value, bool Strong)[] rows =
+        [
+            ("N° du chèque", s.Number, true), ("Banque", s.Bank ?? "—", false), ("Montant", PdfText.Amount(s.Amount), true), ("Colis", s.ParcelCode, true),
+            ("Vendeur", s.ClientName, false), ("Livreur", s.CourierName, false), ("Destinataire (tireur)", s.RecipientName, false),
+        ];
+        return Document.Create(container => BusinessDocuments.Page(container, s.Company, footer, column =>
+        {
+            SlipHeader(column, s.Company, s.Logo, "Bon de remise de chèque", s.Code, s.PrintedAt);
+            column.Item().PaddingTop(8).Column(list =>
+            {
+                foreach (var (label, value, strong) in rows)
+                {
+                    list.Item().ShowEntire().BorderBottom(0.4f).BorderColor(BusinessDocuments.RowRule).PaddingVertical(5).PaddingHorizontal(6).Row(row =>
+                    {
+                        BusinessDocuments.Caption(row.ConstantItem(150), label);
+                        var text = row.RelativeItem().Text(PdfText.Truncate(value, 60)).FontSize(11);
+                        if (strong) text.Bold();
+                    });
+                }
+            });
+            SlipSignatures(column, 40, s.CourierName, s.ClientName, "Signature");
+        })).WithMetadata(new DocumentMetadata { Title = s.Code }).GeneratePdf();
+    }
+
+    public static byte[] ChequeGroupSlip(ChequeGroupSlipSheet sheet)
+    {
+        const string footer = "Ce bon atteste la remise des chèques au vendeur ; il ne change pas leur statut.";
+        return Document.Create(container =>
+        {
+            foreach (var slip in sheet.Slips)
+            {
+                var total = slip.Cheques.Sum(c => c.Amount);
+                var count = slip.Cheques.Count;
+                BusinessDocuments.Page(container, sheet.Company, footer, column =>
+                {
+                    SlipHeader(column, sheet.Company, sheet.Logo, "Bon de remise de chèques", slip.Code, sheet.PrintedAt);
+                    column.Item().Row(row =>
+                    {
+                        BusinessDocuments.Caption(row.ConstantItem(70), "Vendeur");
+                        row.RelativeItem().Text(PdfText.Truncate(slip.ClientName, 60)).Bold();
+                    });
+                    column.Item().PaddingTop(12).Background("#F1F1F1").PaddingVertical(5).PaddingHorizontal(6).Row(head =>
+                    {
+                        BusinessDocuments.Caption(head.ConstantItem(80), "N° chèque");
+                        BusinessDocuments.Caption(head.ConstantItem(70), "Banque");
+                        BusinessDocuments.Caption(head.ConstantItem(78).AlignRight(), "Montant");
+                        BusinessDocuments.Caption(head.ConstantItem(100).PaddingLeft(8), "Colis");
+                        BusinessDocuments.Caption(head.ConstantItem(90), "Livreur");
+                        BusinessDocuments.Caption(head.RelativeItem(), "Tireur");
+                    });
+                    foreach (var cheque in slip.Cheques)
+                    {
+                        ReturnDocumentsPdf.Line(column, row =>
+                        {
+                            row.ConstantItem(80).Text(PdfText.Truncate(cheque.Number, 14)).Bold();
+                            row.ConstantItem(70).Text(PdfText.Truncate(cheque.Bank ?? "—", 12));
+                            row.ConstantItem(78).AlignRight().Text(PdfText.Amount(cheque.Amount));
+                            row.ConstantItem(100).PaddingLeft(8).Text(cheque.ParcelCode);
+                            row.ConstantItem(90).Text(PdfText.Truncate(cheque.CourierName, 16));
+                            row.RelativeItem().Text(PdfText.Truncate(cheque.PayerName, 22));
+                        });
+                    }
+                    column.Item().ShowEntire().Column(end =>
+                    {
+                        end.Item().PaddingTop(10).Row(row =>
+                        {
+                            row.AutoItem().Text($"{count} chèque{(count > 1 ? "s" : string.Empty)}").Bold();
+                            row.RelativeItem();
+                            row.AutoItem().Text($"Total : {PdfText.Amount(total)}").FontSize(11).Bold();
+                        });
+                        SlipSignatures(end, 36, slip.CourierName ?? string.Empty, slip.ClientName, "Signature");
+                    });
+                });
+            }
+        }).WithMetadata(new DocumentMetadata { Title = string.Join(" · ", sheet.Slips.Select(s => s.Code)) }).GeneratePdf();
+    }
+
     public static byte[] Remittance(RemittanceSheet r)
     {
         const string footer = "Montants figés à la confirmation. Le cash d’un colis ne remonte qu’une seule fois.";
