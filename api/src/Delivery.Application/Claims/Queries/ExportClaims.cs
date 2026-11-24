@@ -31,7 +31,7 @@ internal sealed class ExportClaimsHandler(IAppDbContext db, ICurrentUser caller,
     public async Task<FileContent> Handle(ExportClaimsQuery input, CancellationToken cancellationToken)
     {
         var now = clock.UtcNow;
-        var (rows, _, _) = ClaimRows.Filter(db, caller, input.Filter, now);
+        var (rows, _, _) = await ClaimRows.FilterAsync(db, caller, input.Filter, now, cancellationToken);
         Exports.AssertWithinLimit(await rows.CountAsync(cancellationToken));
         var items = await rows.OrderByDescending(c => c.CreatedAt).Select(ClaimRows.Row).ToListAsync(cancellationToken);
         return await Exports.ToXlsxAsync(db, excel, clock, caller, "Réclamations", Columns, items.Select(r => ClaimRows.Item(r, now)).ToList(), cancellationToken);

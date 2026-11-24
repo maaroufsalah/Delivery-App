@@ -13,7 +13,7 @@ internal sealed class GetClaimAttachmentHandler(IAppDbContext db, ICurrentUser c
 {
     public async Task<FileContent> Handle(GetClaimAttachmentQuery input, CancellationToken cancellationToken)
     {
-        var claims = ClaimRows.Scoped(db.Claims.AsNoTracking(), caller).Where(c => c.Code == input.Code).Select(c => c.Id);
+        var claims = (await ClaimRows.ScopedAsync(db, db.Claims.AsNoTracking(), caller, cancellationToken)).Where(c => c.Code == input.Code).Select(c => c.Id);
         var row = await db.ClaimAttachments.AsNoTracking().Where(a => a.Id == input.Id && claims.Contains(a.ClaimId))
             .Select(a => new { a.Filename, a.MimeType, a.StorageKey, Internal = a.Event != null && a.Event.IsInternal }).FirstOrDefaultAsync(cancellationToken);
         if (row is null || (row.Internal && !ClaimRows.CanHandle(caller))) throw BusinessException.NotFound("Pièce jointe introuvable.");

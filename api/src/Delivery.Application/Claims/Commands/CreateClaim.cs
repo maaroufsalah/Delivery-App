@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Delivery.Application.Common.Documents;
 using Delivery.Application.Common.Interfaces;
+using Delivery.Application.Common.Security;
 using Delivery.Application.Common.Settings;
 using Delivery.Application.Common.Validation;
 using Delivery.Application.Notifications;
@@ -51,6 +52,12 @@ internal sealed class CreateClaimHandler(IAppDbContext db, ICurrentUser caller, 
             parcelId = await db.Parcels.AsNoTracking().Where(p => p.Code == parcelCode && p.ClientId == clientId && p.DeletedAt == null).Select(p => p.Id).FirstOrDefaultAsync(cancellationToken)
                        ?? throw BusinessException.Validation($"Colis introuvable chez cet e-commerçant : {parcelCode}", new { field = "parcelCode" });
         }
+        var claimAgency = await ClaimRows.AgencyOfAsync(db, parcelId, clientId, cancellationToken);
+        if (!caller.IsSuperAdmin() && caller.ClientId is null && caller.CourierId is null
+            && (claimAgency is null || !(await ClaimRows.AgenciesAsync(db, caller, cancellationToken)).Contains(claimAgency)))
+        {
+            throw BusinessException.Forbidden("Cette réclamation relève d’une autre agence.", new { reason = "claim-other-agency" });
+        }
         var now = clock.UtcNow;
         var dueAt = await DueDateAsync(now, cancellationToken);
         var author = await ClaimRows.AuthorNameAsync(db, caller.UserId, cancellationToken);
@@ -85,8 +92,9 @@ internal sealed class CreateClaimHandler(IAppDbContext db, ICurrentUser caller, 
             await ClaimRows.RemoveAllAsync(storage, files);
             throw;
         }
-        await Notifier.NotifyStaffAsync(db, caller.AgencyId, "claim-opened", "claims.read", new Dictionary<string, object> { ["code"] = code },
-            new Dictionary<string, string> { ["claimCode"] = code }, cancellationToken);
+        // Les agents de l'agence de la réclamation (ceux qui peuvent l'ouvrir) et les super-admins.
+        await Notifier.NotifyStaffAsync(db, claimAgency ?? caller.AgencyId, "claim-opened", "claims.read", new Dictionary<string, object> { ["code"] = code },
+            new Dictionary<string, string> { ["claimCode"] = code }, cancellationToken, withSuperAdmins: true);
         return await ClaimRows.DetailAsync(db, caller, clock, code, cancellationToken);
     }
 

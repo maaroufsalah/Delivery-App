@@ -1,0 +1,91 @@
+# Pile de production Wimo-Delivery .NET (API .NET + web Speedy + PostgreSQL).
+# Chemin VPS : /opt/wimo-delivery/app-dotnet (checkout détaché de `main`), fichier d'environnement
+# hors Git : /opt/wimo-delivery/app-dotnet.env (voir deploy/.env.example).
+#
+#   docker compose -p wimo-delivery-dotnet -f deploy/docker-compose.prod.yml --env-file ../app-dotnet.env up -d --build
+#
+# Rien n'est publié sur l'interface publique : api et web écoutent sur 127.0.0.1 et nginx
+# termine le TLS (new.wimodelivery.ma → web, api-new.wimodelivery.ma → api). Base, volumes et
+# réseau portent des noms distincts de la pile NestJS : les deux piles coexistent.
+name: wimo-delivery-dotnet
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER manquant}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD manquant}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB manquant}
+      POSTGRES_INITDB_ARGS: '--locale-provider=icu --icu-locale=fr-FR --encoding=UTF8'
+      TZ: Africa/Casablanca
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - internal
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  api:
+    build:
+      context: ../api
+    image: wimo-delivery-dotnet-api:${APP_VERSION:-local}
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_URLS: http://+:5080
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Default: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      WEB_ORIGIN: ${WEB_ORIGIN:?WEB_ORIGIN manquant}
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN:-}
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?JWT_ACCESS_SECRET manquant}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET manquant}
+      LUCKYPENNY_LICENSE_KEY: ${LUCKYPENNY_LICENSE_KEY:-}
+      MIGRATE_ON_STARTUP: 'true'
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
+      UPLOADS_DIR: /app/uploads
+      TZ: Africa/Casablanca
+    volumes:
+      - uploads-data:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - internal
+    ports:
+      - '127.0.0.1:${API_HOST_PORT:-3113}:5080'
+
+  web:
+    build:
+      context: ..
+      dockerfile: docker/web.Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:?PUBLIC_API_URL manquant}
+        NEXT_PUBLIC_PLATFORM_DOMAIN: ${PLATFORM_DOMAIN:-wimodelivery.ma}
+    image: wimo-delivery-dotnet-web:${APP_VERSION:-local}
+    restart: unless-stopped
+    environment:
+      API_URL: http://api:5080/api
+      TZ: Africa/Casablanca
+    depends_on:
+      - api
+    networks:
+      - internal
+    ports:
+      - '127.0.0.1:${WEB_HOST_PORT:-3112}:3000'
+
+networks:
+  internal:
+    name: wimo-delivery-dotnet_net
+    driver: bridge
+
+volumes:
+  postgres-data:
+    name: wimo-delivery-dotnet-postgres-data
+  uploads-data:
+    name: wimo-delivery-dotnet-uploads-data

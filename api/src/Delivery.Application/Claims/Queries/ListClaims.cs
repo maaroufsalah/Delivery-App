@@ -13,7 +13,7 @@ internal sealed class ListClaimsHandler(IAppDbContext db, ICurrentUser caller, I
     public async Task<Paginated<ClaimListItemDto>> Handle(ListClaimsQuery input, CancellationToken cancellationToken)
     {
         var now = clock.UtcNow;
-        var (rows, page, pageSize) = ClaimRows.Filter(db, caller, input.Filter, now);
+        var (rows, page, pageSize) = await ClaimRows.FilterAsync(db, caller, input.Filter, now, cancellationToken);
         var total = await rows.CountAsync(cancellationToken);
         var items = await rows.OrderByDescending(c => c.CreatedAt).Skip((page - 1) * pageSize).Take(pageSize).Select(ClaimRows.Row).ToListAsync(cancellationToken);
         return new Paginated<ClaimListItemDto>(items.Select(r => ClaimRows.Item(r, now)).ToList(), total, page, pageSize);

@@ -38,7 +38,7 @@ internal sealed class ReplyClaimHandler(IAppDbContext db, ICurrentUser caller, I
 {
     public async Task<ClaimDetailDto> Handle(ReplyClaimCommand input, CancellationToken cancellationToken)
     {
-        var claim = await ClaimRows.Scoped(db.Claims, caller).FirstOrDefaultAsync(c => c.Code == input.Code, cancellationToken)
+        var claim = await (await ClaimRows.ScopedAsync(db, db.Claims, caller, cancellationToken)).FirstOrDefaultAsync(c => c.Code == input.Code, cancellationToken)
                     ?? throw BusinessException.NotFound($"Réclamation introuvable : {input.Code}");
         var handler = ClaimRows.CanHandle(caller);
         var from = ClaimRows.Wire(claim.Status);
