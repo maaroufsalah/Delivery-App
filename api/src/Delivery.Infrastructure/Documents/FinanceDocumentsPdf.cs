@@ -252,6 +252,74 @@ internal static class FinanceDocumentsPdf
         })).WithMetadata(new DocumentMetadata { Title = "Petite caisse" }).GeneratePdf();
     }
 
+    private static readonly Dictionary<string, string> StatementStates = new() { ["draft"] = "Brouillon, non validé", ["validated"] = "Validé", ["paid"] = "Payé" };
+    private static readonly Dictionary<string, string> PayModels = new() { ["salary"] = "Fixe", ["commission"] = "À la course", ["hybrid"] = "Fixe + courses" };
+    private static readonly Dictionary<string, string> CourseKinds = new() { ["pickup"] = "Ramassage", ["delivery"] = "Livraison", ["return"] = "Retour" };
+
+    public static byte[] CourierStatement(CourierStatementSheet s)
+    {
+        const string footer = "Montants figés à la validation du relevé. Une course n’est payée qu’une seule fois.";
+        var variableCounts = s.PayModel != "salary";
+        return Document.Create(container => BusinessDocuments.Page(container, s.Company, footer, column =>
+        {
+            ReturnDocumentsPdf.Header(column, s.Company, "Relevé de rémunération", s.Code, s.AgencyName, null);
+            ReturnDocumentsPdf.Blocks(column,
+            [
+                (240, c => ReturnDocumentsPdf.Block(c, "Livreur", s.CourierName, $"Mode : {PayModels.GetValueOrDefault(s.PayModel, s.PayModel)}",
+                    $"Commissions : {(s.SettlementMode == "at-remittance" ? "déduites à chaque remise de fonds" : "cumulées sur ce relevé")}")),
+                (240, c => ReturnDocumentsPdf.Block(c, "Période", $"du {Exports.CalendarDateText(s.PeriodStart)} au {Exports.CalendarDateText(s.PeriodEnd)}",
+                    StatementStates.GetValueOrDefault(s.Status, s.Status))),
+            ]);
+            ReturnDocumentsPdf.Head(column, head =>
+            {
+                BusinessDocuments.Caption(head.ConstantItem(62), "Date");
+                BusinessDocuments.Caption(head.ConstantItem(118), "Colis");
+                BusinessDocuments.Caption(head.ConstantItem(74), "Course");
+                BusinessDocuments.Caption(head.RelativeItem(), "Ville");
+                BusinessDocuments.Caption(head.ConstantItem(60), "Réglée");
+                BusinessDocuments.Caption(head.ConstantItem(74).AlignRight(), "Montant");
+            });
+            foreach (var line in s.Lines)
+            {
+                ReturnDocumentsPdf.Line(column, row =>
+                {
+                    row.ConstantItem(62).Text(Exports.DateText(line.WorkedAt));
+                    row.ConstantItem(118).Text(line.ParcelCode).Bold();
+                    row.ConstantItem(74).Text(CourseKinds.GetValueOrDefault(line.Kind, line.Kind));
+                    row.RelativeItem().Text(PdfText.Truncate(line.CityName, 24));
+                    row.ConstantItem(60).Text(line.Deducted ? "à la remise" : "-");
+                    row.ConstantItem(74).AlignRight().Text(PdfText.Amount(line.Amount));
+                });
+            }
+            if (s.Lines.Count == 0) column.Item().PaddingTop(10).Text("Aucune course confirmée sur la période.").FontColor(Muted);
+            column.Item().PaddingTop(14).Row(row =>
+            {
+                row.AutoItem().Text($"{s.LineCount} courses").Bold();
+                row.RelativeItem();
+                row.ConstantItem(240).Column(totals =>
+                {
+                    if (s.PayModel != "commission") Between(totals, 0, "Fixe de la période", PdfText.Amount(s.BaseAmount));
+                    Between(totals, 3, "COD encaissé (pour mémoire)", PdfText.Amount(s.CodCollected));
+                    Between(totals, 3, $"Commissions{(variableCounts ? string.Empty : " (pour information)")}", PdfText.Amount(s.CommissionsTotal));
+                    if (s.CommissionsDeducted > 0) Between(totals, 3, "Dont déjà gardées aux remises", $"- {PdfText.Amount(s.CommissionsDeducted)}");
+                    Between(totals, 3, "Reste dû sur les courses", PdfText.Amount(s.VariableAmount));
+                    totals.Item().PaddingVertical(6).LineHorizontal(0.6f).LineColor(Ink);
+                    Between(totals, 0, "Net à payer", PdfText.Amount(s.TotalDue), strong: true, valueSize: 12);
+                });
+            });
+            column.Item().PaddingTop(36).Row(row =>
+            {
+                row.ConstantItem(210).Column(c =>
+                {
+                    BusinessDocuments.Caption(c.Item(), "Le livreur");
+                    c.Item().PaddingTop(30).LineHorizontal(0.6f).LineColor(Ink);
+                });
+                row.RelativeItem();
+                Signed(row.ConstantItem(210), "L’agence", s.ValidatedByName);
+            });
+        })).WithMetadata(new DocumentMetadata { Title = s.Code }).GeneratePdf();
+    }
+
     public static byte[] Remittance(RemittanceSheet r)
     {
         const string footer = "Montants figés à la confirmation. Le cash d’un colis ne remonte qu’une seule fois.";

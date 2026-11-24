@@ -135,7 +135,7 @@ public static class StatusCorrection
             await transaction.CommitAsync(cancellationToken);
         }
         db.ChangeTracker.Clear();
-        if (cancel is not null) await DeliveryCancel.SettleAsync(db, logger, cancel, cancellationToken);
+        if (cancel is not null) await DeliveryCancel.SettleAsync(db, caller, logger, cancel, cancellationToken);
         await SettleAsync(db, caller, logger, plan, route, cancellationToken);
         if (plan.ConfirmOnRoute && route is not null)
         {

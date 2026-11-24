@@ -20,6 +20,13 @@ public sealed record PettyCashSheetDay(string Status, long OpeningBalance, long 
 public sealed record PettyCashSheet(PdfCompany Company, byte[]? Logo, DateTime GeneratedAt, string From, string To, long Balance, long Supplied, long Spent, PettyCashSheetDay? Day,
     IReadOnlyList<PettyCashSheetLine> Rows);
 
+public sealed record CourierStatementSheetLine(DateTime WorkedAt, string ParcelCode, string Kind, string CityName, bool Deducted, long Amount);
+
+/// <summary>`CourierStatementDocument` : le relevé de rémunération d'un livreur.</summary>
+public sealed record CourierStatementSheet(PdfCompany Company, string Code, string Status, string AgencyName, string CourierName, string PayModel, string SettlementMode, DateOnly PeriodStart,
+    DateOnly PeriodEnd, int LineCount, long BaseAmount, long CodCollected, long CommissionsTotal, long CommissionsDeducted, long VariableAmount, long TotalDue, string? ValidatedByName,
+    IReadOnlyList<CourierStatementSheetLine> Lines);
+
 public sealed record RemittanceSheetLine(string ParcelCode, string ClientName, string RecipientName, long Amount, long Commission);
 
 public sealed record RemittanceSheetCheque(string Number, string? Bank, string ParcelCode, long Amount);

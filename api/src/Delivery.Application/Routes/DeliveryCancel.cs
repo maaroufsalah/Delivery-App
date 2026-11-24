@@ -27,7 +27,7 @@ public static class DeliveryCancel
     public sealed record RouteLink(string RouteId, string Code, RouteStatus Status, string CourierId);
 
     public sealed record Plan(string ParcelId, string Code, string ClientId, string? CourierId, string? CurrentCityId, RouteLink? Route, string? ChequeId, ChequeStatus? ChequeStatus,
-        string? SlipId, bool Reopen, RouteStatus? PreviousRouteStatus, int Target, string? RemittanceCode);
+        string? SlipId, bool Reopen, RouteStatus? PreviousRouteStatus, int Target, string? RemittanceCode, IReadOnlyList<string>? DraftStatements = null);
 
     public static void AssertAdmin(ICurrentUser caller)
     {
@@ -67,7 +67,8 @@ public static class DeliveryCancel
         var target = backOnRoute ? await StatusBeforeDeliveryAsync(db, parcel.Id, cancellationToken) : AwaitingDelivery;
         var draft = await db.CashRemittanceParcels.AsNoTracking().Where(l => l.ParcelId == parcel.Id && l.ConfirmedParcelId == null && l.Remittance.Status == CashRemittanceStatus.DRAFT)
             .Select(l => l.Remittance.Code).FirstOrDefaultAsync(cancellationToken);
-        return new Plan(parcel.Id, parcel.Code, parcel.ClientId, parcel.CourierId, parcel.CurrentCityId, link, cheque?.Id, cheque?.Status, slip?.Id, reopen, previous, target, draft);
+        var statements = await Finance.CourierStatements.DraftCodesWithDeliveryAsync(db, parcel.Id, cancellationToken);
+        return new Plan(parcel.Id, parcel.Code, parcel.ClientId, parcel.CourierId, parcel.CurrentCityId, link, cheque?.Id, cheque?.Status, slip?.Id, reopen, previous, target, draft, statements);
     }
 
     /// <summary>Les écritures, dans la transaction ouverte par l'appelant. Rend le code du RF- d'où la ligne est sortie.</summary>
@@ -132,9 +133,10 @@ public static class DeliveryCancel
     }
 
     /// <summary>Après validation : livreur et vendeur prévenus (sans faire échouer l'annulation).</summary>
-    public static async Task SettleAsync(IAppDbContext db, ILogger logger, Plan plan, CancellationToken cancellationToken)
+    public static async Task SettleAsync(IAppDbContext db, ICurrentUser caller, ILogger logger, Plan plan, CancellationToken cancellationToken)
     {
-        // Relevés livreur brouillons à recalculer : branché avec le module « Paie des livreurs » (aucun relevé n'existe avant).
+        // Le relevé de paie brouillon se recalcule par son propre geste : la ligne de livraison en sort.
+        await Finance.CourierStatements.RecomputeDraftsForAsync(db, caller, logger, plan.DraftStatements ?? [], plan.Code, cancellationToken);
         try
         {
             if ((plan.Route?.CourierId ?? plan.CourierId) is { } courierId)

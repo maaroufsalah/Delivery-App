@@ -43,7 +43,7 @@ internal sealed class CancelDeliveryHandler(IAppDbContext db, ICurrentUser calle
             remittance = await DeliveryCancel.WriteAsync(db, caller, plan, reason, author, clock.UtcNow, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
         }
-        await DeliveryCancel.SettleAsync(db, logger, plan, cancellationToken);
+        await DeliveryCancel.SettleAsync(db, caller, logger, plan, cancellationToken);
         return new CancelDeliveryResultDto(plan.Code, plan.Target, plan.Route?.Code, plan.Reopen, remittance, plan.SlipId is not null);
     }
 }
