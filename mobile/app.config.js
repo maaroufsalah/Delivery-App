@@ -21,7 +21,7 @@ module.exports = ({ config }) => {
 
   return {
     ...config,
-    name: 'SpeedyTrans Recette',
+    name: 'Wimo Delivery Recette',
     icon: './assets/icon-recette.png',
     ios: {
       ...config.ios,

@@ -19,8 +19,8 @@ const BIOMETRIC_KEY = 'app.biometric';
 
 /** Les deux pages légales, exigées par les magasins, servies par la plateforme. */
 const LEGAL = {
-  privacy: 'https://delivery.nocido.com/privacy',
-  terms: 'https://delivery.nocido.com/terms',
+  privacy: 'https://new.wimodelivery.ma/fr/privacy',
+  terms: 'https://new.wimodelivery.ma/fr/terms',
 };
 
 /**

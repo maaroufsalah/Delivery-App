@@ -127,7 +127,7 @@ interface TenantTheme {
 }
 
 /** La marque de la plateforme — `PLATFORM_BRAND` du web, en deux couleurs. */
-const PLATFORM_FALLBACK = { primary: '#F05A28', secondary: '#1F1F1F' };
+const PLATFORM_FALLBACK = { primary: '#0F62FE', secondary: '#0A1F44' };
 
 const FALLBACK_TOKENS = buildThemeTokens(PLATFORM_FALLBACK);
 const FALLBACK_LIGHT = resolveTokens(FALLBACK_TOKENS.light);
