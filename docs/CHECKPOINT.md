@@ -12,40 +12,28 @@ Rapport final : `docs/chantiers/delivery-app-dotnet.md` (en fin de chantier). Ch
   `dp.at`/`dp.rt`, comptes, rôles, écarts, inscription publique, frein, health). 20 tests unitaires,
   45 tests de contrat verts. Seed : société `cmp-wimo`, permissions, super-admin `SEED_ADMIN_*`.
 
-## En cours — module 3 « Société et référentiel », branche `feat/referential` (commit wip poussé)
+## En cours — module 3 « Société et référentiel », PR ouverte depuis `feat/referential`
 
-Écrit et compilé, **pas encore testé ni branché** sur un contrôleur :
-- Domain : `Parcels/StatusCatalog(.Data).cs` (35 statuts + transitions, produits par
-  `scripts/ts/dump-statuses.mjs`), `Pricing/DeliveryPricing.cs` (`quoteDeliveryFee`),
-  `Common/Money.cs` (centimes, enums « wire »), `Common/Colors.cs` (HEX, contraste WCAG).
-- Application : `Common/Security/References.cs` (assertDeletable, grille interne),
-  `Cities/` complet (liste, export, détail, création, modification, actif, suppression).
-- Outil : `scripts/split-usecases.py` (un fichier par cas d'usage ; refuse un préambule partagé).
-
-Reste dans le module 3 (68 routes, lecture Speedy déjà faite) : contrôleur `/cities`, zones
-(+ `zones/rates`), quartiers, agences, types de livraison, `pricing-rules` (dont `by-origin`,
-import/export xlsx), `directory/*`, `settings/*` (société, business, finance, logo, thème),
-`public/company|logo|rates|mobile-config|cities` ; seed statuts/transitions + type
-« Livraison normale » + référentiel minimal Casablanca ; tests de contrat ; PR.
+68/68 routes : villes, zones (+ tarifs inter-zones), quartiers, agences (siège), types de
+livraison, `pricing-rules` (grille par origine, import/export xlsx), `directory/*`,
+`settings/*` (société, business, finance, logo SkiaSharp, thème + instantanés),
+`public/company|logo|rates|mobile-config|cities`. Seed : statuts + transitions
+(`scripts/ts/dump-statuses.mjs`), paramètres Wimo, « Livraison normale », zone/ville/agence
+Casablanca. Import CSV idempotent : `scripts/import-referential.sh <dossier>` (format dans
+`ReferentialImporter.cs`). Mobile : `PRODUCTION_API_ORIGIN` lu dans `EXPO_PUBLIC_API_URL`
+(eas.json production = `https://api-new.wimodelivery.ma`).
 
 ## Prochaine action exacte
 
-1. `git checkout feat/referential && git pull`.
-2. Écrire `api/src/Delivery.Api/Controllers/CitiesController.cs` (garde `NotMerchant`,
-   `directory.read|write`, query `zoneId` multi-valeur), puis les tests de contrat des villes.
-3. Enchaîner zones → quartiers → agences → types de livraison → tarifs → directory → settings → public.
+1. Fusionner la PR du module 3 une fois la CI verte.
+2. Module 4 « Clients et livreurs » sur `feat/accounts` : lire `modules/clients`, `modules/couriers`,
+   `modules/merchant` de Speedy (inventaire section Module 4, 39 routes) ; y porter aussi la
+   validation/le refus des inscriptions et le masque livreur (`common/scope/courier-mask.ts`).
 
 ## Blocages / décisions pour Salah
 
-1. `LUCKYPENNY_LICENSE_KEY` absente du poste et des secrets GitHub : MediatR/AutoMapper tournent
-   avec un avertissement de licence.
-2. Docker absent du poste : tests de contrat locaux sur Postgres scoop (port 5434,
-   `TEST_DATABASE_URL`) ; Testcontainers en CI seulement.
-3. Hôte API de production du mobile : `https://api.wimo.ma` posé en attente du vrai nom.
-4. Référentiel Wimo réel : seul le dump Laravel du VPS le contient (hors Git, données
-   personnelles) → seed minimal Casablanca prévu, à remplacer par un export du référentiel.
-5. Logo (module 3) : le redimensionnement/assainissement d'image de Speedy (sharp) demande une
-   bibliothèque d'image hors liste autorisée (SkiaSharp envisagé) — à valider.
+- Aucun bloquant. `LUCKYPENNY_LICENSE_KEY` absente de la session courante : avertissement de licence.
+- Dépendance ajoutée hors liste : `Svg.Skia` (rendu des logos SVG, extension de SkiaSharp).
 
 ## Reprendre
 
