@@ -44,4 +44,32 @@ public sealed partial class ParcelsController(ISender sender) : ApiControllerBas
     [Guards(Guard.NotMerchant)]
     public Task<IActionResult> ChangeStatus(string code, [FromBody] ChangeParcelStatusCommand? body) =>
         Created((body ?? new ChangeParcelStatusCommand()) with { Code = code });
+
+    [HttpPatch("{code}/fees")]
+    [RequirePermission("parcels.editFees")]
+    public Task<IActionResult> EditFees(string code, [FromBody] EditParcelFeesCommand? body) => Ok((body ?? new EditParcelFeesCommand()) with { Code = code });
+
+    [HttpPatch("{code}")]
+    [RequirePermission("parcels.write")]
+    [Guards(Guard.Merchant)]
+    public Task<IActionResult> UpdateBySeller(string code, [FromBody] UpdateParcelBySellerCommand? body) => Ok((body ?? new UpdateParcelBySellerCommand()) with { Code = code });
+
+    [HttpDelete("{code}")]
+    [RequirePermission("parcels.write")]
+    [Guards(Guard.Merchant)]
+    public Task<IActionResult> RemoveBySeller(string code) => Ok(new RemoveParcelBySellerCommand(code));
+
+    [HttpPatch("{code}/expected-payment")]
+    [RequirePermission("parcels.write")]
+    [Guards(Guard.NotMerchant)]
+    public Task<IActionResult> ChangeExpectedPayment(string code, [FromBody] ChangeExpectedPaymentCommand? body) => Ok((body ?? new ChangeExpectedPaymentCommand()) with { Code = code });
+
+    [HttpPatch("{code}/bl")]
+    [RequirePermission("parcels.write")]
+    public Task<IActionResult> SetBlRequested(string code, [FromBody] SetParcelBlRequestedCommand? body) => Ok((body ?? new SetParcelBlRequestedCommand()) with { Code = code });
+
+    [HttpPost("{code}/notes")]
+    [RequirePermission("parcels.write")]
+    [Guards(Guard.NotMerchant)]
+    public Task<IActionResult> AddNote(string code, [FromBody] AddParcelNoteCommand? body) => Created((body ?? new AddParcelNoteCommand()) with { Code = code });
 }

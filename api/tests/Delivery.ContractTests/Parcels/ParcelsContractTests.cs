@@ -183,4 +183,53 @@ public sealed class ParcelsContractTests(ApiFactory factory)
         detail.GetProperty("statusId").GetInt32().ShouldBe(3);
         detail.GetProperty("events").GetArrayLength().ShouldBe(2);
     }
+
+    [Fact]
+    public async Task Fees_notes_and_seller_edits_are_journaled()
+    {
+        var world = await WorldAsync();
+        var code = (await (await world.MerchantHttp.PostAsJsonAsync("/api/parcels", Body(world))).JsonAsync()).GetProperty("code").GetString();
+
+        var none = await world.Admin.PatchAsJsonAsync($"/api/parcels/{code}/fees", new { reason = "x" });
+        none.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        (await none.JsonAsync()).GetProperty("details").GetProperty("issues")[0].GetProperty("message").GetString().ShouldBe("no-fee-changed");
+
+        var fees = await (await world.Admin.PatchAsJsonAsync($"/api/parcels/{code}/fees", new { deliveryFee = 25, otherFees = 5, reason = " Hors gabarit " })).JsonAsync();
+        fees.GetProperty("deliveryFee").GetInt64().ShouldBe(2500);
+        fees.GetProperty("otherFees").GetInt64().ShouldBe(500);
+        fees.GetProperty("feeChanges").GetArrayLength().ShouldBe(2);
+        fees.GetProperty("feeChanges")[0].GetProperty("reason").GetString().ShouldBe("Hors gabarit");
+        (await world.Admin.PatchAsJsonAsync($"/api/parcels/{code}/fees", new { deliveryFee = 25, reason = "x" })).StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+
+        var merchantView = await (await world.MerchantHttp.GetAsync($"/api/parcels/{code}")).JsonAsync();
+        merchantView.GetProperty("feeChanges")[0].GetProperty("authorName").GetString().ShouldBe(string.Empty);
+        merchantView.GetProperty("fieldChanges").GetArrayLength().ShouldBe(0);
+
+        (await world.Admin.PatchAsJsonAsync($"/api/parcels/{code}/bl", new { blRequested = true })).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await world.Admin.PatchAsJsonAsync($"/api/parcels/{code}/expected-payment", new { expectedPayment = "cheque", reason = "x" })).StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+
+        (await world.MerchantHttp.PostAsJsonAsync($"/api/parcels/{code}/notes", new { body = "x" })).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        var note = await world.Admin.PostAsJsonAsync($"/api/parcels/{code}/notes", new { body = "  Appeler avant  " });
+        note.StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await note.JsonAsync()).GetProperty("body").GetString().ShouldBe("Appeler avant");
+
+        var updated = await world.MerchantHttp.PatchAsJsonAsync($"/api/parcels/{code}", new
+        {
+            description = "Sac", recipientName = "Salma", recipientPhone = "0612345678", destinationCityId = world.City.Id,
+            deliveryAddress = "Gauthier", codAmount = 100, quantity = 2,
+        });
+        updated.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var after = await updated.JsonAsync();
+        after.GetProperty("quantity").GetInt32().ShouldBe(2);
+        after.GetProperty("deliveryFee").GetInt64().ShouldBe(4000);
+        (await world.Admin.PatchAsJsonAsync($"/api/parcels/{code}", new { description = "x" })).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        var removed = await world.MerchantHttp.DeleteAsync($"/api/parcels/{code}");
+        removed.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await removed.JsonAsync()).GetProperty("code").GetString().ShouldBe(code);
+        (await world.MerchantHttp.GetAsync($"/api/parcels/{code}")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        var deleted = await world.Admin.GetAsync($"/api/parcels/{code}?deleted=true");
+        deleted.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await deleted.JsonAsync()).GetProperty("deletedAt").GetString().ShouldNotBeNull();
+    }
 }

@@ -15,14 +15,17 @@ namespace Delivery.Application.Parcels.Queries;
 /// <summary>`GET /parcels/:code` : la fiche d'un colis (code ou référence vendeur).</summary>
 public sealed record GetParcelQuery(string Code, bool IncludeDeleted = false) : IRequest<ParcelDetailDto>;
 
-internal sealed class GetParcelHandler(IAppDbContext db, ICurrentUser caller, IMapper mapper) : IRequestHandler<GetParcelQuery, ParcelDetailDto>
+public sealed class GetParcelHandler(IAppDbContext db, ICurrentUser caller, IMapper mapper) : IRequestHandler<GetParcelQuery, ParcelDetailDto>
 {
     /// <summary>`PARCEL_TRACE_NAMED_FIELDS` : les champs du journal qui portent un identifiant.</summary>
     internal static readonly string[] LabelledFields = ["destinationDistrictId", "destinationCityId", "originCityId", "clientId", "agencyId", "courierId"];
 
     internal static readonly string[] FeeFields = ["codAmount", "deliveryFee", "failureFee", "otherFees"];
 
-    public async Task<ParcelDetailDto> Handle(GetParcelQuery request, CancellationToken cancellationToken)
+    public Task<ParcelDetailDto> Handle(GetParcelQuery request, CancellationToken cancellationToken) => LoadAsync(db, caller, mapper, request, cancellationToken);
+
+    /// <summary>`detail` : relu aussi par les écritures qui rendent la fiche.</summary>
+    public static async Task<ParcelDetailDto> LoadAsync(IAppDbContext db, ICurrentUser caller, IMapper mapper, GetParcelQuery request, CancellationToken cancellationToken)
     {
         var scoped = request.IncludeDeleted
             ? ParcelFilters.ScopedIncludingDeleted(db.Parcels.AsNoTracking(), caller)
