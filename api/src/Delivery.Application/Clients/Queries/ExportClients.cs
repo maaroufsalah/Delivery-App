@@ -36,6 +36,6 @@ internal sealed class ExportClientsHandler(IAppDbContext db, ICurrentUser caller
         var where = GetClientsHandler.Filter(db.Clients.AsNoTracking(), request.Filter, caller);
         Exports.AssertWithinLimit(await where.CountAsync(cancellationToken));
         var rows = await ClientRows.ProjectAsync<ClientListItemDto>(Sorting.OrderByKey(where, request.Filter.Query, ClientRows.Sorts, "name"), mapper, cancellationToken);
-        return await Exports.ToXlsxAsync(db, excel, clock, "E-commerçants", Columns, rows, cancellationToken);
+        return await Exports.ToXlsxAsync(db, excel, clock, caller, "E-commerçants", Columns, rows, cancellationToken);
     }
 }

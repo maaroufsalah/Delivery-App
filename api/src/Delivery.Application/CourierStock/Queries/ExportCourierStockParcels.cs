@@ -46,6 +46,6 @@ internal sealed class ExportCourierStockParcelsHandler(IAppDbContext db, ICurren
             throw BusinessException.Validation("Saisie invalide.", new { issues = new[] { new { path = "courierId", message = request.CourierId is null ? Common.Validation.Zod.Expected("string") : Common.Validation.Zod.TooSmallString(1) } } });
         }
         var selection = await CourierStocks.SelectionAsync(db, caller, courierId, request.Filter, cancellationToken);
-        return await Exports.ToXlsxAsync(db, excel, clock, "Stock livreur", Columns, selection.Parcels.Select(p => p.View).ToList(), cancellationToken);
+        return await Exports.ToXlsxAsync(db, excel, clock, caller, "Stock livreur", Columns, selection.Parcels.Select(p => p.View).ToList(), cancellationToken);
     }
 }

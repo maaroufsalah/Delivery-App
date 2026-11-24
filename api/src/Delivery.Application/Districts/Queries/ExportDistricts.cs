@@ -30,6 +30,6 @@ internal sealed class ExportDistrictsHandler(IAppDbContext db, ICurrentUser call
         Exports.AssertWithinLimit(await where.CountAsync(cancellationToken));
         var rows = await Sorting.OrderByKey(where, request.Filter.Query, DistrictRows.Sorts, "name")
             .ProjectTo<DistrictListItemDto>(mapper.ConfigurationProvider).ToListAsync(cancellationToken);
-        return await Exports.ToXlsxAsync(db, excel, clock, "Quartiers", Columns, rows, cancellationToken);
+        return await Exports.ToXlsxAsync(db, excel, clock, caller, "Quartiers", Columns, rows, cancellationToken);
     }
 }

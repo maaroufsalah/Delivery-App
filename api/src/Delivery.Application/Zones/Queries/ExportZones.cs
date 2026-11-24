@@ -31,6 +31,6 @@ internal sealed class ExportZonesHandler(IAppDbContext db, ICurrentUser caller, 
         var where = GetZonesHandler.Filter(db.Zones.AsNoTracking(), request.Filter.Query);
         Exports.AssertWithinLimit(await where.CountAsync(cancellationToken));
         var rows = await mapper.ProjectTo<ZoneRow>(Sorting.OrderByKey(where, request.Filter.Query, ZoneRows.Sorts, "name")).ToListAsync(cancellationToken);
-        return await Exports.ToXlsxAsync(db, excel, clock, "Zones", Columns, rows.Select(r => r.ToDto()).ToList(), cancellationToken);
+        return await Exports.ToXlsxAsync(db, excel, clock, caller, "Zones", Columns, rows.Select(r => r.ToDto()).ToList(), cancellationToken);
     }
 }

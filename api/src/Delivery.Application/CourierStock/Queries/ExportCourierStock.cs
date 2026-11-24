@@ -43,6 +43,6 @@ internal sealed class ExportCourierStockHandler(IAppDbContext db, ICurrentUser c
     public async Task<FileContent> Handle(ExportCourierStockQuery request, CancellationToken cancellationToken)
     {
         var (rows, _) = await CourierStocks.SnapshotAsync(db, caller, request.Filter, cancellationToken);
-        return await Exports.ToXlsxAsync(db, excel, clock, "Stock livreurs", Columns, rows, cancellationToken);
+        return await Exports.ToXlsxAsync(db, excel, clock, caller, "Stock livreurs", Columns, rows, cancellationToken);
     }
 }

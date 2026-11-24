@@ -42,6 +42,6 @@ internal sealed class ExportNotesHandler(IAppDbContext db, ICurrentUser caller, 
         var where = NoteRows.Filter(db.DeliveryNotes.AsNoTracking(), caller, request.Filter);
         Exports.AssertWithinLimit(await where.CountAsync(cancellationToken));
         var rows = (await NoteRows.ProjectAsync(where.OrderByDescending(n => n.CreatedAt), cancellationToken)).Select(r => NoteRows.Fill(new DeliveryNoteListItemDto(), r, policy)).ToList();
-        return await Exports.ToXlsxAsync(db, excel, clock, "Bons", Columns, rows, cancellationToken);
+        return await Exports.ToXlsxAsync(db, excel, clock, caller, "Bons", Columns, rows, cancellationToken);
     }
 }

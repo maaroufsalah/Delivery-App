@@ -41,6 +41,6 @@ internal sealed class ExportProductsHandler(IAppDbContext db, ICurrentUser calle
         Exports.AssertWithinLimit(await where.CountAsync(cancellationToken));
         var ordered = request.Filter.Order == "desc" ? where.OrderByDescending(p => p.Name) : where.OrderBy(p => p.Name);
         var rows = await ProductRows.ListAsync(mapper, ordered, cancellationToken);
-        return await Exports.ToXlsxAsync(db, excel, clock, "Produits", Columns, rows, cancellationToken);
+        return await Exports.ToXlsxAsync(db, excel, clock, caller, "Produits", Columns, rows, cancellationToken);
     }
 }

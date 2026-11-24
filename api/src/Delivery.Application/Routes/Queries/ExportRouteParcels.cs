@@ -54,6 +54,6 @@ internal sealed class ExportRouteParcelsHandler(IAppDbContext db, ICurrentUser c
             new("Vendeur", r => r.Client),
         };
         if (caller.CourierId is not null) columns.RemoveAll(c => c.Header == "Frais de livraison");
-        return await Exports.ToXlsxAsync(db, excel, clock, $"Circuit {route.Code}", columns, rows, cancellationToken);
+        return await Exports.ToXlsxAsync(db, excel, clock, caller, $"Circuit {route.Code}", columns, rows, cancellationToken);
     }
 }

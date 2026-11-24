@@ -42,6 +42,6 @@ internal sealed class ExportOrdersHandler(IAppDbContext db, ICurrentUser caller,
         var where = OrderRows.Filter(db.Orders.AsNoTracking(), caller, request.Filter);
         Exports.AssertWithinLimit(await where.CountAsync(cancellationToken));
         var rows = (await OrderRows.Project(where).ToListAsync(cancellationToken)).Select(r => OrderRows.Fill(new OrderListItemDto(), r)).ToList();
-        return await Exports.ToXlsxAsync(db, excel, clock, "Commandes", Columns, rows, cancellationToken);
+        return await Exports.ToXlsxAsync(db, excel, clock, caller, "Commandes", Columns, rows, cancellationToken);
     }
 }

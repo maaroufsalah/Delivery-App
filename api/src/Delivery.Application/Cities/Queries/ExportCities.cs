@@ -33,6 +33,6 @@ internal sealed class ExportCitiesHandler(IAppDbContext db, ICurrentUser caller,
         Exports.AssertWithinLimit(await where.CountAsync(cancellationToken));
         var rows = await Sorting.OrderByKey(where, request.Filter.Query, CityRows.Sorts, "name")
             .ProjectTo<CityListItemDto>(mapper.ConfigurationProvider).ToListAsync(cancellationToken);
-        return await Exports.ToXlsxAsync(db, excel, clock, "Villes", Columns, await CityRows.WithCountsAsync(db, rows, cancellationToken), cancellationToken);
+        return await Exports.ToXlsxAsync(db, excel, clock, caller, "Villes", Columns, await CityRows.WithCountsAsync(db, rows, cancellationToken), cancellationToken);
     }
 }

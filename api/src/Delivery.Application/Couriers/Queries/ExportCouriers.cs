@@ -37,6 +37,6 @@ internal sealed class ExportCouriersHandler(IAppDbContext db, ICurrentUser calle
             Exports.AssertWithinLimit(await where.CountAsync(cancellationToken));
             rows = await CourierRows.ProjectAsync<CourierListItemDto>(Sorting.OrderByKey(where, request.Filter.Query, CourierRows.Sorts, "lastName"), mapper, cancellationToken);
         }
-        return await Exports.ToXlsxAsync(db, excel, clock, "Livreurs", Columns, rows, cancellationToken);
+        return await Exports.ToXlsxAsync(db, excel, clock, caller, "Livreurs", Columns, rows, cancellationToken);
     }
 }

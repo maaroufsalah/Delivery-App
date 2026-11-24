@@ -39,6 +39,6 @@ internal sealed class ExportStorageRequestsHandler(IAppDbContext db, ICurrentUse
         var where = StorageRows.Filter(db.StorageRequests.AsNoTracking(), caller, request.Filter);
         Exports.AssertWithinLimit(await where.CountAsync(cancellationToken));
         var rows = (await StorageRows.Project(where).ToListAsync(cancellationToken)).Select(r => StorageRows.Fill(new StorageRequestListItemDto(), r)).ToList();
-        return await Exports.ToXlsxAsync(db, excel, clock, "Entreposages", Columns, rows, cancellationToken);
+        return await Exports.ToXlsxAsync(db, excel, clock, caller, "Entreposages", Columns, rows, cancellationToken);
     }
 }

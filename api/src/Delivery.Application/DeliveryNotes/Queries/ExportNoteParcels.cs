@@ -48,6 +48,6 @@ internal sealed class ExportNoteParcelsHandler(IAppDbContext db, ICurrentUser ca
         };
         if (caller.CourierId is not null) columns.RemoveAll(c => c.Header == "Frais de livraison");
         var rows = note.Parcels.Select(p => new Line(p, extras.GetValueOrDefault(p.Id)?.ExternalCode, extras.GetValueOrDefault(p.Id)?.RecipientPhone ?? string.Empty)).ToList();
-        return await Exports.ToXlsxAsync(db, excel, clock, $"Bon {note.Code}", columns, rows, cancellationToken);
+        return await Exports.ToXlsxAsync(db, excel, clock, caller, $"Bon {note.Code}", columns, rows, cancellationToken);
     }
 }

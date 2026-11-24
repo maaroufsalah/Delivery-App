@@ -67,6 +67,6 @@ internal sealed class ExportParcelsHandler(IAppDbContext db, ICurrentUser caller
         {
             columns.Add(new("Statut financier", r => r.Extra.GetValueOrDefault("merchantFinancialStatus") is string s ? MerchantLabels.GetValueOrDefault(s, string.Empty) : string.Empty));
         }
-        return await Exports.ToXlsxAsync(db, excel, clock, "Colis", columns, rows.Select(r => ParcelViews.ToListItem(r, caller)).ToList(), cancellationToken);
+        return await Exports.ToXlsxAsync(db, excel, clock, caller, "Colis", columns, rows.Select(r => ParcelViews.ToListItem(r, caller)).ToList(), cancellationToken);
     }
 }

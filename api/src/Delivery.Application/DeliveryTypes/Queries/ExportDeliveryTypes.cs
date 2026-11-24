@@ -27,6 +27,6 @@ internal sealed class ExportDeliveryTypesHandler(IAppDbContext db, ICurrentUser 
         var where = GetDeliveryTypesHandler.Filter(db.DeliveryTypes.AsNoTracking(), request.Filter.Query);
         Exports.AssertWithinLimit(await where.CountAsync(cancellationToken));
         var rows = await mapper.ProjectTo<DeliveryTypeRow>(Sorting.OrderByKey(where, request.Filter.Query, DeliveryTypeRows.Sorts, "name")).ToListAsync(cancellationToken);
-        return await Exports.ToXlsxAsync(db, excel, clock, "Types de livraison", Columns, rows.Select(r => r.ToDto()).ToList(), cancellationToken);
+        return await Exports.ToXlsxAsync(db, excel, clock, caller, "Types de livraison", Columns, rows.Select(r => r.ToDto()).ToList(), cancellationToken);
     }
 }

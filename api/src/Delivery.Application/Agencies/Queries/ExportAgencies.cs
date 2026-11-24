@@ -33,6 +33,6 @@ internal sealed class ExportAgenciesHandler(IAppDbContext db, ICurrentUser calle
         Exports.AssertWithinLimit(await where.CountAsync(cancellationToken));
         var rows = await mapper.ProjectTo<AgencyRow>(Sorting.OrderByKey(where, request.Filter.Query, AgencyRows.Sorts, "name")).ToListAsync(cancellationToken);
         var headquarters = await AgencyRows.HeadquartersIdAsync(db, cancellationToken);
-        return await Exports.ToXlsxAsync(db, excel, clock, "Agences", Columns, rows.Select(r => r.ToDto(headquarters)).ToList(), cancellationToken);
+        return await Exports.ToXlsxAsync(db, excel, clock, caller, "Agences", Columns, rows.Select(r => r.ToDto(headquarters)).ToList(), cancellationToken);
     }
 }
