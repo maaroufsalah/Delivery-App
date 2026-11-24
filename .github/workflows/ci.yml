@@ -36,3 +36,30 @@ jobs:
         run: |
           dotnet tool restore
           dotnet ef migrations has-pending-model-changes -p src/Delivery.Infrastructure -s src/Delivery.Api --no-build --configuration Release
+
+  recette:
+    # Recette globale : pile docker compose complète (api + web Speedy + postgres), parcours curl.
+    runs-on: ubuntu-latest
+    needs: api
+    env:
+      SEED_ADMIN_EMAIL: admin@wimo.ma
+      SEED_ADMIN_PASSWORD: Recette-Admin-1!
+      LUCKYPENNY_LICENSE_KEY: ${{ secrets.LUCKYPENNY_LICENSE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stack up
+        run: docker compose up -d --build
+      - name: Wait for api and web
+        run: |
+          for i in $(seq 1 90); do
+            api=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:5080/api/health || true)
+            web=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/healthz.txt || true)
+            [ "$api" = 200 ] && [ "$web" = 200 ] && exit 0
+            sleep 2
+          done
+          docker compose ps; docker compose logs --tail 80; exit 1
+      - name: Recette
+        run: API=http://localhost:5080/api WEB=http://localhost:3000 ADMIN_EMAIL="$SEED_ADMIN_EMAIL" ADMIN_PASSWORD="$SEED_ADMIN_PASSWORD" bash scripts/recette.sh
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs --tail 200 api web
