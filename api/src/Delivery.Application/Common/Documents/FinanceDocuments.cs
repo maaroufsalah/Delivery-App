@@ -11,6 +11,15 @@ public sealed record ChequeGroupSlip(string Code, string ClientName, string? Cou
 /// <summary>`ChequeGroupSlipDocument` : un bon par vendeur, une page chacun, dans un seul PDF.</summary>
 public sealed record ChequeGroupSlipSheet(PdfCompany Company, byte[]? Logo, DateTime PrintedAt, IReadOnlyList<ChequeGroupSlip> Slips);
 
+public sealed record PettyCashSheetLine(string Date, string Kind, string? Label, string? Note, string? Category, string? BuyerName, long Amount);
+
+public sealed record PettyCashSheetDay(string Status, long OpeningBalance, long Supplied, long Spent, long ClosingBalance, DateTime? ClosedAt, string? ClosedBy, int PendingDrafts,
+    string? ReopenReason);
+
+/// <summary>`PettyCashDocument` : le relevé de petite caisse (ou d'une journée), logo de la société en tête.</summary>
+public sealed record PettyCashSheet(PdfCompany Company, byte[]? Logo, DateTime GeneratedAt, string From, string To, long Balance, long Supplied, long Spent, PettyCashSheetDay? Day,
+    IReadOnlyList<PettyCashSheetLine> Rows);
+
 public sealed record RemittanceSheetLine(string ParcelCode, string ClientName, string RecipientName, long Amount, long Commission);
 
 public sealed record RemittanceSheetCheque(string Number, string? Bank, string ParcelCode, long Amount);

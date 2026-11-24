@@ -35,6 +35,7 @@ public static class ApiSetup
         builder.Services.AddScoped<CourierMaskFilter>();
         builder.Services.AddHostedService<Background.LabelJobWorker>();
         builder.Services.AddHostedService<Background.BulkJobWorker>();
+        builder.Services.AddHostedService<Background.PettyCashSweepWorker>();
 
         builder.Services.ConfigureHttpJsonOptions(options => JsonDefaults.Apply(options.SerializerOptions));
         builder.Services

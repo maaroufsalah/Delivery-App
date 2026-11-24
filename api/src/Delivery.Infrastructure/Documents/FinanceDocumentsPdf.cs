@@ -170,6 +170,88 @@ internal static class FinanceDocumentsPdf
         }).WithMetadata(new DocumentMetadata { Title = string.Join(" · ", sheet.Slips.Select(s => s.Code)) }).GeneratePdf();
     }
 
+    private static string NoonDate(string day) => Exports.DateText(DateTime.SpecifyKind(DateTime.ParseExact($"{day}T12:00:00", "yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture), DateTimeKind.Utc));
+
+    /// <summary>Une rangée `styles.between` de plusieurs textes : écarts égaux entre eux.</summary>
+    private static void Spread(IContainer container, IReadOnlyList<(string Text, bool Strong)> items) => container.Row(row =>
+    {
+        for (var i = 0; i < items.Count; i++)
+        {
+            if (i > 0) row.RelativeItem();
+            var text = row.AutoItem().Text(items[i].Text);
+            if (items[i].Strong) text.Bold();
+        }
+    });
+
+    public static byte[] PettyCash(PettyCashSheet s)
+    {
+        const string footer = "Petite caisse — dépenses courantes, hors facturation.";
+        return Document.Create(container => BusinessDocuments.Page(container, s.Company, footer, column =>
+        {
+            column.Item().Row(row =>
+            {
+                row.RelativeItem().Column(head =>
+                {
+                    if (s.Logo is { } logo) head.Item().PaddingBottom(4).Height(36).MaxWidth(160).AlignLeft().Image(logo).FitArea();
+                    head.Item().Text(PdfText.Truncate(s.Company.Title, 34)).FontSize(15).Bold();
+                    foreach (var line in s.Company.HeaderLines()) head.Item().Text(PdfText.Truncate(line, 52)).FontColor(Muted);
+                });
+                row.AutoItem().Column(right =>
+                {
+                    right.Item().AlignRight().Text("PETITE CAISSE").FontSize(14).Bold().LetterSpacing(0.04f);
+                    right.Item().AlignRight().Text($"Du {NoonDate(s.From)} au {NoonDate(s.To)}").FontColor(Muted);
+                    right.Item().AlignRight().Text($"Généré le {Exports.DateText(s.GeneratedAt)}").FontColor(Muted);
+                });
+            });
+            BusinessDocuments.Rule(column);
+            if (s.Day is { } day)
+            {
+                Spread(column.Item().PaddingVertical(6), [($"Journée {(day.Status == "closed" ? "clôturée" : "ouverte")}", true), ($"Ouverture : {PdfText.Amount(day.OpeningBalance)}", false),
+                    ($"Approvisionné : {PdfText.Amount(day.Supplied)}", false), ($"Dépensé : {PdfText.Amount(day.Spent)}", false), ($"Clôture : {PdfText.Amount(day.ClosingBalance)}", true)]);
+                var notes = new List<string>();
+                if (day.Status == "closed" && day.ClosedAt is { } closedAt) notes.Add($"Clôturée le {Exports.DateText(closedAt)} — {(day.ClosedBy == "automatic" ? "automatique" : day.ClosedBy ?? string.Empty)}");
+                if (day.PendingDrafts > 0) notes.Add($"{day.PendingDrafts} dépense(s) de livreur à valider, hors solde");
+                if (!string.IsNullOrEmpty(day.ReopenReason)) notes.Add($"Dernière correction : {PdfText.Truncate(day.ReopenReason, 60)}");
+                column.Item().Text(string.Join(" · ", notes)).FontColor(Muted);
+            }
+            else
+            {
+                Spread(column.Item().PaddingVertical(6), [($"Solde actuel : {PdfText.Amount(s.Balance)}", true), ($"Approvisionné : {PdfText.Amount(s.Supplied)}", false),
+                    ($"Dépensé : {PdfText.Amount(s.Spent)}", false)]);
+            }
+            column.Item().PaddingTop(6).Table(table =>
+            {
+                table.ColumnsDefinition(columns =>
+                {
+                    columns.ConstantColumn(58 + 6);
+                    columns.RelativeColumn();
+                    columns.ConstantColumn(78);
+                    columns.ConstantColumn(92);
+                    columns.ConstantColumn(72 + 6);
+                });
+                table.Header(header =>
+                {
+                    static IContainer Head(IContainer cell) => cell.Background("#F1F1F1").PaddingVertical(5);
+                    BusinessDocuments.Caption(Head(header.Cell()).PaddingLeft(6), "Date");
+                    BusinessDocuments.Caption(Head(header.Cell()), "Libellé");
+                    BusinessDocuments.Caption(Head(header.Cell()), "Catégorie");
+                    BusinessDocuments.Caption(Head(header.Cell()), "Acheté par");
+                    BusinessDocuments.Caption(Head(header.Cell()).PaddingRight(6).AlignRight(), "Montant");
+                });
+                foreach (var line in s.Rows)
+                {
+                    static IContainer Cell(IContainer cell) => cell.BorderBottom(0.4f).BorderColor(BusinessDocuments.RowRule).PaddingVertical(5);
+                    Cell(table.Cell()).PaddingLeft(6).Text(NoonDate(line.Date));
+                    Cell(table.Cell()).Text(PdfText.Truncate(line.Kind == "supply" ? $"Approvisionnement{(string.IsNullOrEmpty(line.Note) ? string.Empty : $" — {line.Note}")}" : line.Label ?? string.Empty, 48));
+                    Cell(table.Cell()).Text(PdfText.Truncate(line.Category ?? string.Empty, 16));
+                    Cell(table.Cell()).Text(PdfText.Truncate(line.BuyerName ?? string.Empty, 20));
+                    Cell(table.Cell()).PaddingRight(6).AlignRight().Text($"{(line.Kind == "expense" ? "−" : "+")}{PdfText.Amount(line.Amount)}").Bold();
+                }
+            });
+            if (s.Rows.Count == 0) column.Item().PaddingTop(10).Text("Aucun mouvement sur cette période.").FontColor(Muted);
+        })).WithMetadata(new DocumentMetadata { Title = "Petite caisse" }).GeneratePdf();
+    }
+
     public static byte[] Remittance(RemittanceSheet r)
     {
         const string footer = "Montants figés à la confirmation. Le cash d’un colis ne remonte qu’une seule fois.";
