@@ -23,7 +23,7 @@ import type { ActionResult } from '@/lib/actions/parcels';
 const API_URL = (
   process.env.API_URL ??
   process.env.NEXT_PUBLIC_API_URL ??
-  'http://localhost:5080/api'
+  'http://localhost:3001/api'
 ).replace(/\/$/, '');
 
 /**

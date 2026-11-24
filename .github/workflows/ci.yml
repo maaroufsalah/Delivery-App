@@ -59,7 +59,7 @@ jobs:
           done
           docker compose ps; docker compose logs --tail 80; exit 1
       - name: Recette
-        run: API=http://localhost:5080/api WEB=http://localhost:3000 ADMIN_EMAIL="$SEED_ADMIN_EMAIL" ADMIN_PASSWORD="$SEED_ADMIN_PASSWORD" bash scripts/recette.sh
+        run: CLEANUP_PSQL="docker compose exec -T postgres psql -U wimo -d wimo_delivery" API=http://localhost:5080/api WEB=http://localhost:3000 ADMIN_EMAIL="$SEED_ADMIN_EMAIL" ADMIN_PASSWORD="$SEED_ADMIN_PASSWORD" bash scripts/recette.sh --cleanup
       - name: Logs on failure
         if: failure()
         run: docker compose logs --tail 200 api web
