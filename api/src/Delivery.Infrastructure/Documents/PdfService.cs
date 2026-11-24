@@ -36,6 +36,9 @@ public sealed class PdfService : IPdfService
             RouteSheet route => RouteDocumentsPdf.RouteSheet(route),
             DeliveryNoteSheet note => RouteDocumentsPdf.DeliveryNote(note),
             CourierStockSheet stock => CourierStockPdf.Render(stock),
+            BlNoteSheet note => ReturnDocumentsPdf.BlNote(note),
+            ReturnHandoverSheet handover => ReturnDocumentsPdf.ReturnHandover(handover),
+            ReturnSlipSheet slip => ReturnDocumentsPdf.ReturnSlip(slip),
             _ => throw new NotSupportedException($"Document PDF inconnu : {document.GetType().Name}"),
         };
     }

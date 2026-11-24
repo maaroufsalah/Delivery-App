@@ -141,6 +141,15 @@ public static class CourierMasks
         return mask.StaffAlias;
     }
 
+    /// <summary>`maskForRequest` hors réponse JSON (un PDF) : la valeur masquée pour ce lecteur, sinon intacte.</summary>
+    public static async Task<T> ForReaderAsync<T>(IAppDbContext db, ICurrentUser reader, T value, CancellationToken cancellationToken)
+    {
+        if (reader.CanSeeCourierIdentity()) return value;
+        var mask = await LoadAsync(db, reader, cancellationToken);
+        var node = Apply(System.Text.Json.JsonSerializer.SerializeToNode(value, System.Text.Json.JsonSerializerOptions.Web), mask);
+        return System.Text.Json.JsonSerializer.Deserialize<T>(node, System.Text.Json.JsonSerializerOptions.Web)!;
+    }
+
     /// <summary>`maskCouriers` : parcourt la réponse ; la clé guide le traitement de chaque texte.</summary>
     public static JsonNode? Apply(JsonNode? node, CourierMask mask, string? key = null)
     {

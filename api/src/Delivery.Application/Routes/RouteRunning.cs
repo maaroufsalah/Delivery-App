@@ -132,7 +132,7 @@ public static class RouteDispatch
 
 /// <summary>Ce que le livreur (ou le bureau) rend compte d'un colis du circuit (`routeConfirmSchema`, montants en dirhams).</summary>
 public sealed record RouteOutcome(bool Confirmed, int? StatusId, string? ScheduledAt, string? Comment, double? CollectedAmount = null, double? Latitude = null, double? Longitude = null,
-    double? ChequeAmount = null, string? ChequeNumber = null, string? ChequeBank = null, string? ChequeDate = null);
+    double? ChequeAmount = null, string? ChequeNumber = null, string? ChequeBank = null, string? ChequeDate = null, bool? BlCollected = null, string? BlReference = null);
 
 /// <summary>`prepareConfirmation` : statut, encaissement (espèces, chèque), commission, recette du livreur.</summary>
 public static class RouteConfirmation

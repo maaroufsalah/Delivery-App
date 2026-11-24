@@ -4,18 +4,21 @@ using Microsoft.EntityFrameworkCore;
 namespace Delivery.Application.Common.Documents;
 
 /// <summary>`PdfCompany` : l'en-tête et le pied légal des documents PDF.</summary>
-public sealed record PdfCompany(string Name, string? LegalName, string? TaxId, string? Rc, string? Address, string? City, string? Phone, string? Email, string? Website)
+public sealed record PdfCompany(string Name, string? LegalName, string? TaxId, string? Rc, string? Address, string? City, string? Phone, string? Email, string? Website, string? ShortName = null)
 {
     public static PdfCompany Blank(string label) => new(label, null, null, null, null, null, null, null, null);
 
     /// <summary>`loadPdfCompany`.</summary>
     public static async Task<PdfCompany> LoadAsync(IAppDbContext db, string fallback, CancellationToken cancellationToken) =>
         await db.Companies.AsNoTracking().OrderBy(c => c.CreatedAt)
-            .Select(c => new PdfCompany(c.Name, c.LegalName, c.TaxId, c.Rc, c.Address, c.City, c.Phone, c.Email, c.Website))
+            .Select(c => new PdfCompany(c.Name, c.LegalName, c.TaxId, c.Rc, c.Address, c.City, c.Phone, c.Email, c.Website, c.ShortName))
             .FirstOrDefaultAsync(cancellationToken) ?? Blank(fallback);
 
     /// <summary>`companyTitle`.</summary>
     public string Title => Clean(LegalName) is { Length: > 0 } legal ? legal : Name.Trim() is { Length: > 0 } name ? name : "Document";
+
+    /// <summary>`companyShortName` : le réglage, sinon le nom tronqué à 20.</summary>
+    public string ShortText => Clean(ShortName) is { Length: > 0 } s ? s : Name.Trim().Length > 20 ? Name.Trim()[..20] : Name.Trim();
 
     /// <summary>`companyHeaderLines`.</summary>
     public IReadOnlyList<string> HeaderLines()
