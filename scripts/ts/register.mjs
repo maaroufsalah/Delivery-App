@@ -5,6 +5,18 @@ import { fileURLToPath } from 'node:url';
 
 registerHooks({
   resolve(specifier, context, next) {
+    // Alias de Speedy : le paquet partagé (copie locale) et `@/` (sources de l'API, lecture seule).
+    if (specifier === '@delivery/shared') {
+      return next(new URL('../../packages/shared/src/index.ts', import.meta.url).href, context);
+    }
+    if (specifier.startsWith('@/')) {
+      const api = process.env.SPEEDY_API_SRC ?? 'D:/Work/Projects/Freelance/Anass/delivery-platform/apps/api/src/';
+      const base = new URL(specifier.slice(2), `file:///${api}`);
+      for (const suffix of ['.ts', '/index.ts', '']) {
+        const candidate = new URL(base.href + suffix);
+        if (existsSync(fileURLToPath(candidate))) return next(candidate.href, context);
+      }
+    }
     if ((specifier.startsWith('.') || specifier.startsWith('/')) && context.parentURL) {
       const base = new URL(specifier, context.parentURL);
       for (const suffix of ['', '.ts', '/index.ts']) {

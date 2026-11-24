@@ -21,11 +21,13 @@ public sealed class ListQueryParams
 
     public string? IsActive { get; set; }
 
-    public ListQuery ToQuery()
+    public ListQuery ToQuery() => ToQueryWithDefault(25);
+
+    public ListQuery ToQueryWithDefault(int defaultPageSize)
     {
         var issues = new List<object>();
         var page = Coerce(Page, 1, 1, null, "page", issues);
-        var pageSize = Coerce(PageSize, 25, 1, 200, "pageSize", issues);
+        var pageSize = Coerce(PageSize, defaultPageSize, 1, 200, "pageSize", issues);
         var search = Search?.Trim();
         if (search is { Length: > 120 }) issues.Add(new { path = "search", message = "Too big: expected string to have <=120 characters" });
         var sort = Sort?.Trim();

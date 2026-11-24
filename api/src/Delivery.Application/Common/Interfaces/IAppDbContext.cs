@@ -113,5 +113,7 @@ public interface IAppDbContext
 
     DatabaseFacade Database { get; }
 
+    Microsoft.EntityFrameworkCore.ChangeTracking.ChangeTracker ChangeTracker { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
