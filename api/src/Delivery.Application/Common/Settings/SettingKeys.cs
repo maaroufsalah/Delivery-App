@@ -16,6 +16,33 @@ public static class SettingKeys
     public const string ParcelCodePrefix = "parcels.codePrefix";
     public const string RegistrationMerchant = "registration.merchant";
     public const string RegistrationCourier = "registration.courier";
+    public const string LabelFormat = "labels.defaultFormat";
+    public const string LabelTemplate = "labels.template";
+    public const string LabelBrandColor = "labels.brandColor";
+    public const string LabelBanner = "labels.banner";
+    public const string LocalesEnabled = "locales.enabled";
+    public const string LocalesDefault = "locales.default";
+    public const string LowStockThreshold = "warehouse.lowStockThreshold";
+    public const string InvoiceFooter = "invoice.footer";
+    public const string CourierReturnFee = "courierPay.returnFee";
+    public const string CourierPayPeriod = "courierPay.period";
+    public const string CourierFailedCommission = "finance.courierFailedCommission";
+    public const string VatRate = "finance.vatRate";
+    public const string ProVatRate = "finance.proVatRate";
+    public const string InvoicePrefix = "finance.invoicePrefix";
+    public const string RemittancePrefix = "finance.remittancePrefix";
+    public const string StatementPrefix = "finance.statementPrefix";
+    public const string CodPayoutPrefix = "finance.codPayoutPrefix";
+    public const string CodPayoutFooter = "finance.codPayoutFooter";
+    public const string NumberingYearlyReset = "finance.numberingYearlyReset";
+    public const string DefaultBankAccount = "finance.defaultBankAccount";
+    public const string AuditRetentionDays = "audit.retentionDays";
+    public const string AutoRouteByScan = "routes.autoRouteByScan";
+    public const string ScanCityFromCourier = "routes.scanCityFromCourier";
+    public const string ClaimResolutionDays = "claims.resolutionDays";
+    public const string ThemePresets = "theme.presets";
+    public const string ThemeStandard = "theme.standard";
+    public const string ThemePrevious = "theme.previous";
     public const string SessionAccessMinutes = "session.accessMinutes";
     public const string SessionWebDays = "session.webDays";
     public const string SessionRememberDays = "session.rememberDays";
@@ -56,6 +83,19 @@ public static class SettingsQueries
             // Speedy rend la valeur telle quelle (`value as T`) : une valeur non booléenne est « vraie ».
             _ => true,
         };
+    }
+
+    /// <summary>`pricingPolicy` : frais d'échec, frais de ramassage, seuil de gratuité (centimes).</summary>
+    public static async Task<Domain.Pricing.PricingPolicy> PricingPolicyAsync(this IAppDbContext db, CancellationToken cancellationToken, string? agencyId = null)
+    {
+        var all = await db.AllSettingsAsync(agencyId, cancellationToken);
+        long Read(string key, long fallback) => all.TryGetValue(key, out var v) && v.ValueKind == JsonValueKind.Number && double.IsFinite(v.GetDouble()) ? (long)v.GetDouble() : fallback;
+        var d = Domain.Pricing.PricingPolicy.Default;
+        return new Domain.Pricing.PricingPolicy(
+            Read(SettingKeys.FailureFeeSameCity, d.FailureFeeSameCity),
+            Read(SettingKeys.FailureFeeCrossCity, d.FailureFeeCrossCity),
+            Read(SettingKeys.PickupFee, d.PickupFee),
+            Read(SettingKeys.FreePickupThreshold, d.FreePickupThreshold));
     }
 
     public static async Task<SessionDurations> SessionDurationsAsync(this IAppDbContext db, CancellationToken cancellationToken)

@@ -84,6 +84,26 @@ public static class Zod
     public static IRuleBuilderOptions<T, string?> OneOf<T>(this IRuleBuilder<T, string?> rule, IReadOnlyCollection<string> values) =>
         rule.Must(v => v is null || values.Contains(v)).WithMessage(InvalidOption(values));
 
+    public const string ExpectedInt = "Invalid input: expected int, received number";
+
+    /// <summary>`.int()` : un nombre à virgule est refusé.</summary>
+    public static IRuleBuilderOptions<T, double?> Int<T>(this IRuleBuilder<T, double?> rule) =>
+        rule.Must(v => v is null || (Math.Floor(v.Value) == v.Value && !double.IsInfinity(v.Value))).WithMessage(ExpectedInt);
+
+    public static IRuleBuilderOptions<T, double?> Min<T>(this IRuleBuilder<T, double?> rule, double min, string? message = null) =>
+        rule.Must(v => v is null || v.Value >= min).WithMessage(message ?? TooSmallNumber((decimal)min));
+
+    public static IRuleBuilderOptions<T, double?> Max<T>(this IRuleBuilder<T, double?> rule, double max, string? message = null) =>
+        rule.Must(v => v is null || v.Value <= max).WithMessage(message ?? TooBigNumber((decimal)max));
+
+    /// <summary>`madAmountSchema` : nombre requis (« required »), 0 à 1 000 000 MAD.</summary>
+    public static void MadAmount<T>(this IRuleBuilder<T, double?> rule, bool nullable = false)
+    {
+        if (!nullable) rule.Must(v => v is not null).WithMessage("required");
+        rule.Must(v => v is null || v.Value >= 0).WithMessage("negative-amount");
+        rule.Must(v => v is null || v.Value <= 1_000_000).WithMessage("amount-too-large");
+    }
+
     /// <summary>`z.string().trim()` puis la normalisation des champs facultatifs vides.</summary>
     public static string? Trim(string? value) => value?.Trim();
 

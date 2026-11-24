@@ -8,6 +8,9 @@
     <PackageReference Include="QuestPDF" />
     <PackageReference Include="ClosedXML" />
     <PackageReference Include="QRCoder" />
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" />
+    <PackageReference Include="Svg.Skia" />
     <PackageReference Include="ZXing.Net" />
   </ItemGroup>
   <ItemGroup>

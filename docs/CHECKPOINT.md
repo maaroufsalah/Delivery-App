@@ -1,34 +1,43 @@
 # CHECKPOINT — chantier « Delivery-App » (API .NET pour Wimo)
 
-Rapport final : `docs/chantiers/delivery-app-dotnet.md` (en fin de chantier). Checklist : `docs/contract/INVENTAIRE.md`.
+Rapport final : `docs/chantiers/delivery-app-dotnet.md` (en fin de chantier). Checklist : `docs/contract/INVENTAIRE.md`
+(`node scripts/check-inventory.mjs` coche les routes servies par les contrôleurs .NET).
 
 ## Fait
 
-- PR 1 (socle) : web/mobile/packages copiés de Speedy `main` e9a98b06 (seuls changent les
-  `.env.example`, l'hôte API par défaut `localhost:5080` et `PRODUCTION_API_ORIGIN` du mobile),
-  inventaire de 506 endpoints (494 dans le périmètre, 12 /platform hors périmètre), solution
-  .NET 10 (4 projets + 2 projets de tests), schéma Prisma porté en 104 entités EF Core
-  (`scripts/prisma-to-ef.py`, `companyId` retiré), migration `InitialSchema`, middleware
-  d'erreurs au format Nest, sérialisation JSON (dates `.fffZ`, décimaux JS), CI GitHub Actions.
+- **PR 1 socle** (#1, fusionnée) : web/mobile/packages copiés de Speedy `main` e9a98b06, inventaire
+  506 endpoints (494 dans le périmètre), solution .NET 10, 104 entités EF (`scripts/prisma-to-ef.py`,
+  `companyId` retiré), migration `InitialSchema`, erreurs au format Nest, JSON `.fffZ`, CI.
+- **PR 2 identité** (#2, fusionnée) : 27/27 routes du module 2 (auth, sessions/rotation, cookies
+  `dp.at`/`dp.rt`, comptes, rôles, écarts, inscription publique, frein, health). 20 tests unitaires,
+  45 tests de contrat verts. Seed : société `cmp-wimo`, permissions, super-admin `SEED_ADMIN_*`.
 
-## En cours
+## En cours — module 3 « Société et référentiel », PR ouverte depuis `feat/referential`
 
-- (rien)
+68/68 routes : villes, zones (+ tarifs inter-zones), quartiers, agences (siège), types de
+livraison, `pricing-rules` (grille par origine, import/export xlsx), `directory/*`,
+`settings/*` (société, business, finance, logo SkiaSharp, thème + instantanés),
+`public/company|logo|rates|mobile-config|cities`. Seed : statuts + transitions
+(`scripts/ts/dump-statuses.mjs`), paramètres Wimo, « Livraison normale », zone/ville/agence
+Casablanca. Import CSV idempotent : `scripts/import-referential.sh <dossier>` (format dans
+`ReferentialImporter.cs`). Mobile : `PRODUCTION_API_ORIGIN` lu dans `EXPO_PUBLIC_API_URL`
+(eas.json production = `https://api-new.wimodelivery.ma`).
 
-## Prochaine action
+## Prochaine action exacte
 
-- Module 2 « Identité et accès » sur `feat/identity`.
+1. Fusionner la PR du module 3 une fois la CI verte.
+2. Module 4 « Clients et livreurs » sur `feat/accounts` : lire `modules/clients`, `modules/couriers`,
+   `modules/merchant` de Speedy (inventaire section Module 4, 39 routes) ; y porter aussi la
+   validation/le refus des inscriptions et le masque livreur (`common/scope/courier-mask.ts`).
 
 ## Blocages / décisions pour Salah
 
-1. `LUCKYPENNY_LICENSE_KEY` absente du poste (ni User ni Machine) et des secrets GitHub du
-   dépôt : MediatR/AutoMapper tournent mais journalisent un avertissement de licence.
-2. Docker absent du poste : tests de contrat joués en local sur Postgres (scoop, port 5434,
-   `TEST_DATABASE_URL`) ; Testcontainers ne tourne qu'en CI.
-3. Hôte API de production du mobile : `https://api.wimo.ma` posé en attente du vrai nom.
+- Aucun bloquant. `LUCKYPENNY_LICENSE_KEY` absente de la session courante : avertissement de licence.
+- Dépendance ajoutée hors liste : `Svg.Skia` (rendu des logos SVG, extension de SkiaSharp).
 
 ## Reprendre
 
 1. `pg_ctl -D C:\Users\dell\pgdata-wimo -o "-p 5434" start` (ou `docker compose up -d postgres`).
 2. `cd api && dotnet build Delivery.slnx`.
-3. Lire la section « Prochaine action », ouvrir la section du module dans l'inventaire.
+3. `TEST_DATABASE_URL="Host=localhost;Port=5434;Username=postgres;Database=postgres" dotnet test tests/Delivery.ContractTests`.
+4. Lire « Prochaine action exacte ».

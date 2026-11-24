@@ -6,14 +6,30 @@ public interface IClock
     DateTime UtcNow { get; }
 }
 
-/// <summary>Stockage des pièces jointes et du logo (volume `uploads`).</summary>
+/// <summary>Fichier écrit : sa clé (`dossier/uuid.ext`), sa taille, son empreinte.</summary>
+public sealed record StoredFile(string Key, long SizeBytes, string MimeType, string Checksum);
+
+/// <summary>Image ré-encodée : pixels seulement, métadonnées (EXIF, scripts SVG) retirées.</summary>
+public sealed record SanitizedImage(byte[] Content, string MimeType, int Width, int Height, string SourceFormat);
+
+/// <summary>
+/// Stockage des pièces jointes et du logo (volume `uploads`, `StorageService`),
+/// et l'assainissement des images reçues (`image-sanitizer.ts`).
+/// </summary>
 public interface IFileStorage
 {
-    Task<string> SaveAsync(string folder, string fileName, Stream content, string contentType, CancellationToken cancellationToken);
+    Task<StoredFile> PutAsync(string folder, byte[] content, string mimeType, CancellationToken cancellationToken);
 
-    Task<Stream?> OpenAsync(string key, CancellationToken cancellationToken);
+    /// <summary>Contenu d'une clé ; 404 « Fichier introuvable. » si absente.</summary>
+    Task<byte[]> GetAsync(string key, CancellationToken cancellationToken);
 
-    Task DeleteAsync(string key, CancellationToken cancellationToken);
+    Task RemoveAsync(string key, CancellationToken cancellationToken);
+
+    /// <summary>Décode, vérifie le type annoncé, redimensionne (`maxSide`) et ré-encode ; 422 nommé sinon.</summary>
+    SanitizedImage SanitizeImage(byte[] input, string declaredMime, int maxSide, bool preserveFormat = false);
+
+    /// <summary>`brandIcon` : le logo centré sur un carré de la couleur de fond, en PNG.</summary>
+    byte[] BrandIcon(byte[] sanitizedLogo, string? background, int size = 64);
 }
 
 /// <summary>Bandeau d'un export : raison sociale, puis ligne légale.</summary>

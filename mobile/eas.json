@@ -33,7 +33,7 @@
       "autoIncrement": true,
       "env": {
         "APP_VARIANT": "production",
-        "EXPO_PUBLIC_API_URL": "https://api.speedytrans.ma"
+        "EXPO_PUBLIC_API_URL": "https://api-new.wimodelivery.ma"
       },
       "android": {
         "buildType": "apk"
@@ -45,7 +45,7 @@
       "autoIncrement": true,
       "env": {
         "APP_VARIANT": "production",
-        "EXPO_PUBLIC_API_URL": "https://api.speedytrans.ma"
+        "EXPO_PUBLIC_API_URL": "https://api-new.wimodelivery.ma"
       },
       "android": {
         "buildType": "app-bundle"

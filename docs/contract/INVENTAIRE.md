@@ -75,98 +75,98 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 
 ### `modules/agencies/agencies.controller.ts`
 
-- [ ] `GET /api/agencies` — `list` (L52) · perm: accounts.read · entrée: listQuerySchema
-- [ ] `GET /api/agencies/export` — `export` (L66) · perm: accounts.read · entrée: listQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/agencies/:id` — `detail` (L80) · perm: accounts.read
-- [ ] `POST /api/agencies` — `create` (L87) · perm: accounts.write · entrée: agencySchema
-- [ ] `PATCH /api/agencies/:id` — `update` (L94) · perm: accounts.write · entrée: agencySchema
-- [ ] `PATCH /api/agencies/:id/active` — `setActive` (L105) · perm: accounts.write · entrée: toggleActiveSchema
-- [ ] `DELETE /api/agencies/:id` — `remove` (L116) · perm: accounts.write
+- [x] `GET /api/agencies` — `list` (L52) · perm: accounts.read · entrée: listQuerySchema
+- [x] `GET /api/agencies/export` — `export` (L66) · perm: accounts.read · entrée: listQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/agencies/:id` — `detail` (L80) · perm: accounts.read
+- [x] `POST /api/agencies` — `create` (L87) · perm: accounts.write · entrée: agencySchema
+- [x] `PATCH /api/agencies/:id` — `update` (L94) · perm: accounts.write · entrée: agencySchema
+- [x] `PATCH /api/agencies/:id/active` — `setActive` (L105) · perm: accounts.write · entrée: toggleActiveSchema
+- [x] `DELETE /api/agencies/:id` — `remove` (L116) · perm: accounts.write
 
 ### `modules/cities/cities.controller.ts`
 
-- [ ] `GET /api/cities` — `list` (L61) · gardes: NotMerchantGuard · perm: directory.read · entrée: listQuerySchema · query: zoneId
-- [ ] `GET /api/cities/export` — `export` (L79) · gardes: NotMerchantGuard · perm: directory.read · entrée: listQuerySchema · query: zoneId · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/cities/:id` — `detail` (L94) · gardes: NotMerchantGuard · perm: directory.read
-- [ ] `POST /api/cities` — `create` (L101) · gardes: NotMerchantGuard · perm: directory.write · entrée: citySchema
-- [ ] `PATCH /api/cities/:id` — `update` (L108) · gardes: NotMerchantGuard · perm: directory.write · entrée: citySchema
-- [ ] `PATCH /api/cities/:id/active` — `setActive` (L119) · gardes: NotMerchantGuard · perm: directory.write · entrée: toggleActiveSchema
-- [ ] `DELETE /api/cities/:id` — `remove` (L130) · gardes: NotMerchantGuard · perm: directory.write
+- [x] `GET /api/cities` — `list` (L61) · gardes: NotMerchantGuard · perm: directory.read · entrée: listQuerySchema · query: zoneId
+- [x] `GET /api/cities/export` — `export` (L79) · gardes: NotMerchantGuard · perm: directory.read · entrée: listQuerySchema · query: zoneId · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/cities/:id` — `detail` (L94) · gardes: NotMerchantGuard · perm: directory.read
+- [x] `POST /api/cities` — `create` (L101) · gardes: NotMerchantGuard · perm: directory.write · entrée: citySchema
+- [x] `PATCH /api/cities/:id` — `update` (L108) · gardes: NotMerchantGuard · perm: directory.write · entrée: citySchema
+- [x] `PATCH /api/cities/:id/active` — `setActive` (L119) · gardes: NotMerchantGuard · perm: directory.write · entrée: toggleActiveSchema
+- [x] `DELETE /api/cities/:id` — `remove` (L130) · gardes: NotMerchantGuard · perm: directory.write
 
 ### `modules/delivery-types/delivery-types.controller.ts`
 
-- [ ] `GET /api/delivery-types` — `list` (L51) · gardes: NotMerchantGuard · perm: directory.read · entrée: listQuerySchema
-- [ ] `GET /api/delivery-types/export` — `export` (L65) · gardes: NotMerchantGuard · perm: directory.read · entrée: listQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/delivery-types/:id` — `detail` (L81) · gardes: NotMerchantGuard · perm: directory.read
-- [ ] `POST /api/delivery-types` — `create` (L88) · gardes: NotMerchantGuard · perm: directory.write · entrée: deliveryTypeSchema
-- [ ] `PATCH /api/delivery-types/:id` — `update` (L98) · gardes: NotMerchantGuard · perm: directory.write · entrée: deliveryTypeSchema
-- [ ] `PATCH /api/delivery-types/:id/active` — `setActive` (L109) · gardes: NotMerchantGuard · perm: directory.write · entrée: toggleActiveSchema
-- [ ] `DELETE /api/delivery-types/:id` — `remove` (L120) · gardes: NotMerchantGuard · perm: directory.write
+- [x] `GET /api/delivery-types` — `list` (L51) · gardes: NotMerchantGuard · perm: directory.read · entrée: listQuerySchema
+- [x] `GET /api/delivery-types/export` — `export` (L65) · gardes: NotMerchantGuard · perm: directory.read · entrée: listQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/delivery-types/:id` — `detail` (L81) · gardes: NotMerchantGuard · perm: directory.read
+- [x] `POST /api/delivery-types` — `create` (L88) · gardes: NotMerchantGuard · perm: directory.write · entrée: deliveryTypeSchema
+- [x] `PATCH /api/delivery-types/:id` — `update` (L98) · gardes: NotMerchantGuard · perm: directory.write · entrée: deliveryTypeSchema
+- [x] `PATCH /api/delivery-types/:id/active` — `setActive` (L109) · gardes: NotMerchantGuard · perm: directory.write · entrée: toggleActiveSchema
+- [x] `DELETE /api/delivery-types/:id` — `remove` (L120) · gardes: NotMerchantGuard · perm: directory.write
 
 ### `modules/directory/directory.controller.ts`
 
-- [ ] `GET /api/directory/cities` — `cities` (L17) · perm: directory.read · query: includeInactive
-- [ ] `GET /api/directory/zones` — `zones` (L24) · perm: directory.read
-- [ ] `GET /api/directory/districts` — `districts` (L32) · perm: directory.read · query: cityId
-- [ ] `GET /api/directory/clients` — `clients` (L39) · perm: directory.read
-- [ ] `GET /api/directory/couriers` — `couriers` (L46) · perm: directory.read
-- [ ] `GET /api/directory/agencies` — `agencies` (L53) · perm: directory.read
-- [ ] `GET /api/directory/pending-counts` — `pendingCounts` (L67) · perm: directory.read
+- [x] `GET /api/directory/cities` — `cities` (L17) · perm: directory.read · query: includeInactive
+- [x] `GET /api/directory/zones` — `zones` (L24) · perm: directory.read
+- [x] `GET /api/directory/districts` — `districts` (L32) · perm: directory.read · query: cityId
+- [x] `GET /api/directory/clients` — `clients` (L39) · perm: directory.read
+- [x] `GET /api/directory/couriers` — `couriers` (L46) · perm: directory.read
+- [x] `GET /api/directory/agencies` — `agencies` (L53) · perm: directory.read
+- [x] `GET /api/directory/pending-counts` — `pendingCounts` (L67) · perm: directory.read
 
 ### `modules/districts/districts.controller.ts`
 
-- [ ] `GET /api/districts` — `list` (L52) · gardes: NotMerchantGuard · perm: directory.read · entrée: listQuerySchema · query: cityId
-- [ ] `GET /api/districts/export` — `export` (L70) · gardes: NotMerchantGuard · perm: directory.read · entrée: listQuerySchema · query: cityId · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/districts/:id` — `detail` (L85) · gardes: NotMerchantGuard · perm: directory.read
-- [ ] `POST /api/districts` — `create` (L92) · gardes: NotMerchantGuard · perm: directory.write · entrée: districtSchema
-- [ ] `PATCH /api/districts/:id` — `update` (L99) · gardes: NotMerchantGuard · perm: directory.write · entrée: districtSchema
-- [ ] `PATCH /api/districts/:id/active` — `setActive` (L110) · gardes: NotMerchantGuard · perm: directory.write · entrée: toggleActiveSchema
-- [ ] `DELETE /api/districts/:id` — `remove` (L121) · gardes: NotMerchantGuard · perm: directory.write
+- [x] `GET /api/districts` — `list` (L52) · gardes: NotMerchantGuard · perm: directory.read · entrée: listQuerySchema · query: cityId
+- [x] `GET /api/districts/export` — `export` (L70) · gardes: NotMerchantGuard · perm: directory.read · entrée: listQuerySchema · query: cityId · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/districts/:id` — `detail` (L85) · gardes: NotMerchantGuard · perm: directory.read
+- [x] `POST /api/districts` — `create` (L92) · gardes: NotMerchantGuard · perm: directory.write · entrée: districtSchema
+- [x] `PATCH /api/districts/:id` — `update` (L99) · gardes: NotMerchantGuard · perm: directory.write · entrée: districtSchema
+- [x] `PATCH /api/districts/:id/active` — `setActive` (L110) · gardes: NotMerchantGuard · perm: directory.write · entrée: toggleActiveSchema
+- [x] `DELETE /api/districts/:id` — `remove` (L121) · gardes: NotMerchantGuard · perm: directory.write
 
 ### `modules/pricing/pricing-rules.controller.ts`
 
-- [ ] `GET /api/pricing-rules` — `list` (L46) · gardes: NotMerchantGuard · perm: directory.read · entrée: listQuerySchema · query: originCityId, destinationCityId
-- [ ] `GET /api/pricing-rules/by-origin` — `byOrigin` (L65) · gardes: NotMerchantGuard · perm: directory.read · entrée: listQuerySchema · query: originCityId, zoneId
-- [ ] `PUT /api/pricing-rules/by-origin/:originCityId` — `saveOrigin` (L79) · gardes: NotMerchantGuard · perm: directory.write · entrée: pricingOriginSaveSchema
-- [ ] `GET /api/pricing-rules/by-origin/:originCityId/export` — `exportOrigin` (L90) · gardes: NotMerchantGuard · perm: directory.read · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/pricing-rules/by-origin/:originCityId/import` — `importOrigin` (L106) · gardes: NotMerchantGuard · perm: directory.write · entrée: pricingImportSchema
-- [ ] `POST /api/pricing-rules` — `create` (L117) · gardes: NotMerchantGuard · perm: directory.write · entrée: pricingRuleSchema
-- [ ] `PATCH /api/pricing-rules/:id` — `update` (L124) · gardes: NotMerchantGuard · perm: directory.write · entrée: pricingRuleSchema
-- [ ] `DELETE /api/pricing-rules/:id` — `remove` (L135) · gardes: NotMerchantGuard · perm: directory.write
+- [x] `GET /api/pricing-rules` — `list` (L46) · gardes: NotMerchantGuard · perm: directory.read · entrée: listQuerySchema · query: originCityId, destinationCityId
+- [x] `GET /api/pricing-rules/by-origin` — `byOrigin` (L65) · gardes: NotMerchantGuard · perm: directory.read · entrée: listQuerySchema · query: originCityId, zoneId
+- [x] `PUT /api/pricing-rules/by-origin/:originCityId` — `saveOrigin` (L79) · gardes: NotMerchantGuard · perm: directory.write · entrée: pricingOriginSaveSchema
+- [x] `GET /api/pricing-rules/by-origin/:originCityId/export` — `exportOrigin` (L90) · gardes: NotMerchantGuard · perm: directory.read · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/pricing-rules/by-origin/:originCityId/import` — `importOrigin` (L106) · gardes: NotMerchantGuard · perm: directory.write · entrée: pricingImportSchema
+- [x] `POST /api/pricing-rules` — `create` (L117) · gardes: NotMerchantGuard · perm: directory.write · entrée: pricingRuleSchema
+- [x] `PATCH /api/pricing-rules/:id` — `update` (L124) · gardes: NotMerchantGuard · perm: directory.write · entrée: pricingRuleSchema
+- [x] `DELETE /api/pricing-rules/:id` — `remove` (L135) · gardes: NotMerchantGuard · perm: directory.write
 
 ### `modules/public/public.controller.ts`
 
-- [ ] `GET /api/public/company` — `company` (L35) · public · gardes: PublicRateLimitGuard
-- [ ] `GET /api/public/logo/:fileName` — `logo` (L59) · public · gardes: PublicRateLimitGuard · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/public/rates` — `rates` (L71) · public · gardes: PublicRateLimitGuard
-- [ ] `GET /api/public/mobile-config` — `mobileConfig` (L90) · public · gardes: PublicRateLimitGuard · sortie: `MobileConfig`
-- [ ] `GET /api/public/cities` — `cities` (L103) · public · gardes: PublicRateLimitGuard · sortie: `Promise<PublicCity[]>`
+- [x] `GET /api/public/company` — `company` (L35) · public · gardes: PublicRateLimitGuard
+- [x] `GET /api/public/logo/:fileName` — `logo` (L59) · public · gardes: PublicRateLimitGuard · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/public/rates` — `rates` (L71) · public · gardes: PublicRateLimitGuard
+- [x] `GET /api/public/mobile-config` — `mobileConfig` (L90) · public · gardes: PublicRateLimitGuard · sortie: `MobileConfig`
+- [x] `GET /api/public/cities` — `cities` (L103) · public · gardes: PublicRateLimitGuard · sortie: `Promise<PublicCity[]>`
 
 ### `modules/settings/settings.controller.ts`
 
-- [ ] `GET /api/settings/company` — `getCompany` (L32) · perm: settings.read
-- [ ] `GET /api/settings/business` — `getBusiness` (L43) · perm: settings.read
-- [ ] `PATCH /api/settings/business` — `updateBusiness` (L50) · perm: settings.write · entrée: businessSettingsSchema
-- [ ] `GET /api/settings/finance` — `getFinance` (L67) · perm: settings.read
-- [ ] `PATCH /api/settings/finance` — `updateFinance` (L74) · perm: settings.write · entrée: financeSettingsSchema
-- [ ] `POST /api/settings/logo` — `uploadLogo` (L95) · perm: settings.write · entrée: companyLogoSchema
-- [ ] `PATCH /api/settings/company` — `updateCompany` (L106) · perm: settings.write · entrée: companySettingsPatchSchema
-- [ ] `GET /api/settings/theme` — `getThemeWorkbench` (L131) · perm: settings.read
-- [ ] `POST /api/settings/theme/restore/:which` — `restoreTheme` (L144) · perm: settings.write
-- [ ] `PATCH /api/settings/theme` — `updateTheme` (L163) · perm: settings.write · entrée: themeOverridesSchema
+- [x] `GET /api/settings/company` — `getCompany` (L32) · perm: settings.read
+- [x] `GET /api/settings/business` — `getBusiness` (L43) · perm: settings.read
+- [x] `PATCH /api/settings/business` — `updateBusiness` (L50) · perm: settings.write · entrée: businessSettingsSchema
+- [x] `GET /api/settings/finance` — `getFinance` (L67) · perm: settings.read
+- [x] `PATCH /api/settings/finance` — `updateFinance` (L74) · perm: settings.write · entrée: financeSettingsSchema
+- [x] `POST /api/settings/logo` — `uploadLogo` (L95) · perm: settings.write · entrée: companyLogoSchema
+- [x] `PATCH /api/settings/company` — `updateCompany` (L106) · perm: settings.write · entrée: companySettingsPatchSchema
+- [x] `GET /api/settings/theme` — `getThemeWorkbench` (L131) · perm: settings.read
+- [x] `POST /api/settings/theme/restore/:which` — `restoreTheme` (L144) · perm: settings.write
+- [x] `PATCH /api/settings/theme` — `updateTheme` (L163) · perm: settings.write · entrée: themeOverridesSchema
 
 ### `modules/zones/zones.controller.ts`
 
-- [ ] `GET /api/zones` — `list` (L60) · gardes: NotMerchantGuard · perm: directory.read · entrée: listQuerySchema
-- [ ] `GET /api/zones/export` — `export` (L74) · gardes: NotMerchantGuard · perm: directory.read · entrée: listQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/zones/rates` — `rates` (L92) · gardes: NotMerchantGuard · perm: directory.read
-- [ ] `POST /api/zones/rates` — `upsertRate` (L99) · gardes: NotMerchantGuard · perm: directory.write · entrée: zoneRateSchema
-- [ ] `DELETE /api/zones/rates/:id` — `removeRate` (L106) · gardes: NotMerchantGuard · perm: directory.write
-- [ ] `GET /api/zones/:id` — `detail` (L113) · gardes: NotMerchantGuard · perm: directory.read
-- [ ] `POST /api/zones` — `create` (L120) · gardes: NotMerchantGuard · perm: directory.write · entrée: zoneSchema
-- [ ] `PATCH /api/zones/:id` — `update` (L127) · gardes: NotMerchantGuard · perm: directory.write · entrée: zoneSchema
-- [ ] `PATCH /api/zones/:id/active` — `setActive` (L138) · gardes: NotMerchantGuard · perm: directory.write · entrée: toggleActiveSchema
-- [ ] `DELETE /api/zones/:id` — `remove` (L149) · gardes: NotMerchantGuard · perm: directory.write
+- [x] `GET /api/zones` — `list` (L60) · gardes: NotMerchantGuard · perm: directory.read · entrée: listQuerySchema
+- [x] `GET /api/zones/export` — `export` (L74) · gardes: NotMerchantGuard · perm: directory.read · entrée: listQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/zones/rates` — `rates` (L92) · gardes: NotMerchantGuard · perm: directory.read
+- [x] `POST /api/zones/rates` — `upsertRate` (L99) · gardes: NotMerchantGuard · perm: directory.write · entrée: zoneRateSchema
+- [x] `DELETE /api/zones/rates/:id` — `removeRate` (L106) · gardes: NotMerchantGuard · perm: directory.write
+- [x] `GET /api/zones/:id` — `detail` (L113) · gardes: NotMerchantGuard · perm: directory.read
+- [x] `POST /api/zones` — `create` (L120) · gardes: NotMerchantGuard · perm: directory.write · entrée: zoneSchema
+- [x] `PATCH /api/zones/:id` — `update` (L127) · gardes: NotMerchantGuard · perm: directory.write · entrée: zoneSchema
+- [x] `PATCH /api/zones/:id/active` — `setActive` (L138) · gardes: NotMerchantGuard · perm: directory.write · entrée: toggleActiveSchema
+- [x] `DELETE /api/zones/:id` — `remove` (L149) · gardes: NotMerchantGuard · perm: directory.write
 
 ## Module 4 — Clients et livreurs
 

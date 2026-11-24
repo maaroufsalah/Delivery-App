@@ -31,7 +31,7 @@ export const APP_ENVIRONMENT: AppEnvironment = CHANNEL === 'production' ? 'produ
  * donc rien d'autre à connaître. Changer le nom du web, au go-live, ne
  * demande ni APK ni OTA.
  */
-export const PRODUCTION_API_ORIGIN = 'https://api.wimo.ma';
+export const PRODUCTION_API_ORIGIN = (process.env.EXPO_PUBLIC_API_URL?.trim() ?? '').replace(/\/$/, '');
 
 /** Surcharge de DÉVELOPPEMENT seulement : jamais lue par un binaire qui porte un canal. */
 export function developmentApiOverride(): string | null {
