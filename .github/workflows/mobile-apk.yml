@@ -1,0 +1,44 @@
+name: Mobile APK
+
+# Build EAS dans le cloud, lancé à la main (Actions > Mobile APK > Run workflow).
+# Les dépendances du mobile s'installent ici, sur le runner, jamais sur le poste de dev.
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: Profil eas.json
+        required: true
+        default: preview
+        type: choice
+        options: [preview, production-apk]
+
+concurrency:
+  group: mobile-apk
+  cancel-in-progress: false
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install mobile dependencies
+        working-directory: .
+        run: pnpm install --frozen-lockfile --filter "@delivery/mobile..."
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: EAS build (Android)
+        run: |
+          eas build --platform android --profile "${{ inputs.profile }}" --non-interactive --wait --json > build.json
+          cat build.json
+          jq -r '.[0] | "Build \(.id) | versionCode \(.appBuildVersion) | version \(.appVersion) | \(.status)\nAPK \(.artifacts.buildUrl)\nhttps://expo.dev/accounts/maaroufsalaheddine/projects/wimo-delivery/builds/\(.id)"' build.json | tee -a "$GITHUB_STEP_SUMMARY"
