@@ -104,6 +104,26 @@ public static class Zod
         rule.Must(v => v is null || v.Value <= 1_000_000).WithMessage("amount-too-large");
     }
 
+    /// <summary>`madAmount0` (finance) : nombre requis, 0 à 1 000 000 MAD (« negative » sous zéro).</summary>
+    public static void MadAmount0<T>(this IRuleBuilder<T, double?> rule)
+    {
+        rule.Must(v => v is not null).WithMessage("required");
+        rule.Must(v => v is null || v.Value >= 0).WithMessage("negative");
+        rule.Must(v => v is null || v.Value <= 1_000_000).WithMessage("amount-too-large");
+    }
+
+    /// <summary>Le type JSON reçu, tel que zod le nomme dans « expected X, received Y ».</summary>
+    public static string Received(System.Text.Json.JsonElement? value) => value?.ValueKind switch
+    {
+        null or System.Text.Json.JsonValueKind.Undefined => "undefined",
+        System.Text.Json.JsonValueKind.Null => "null",
+        System.Text.Json.JsonValueKind.String => "string",
+        System.Text.Json.JsonValueKind.True or System.Text.Json.JsonValueKind.False => "boolean",
+        System.Text.Json.JsonValueKind.Array => "array",
+        System.Text.Json.JsonValueKind.Object => "object",
+        _ => "number",
+    };
+
     /// <summary>`z.string().trim()` puis la normalisation des champs facultatifs vides.</summary>
     public static string? Trim(string? value) => value?.Trim();
 

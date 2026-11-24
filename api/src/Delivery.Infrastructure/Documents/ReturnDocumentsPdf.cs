@@ -31,7 +31,7 @@ internal static class ReturnDocumentsPdf
 
     private static string WithShortName(string text, PdfCompany company) => text.Replace(ShortNameToken, company.ShortText, StringComparison.Ordinal);
 
-    private static void Header(ColumnDescriptor column, PdfCompany company, string subtitle, string code, string agencyName, DateTime? createdAt)
+    internal static void Header(ColumnDescriptor column, PdfCompany company, string subtitle, string code, string agencyName, DateTime? createdAt)
     {
         column.Item().Row(row =>
         {
@@ -53,7 +53,7 @@ internal static class ReturnDocumentsPdf
     }
 
     /// <summary>Un bloc « légende / valeur 11 pt / ligne grise » ; `styles.between` répartit les blocs.</summary>
-    private static void Block(IContainer container, string label, string value, string? muted, string? extra = null) => container.Column(c =>
+    internal static void Block(IContainer container, string label, string value, string? muted, string? extra = null) => container.Column(c =>
     {
         BusinessDocuments.Caption(c.Item(), label);
         c.Item().PaddingTop(2).Text(value).FontSize(11);
@@ -61,7 +61,7 @@ internal static class ReturnDocumentsPdf
         if (extra is not null) c.Item().Text(extra).FontColor(Muted);
     });
 
-    private static void Blocks(ColumnDescriptor column, IReadOnlyList<(float MaxWidth, Action<IContainer> Draw)> blocks)
+    internal static void Blocks(ColumnDescriptor column, IReadOnlyList<(float MaxWidth, Action<IContainer> Draw)> blocks)
     {
         column.Item().Row(row =>
         {
@@ -73,10 +73,10 @@ internal static class ReturnDocumentsPdf
         });
     }
 
-    private static void Head(ColumnDescriptor column, Action<RowDescriptor> cells) =>
+    internal static void Head(ColumnDescriptor column, Action<RowDescriptor> cells) =>
         column.Item().PaddingTop(16).Background("#F1F1F1").PaddingVertical(5).PaddingHorizontal(6).Row(cells);
 
-    private static void Line(ColumnDescriptor column, Action<RowDescriptor> cells) =>
+    internal static void Line(ColumnDescriptor column, Action<RowDescriptor> cells) =>
         column.Item().ShowEntire().BorderBottom(0.4f).BorderColor(BusinessDocuments.RowRule).PaddingVertical(5).PaddingHorizontal(6).Row(cells);
 
     private static void Totals(ColumnDescriptor column, string left, string right, bool rightStrong)
@@ -92,14 +92,14 @@ internal static class ReturnDocumentsPdf
     }
 
     /// <summary>Signature nommée : légende, nom (12 pt minimum), filet 16 pt plus bas.</summary>
-    private static void Signed(IContainer container, string label, string? name) => container.Column(c =>
+    internal static void Signed(IContainer container, string label, string? name) => container.Column(c =>
     {
         BusinessDocuments.Caption(c.Item(), label);
         c.Item().PaddingTop(2).MinHeight(12).Text(name ?? string.Empty);
         c.Item().PaddingTop(16).LineHorizontal(0.6f).LineColor(Ink);
     });
 
-    private static void Signatures(ColumnDescriptor column, Action<IContainer> left, Action<IContainer> right)
+    internal static void Signatures(ColumnDescriptor column, Action<IContainer> left, Action<IContainer> right)
     {
         column.Item().PaddingTop(36).Row(row =>
         {
