@@ -33,7 +33,10 @@ Checklist du chantier : `docs/contract/INVENTAIRE.md`. Reprise : `docs/CHECKPOIN
 
 Branche `feat/<module>` → commits Conventional Commits, fichiers ajoutés nommément
 (jamais `git add .`), `git diff --cached --stat` avant chaque commit → PR → CI verte →
-`gh pr merge --squash --delete-branch`. Aucune mention d'outil d'assistance dans les
+`gh pr merge --squash --delete-branch`.
+Après `gh pr create`, attendre la CI soi-même : `gh pr checks <n> --watch --fail-fast`. Verte →
+`gh pr merge <n> --squash --delete-branch`, puis module suivant sans s'arrêter. Rouge → corriger,
+pousser, attendre à nouveau. Ne jamais s'arrêter en attendant la CI. Aucune mention d'outil d'assistance dans les
 commits, PR, branches ou le code.
 
 ## Commandes (depuis `api/`)
