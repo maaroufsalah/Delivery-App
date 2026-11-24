@@ -17,8 +17,10 @@ public static class DependencyInjection
     {
         services.AddSingleton<IClock, SystemClock>();
         services.AddScoped<TimestampsInterceptor>();
+        services.AddScoped<AuditInterceptor>();
         services.AddSingleton<IJwtService, JwtService>();
         services.AddSingleton<IExcelService, ExcelService>();
+        services.AddSingleton<IPdfService, PdfService>();
         services.AddSingleton<IFileStorage, LocalFileStorage>();
         services.AddScoped<DatabaseSeeder>();
         services.AddScoped<ReferentialImporter>();
@@ -28,7 +30,7 @@ public static class DependencyInjection
             var connectionString = provider.GetRequiredService<IConfiguration>().GetConnectionString("Default")
                 ?? throw new InvalidOperationException("ConnectionStrings:Default manquant.");
             options.UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable("__ef_migrations"));
-            options.AddInterceptors(provider.GetRequiredService<TimestampsInterceptor>());
+            options.AddInterceptors(provider.GetRequiredService<TimestampsInterceptor>(), provider.GetRequiredService<AuditInterceptor>());
         });
         services.AddScoped<IAppDbContext>(provider => provider.GetRequiredService<AppDbContext>());
         return services;

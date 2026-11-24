@@ -14,6 +14,9 @@
     <PackageReference Include="ZXing.Net" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Documents\Fonts\*.ttf" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Delivery.Application\Delivery.Application.csproj" />
   </ItemGroup>
 </Project>

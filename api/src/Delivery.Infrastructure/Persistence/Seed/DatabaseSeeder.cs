@@ -21,7 +21,9 @@ public sealed class DatabaseSeeder(AppDbContext db, IClock clock, IConfiguration
 {
     public const string CompanyId = "cmp-wimo";
 
-    public async Task SeedAsync(CancellationToken cancellationToken = default)
+    public Task SeedAsync(CancellationToken cancellationToken = default) => AuditSilence.RunAsync(() => SeedCoreAsync(cancellationToken));
+
+    private async Task SeedCoreAsync(CancellationToken cancellationToken)
     {
         await SeedCompanyAsync(cancellationToken);
         await SeedPermissionsAsync(cancellationToken);

@@ -169,4 +169,58 @@ public sealed class ExcelService : IExcelService
         workbook.SaveAs(stream);
         return stream.ToArray();
     }
+
+    public byte[] WriteTemplate(ExcelTemplate template)
+    {
+        using var workbook = new XLWorkbook();
+        var sheet = workbook.Worksheets.Add(template.SheetName);
+        var lists = workbook.Worksheets.Add(template.ListsName);
+        lists.Visibility = XLWorksheetVisibility.VeryHidden;
+        for (var index = 0; index < template.Columns.Count; index++)
+        {
+            var column = template.Columns[index];
+            var position = index + 1;
+            var head = sheet.Cell(1, position);
+            head.Value = column.Header;
+            head.Style.Font.Bold = true;
+            head.Style.Font.FontColor = XLColor.White;
+            head.Style.Fill.BackgroundColor = XLColor.FromHtml("#1F1F1F");
+            var example = sheet.Cell(2, position);
+            example.Value = column.Example;
+            example.Style.Font.Italic = true;
+            example.Style.Font.FontColor = XLColor.FromHtml("#808080");
+            sheet.Column(position).Width = column.Width ?? Math.Max(14, column.Header.Length + 4);
+            if (column.Text) sheet.Column(position).Style.NumberFormat.Format = "@";
+            if (column.Choices is not { Count: > 0 } choices) continue;
+            lists.Cell(1, position).Value = column.Header;
+            for (var i = 0; i < choices.Count; i++) lists.Cell(i + 2, position).Value = choices[i];
+            var letter = XLHelper.GetColumnLetterFromNumber(position);
+            var validation = sheet.Range(2, position, template.RowCount + 1, position).CreateDataValidation();
+            validation.List($"'{template.ListsName}'!${letter}$2:${letter}${choices.Count + 1}", true);
+            validation.IgnoreBlanks = !column.Required;
+            validation.ShowErrorMessage = !column.SuggestOnly;
+            validation.ErrorStyle = XLErrorStyle.Warning;
+            validation.ErrorMessage = "Valeur hors liste. Choisissez une valeur proposée.";
+        }
+        sheet.Row(1).Height = 22;
+        var help = workbook.Worksheets.Add(template.HelpName);
+        help.Column(1).Width = 28;
+        help.Column(2).Width = 90;
+        help.Cell(1, 1).Value = template.HelpTitle;
+        help.Cell(1, 1).Style.Font.Bold = true;
+        help.Cell(1, 1).Style.Font.FontSize = 14;
+        var row = 3;
+        foreach (var (label, text) in template.HelpRows)
+        {
+            help.Cell(row, 1).Value = label;
+            help.Cell(row, 1).Style.Font.Bold = true;
+            help.Cell(row, 2).Value = text;
+            help.Cell(row, 2).Style.Alignment.WrapText = true;
+            help.Cell(row, 2).Style.Alignment.Vertical = XLAlignmentVerticalValues.Top;
+            row++;
+        }
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        return stream.ToArray();
+    }
 }

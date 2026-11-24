@@ -32,6 +32,10 @@ public sealed class PublicController(ISender sender) : ApiControllerBase(sender)
     public Task<IActionResult> Cities() => Ok(new GetPublicCitiesQuery());
 
     [Public]
+    [HttpGet("track/{code}")]
+    public Task<IActionResult> Track(string code) => Ok(new TrackParcelQuery(code));
+
+    [Public]
     [HttpPost("register")]
     public Task<IActionResult> Register([FromBody] RegisterCommand? body) => Created(body ?? new RegisterCommand());
 }

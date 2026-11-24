@@ -17,20 +17,33 @@ Rapport final : `docs/chantiers/delivery-app-dotnet.md` (en fin de chantier). Ch
 - **PR 3 référentiel** (#3, fusionnée) : 68 routes (villes, zones, quartiers, agences, types, tarifs,
   directory, settings, public), seed statuts/Casablanca, import CSV, logo SkiaSharp.
 
-## En cours — module 4 « Clients et livreurs », PR ouverte depuis `feat/accounts`
+- **PR 4 comptes** (#4, fusionnée) : 35 routes clients/livreurs/merchant company. Journal d'audit
+  générique (`AuditInterceptor`, 64 entités) commité en tête de `feat/parcels`.
 
-35 routes : `/clients` (fiche, patch partiel, TVA Pro, frais de ramassage, validation/refus des
-inscriptions, compte, remises sans doublon, adresses, documents), `/couriers` (fiche, grille de paie
-par ville auditée, validation/refus, compte), `/merchant/me/company`. Rangées ailleurs :
-`/merchant/me/summary` → module 5, `/merchant/me/pickups|dropoffs|notes` → module 6.
+## En cours — module 5 « Colis », PR ouverte depuis `feat/parcels`
+
+90 routes (220/494 cochées) : colis (liste, fiche, création idempotente, statut, frais, destination,
+vendeur, admin, client, BL, notes), échanges, étiquettes PDF + label-jobs, suivi public, import Excel,
+entrepôt (produits, stock, entreposages + bon de réception PDF, commandes, imports), jetons
+prestataires, audit technique + journal métier, merchant/me/summary, courier/me. 78 tests de contrat,
+44 unitaires. Rangées au module 6 (remap `gen-inventory.mjs`) : `courier/me/{notes,routes,deliveries,
+scan,performance}`, `courier/parcels/:code/*`, `courier-stock`, `provider/parcels/:code/status`,
+`bulk-jobs` ; au module 8 : `courier/me/{cheques,balance,remittance}`.
+
+**Écarts à reporter dans le rapport final** : journal sans la reprise des anciens `UPDATE_MANY`
+(aucune ligne de ce type n'est écrite ici) ; mise en page des étiquettes et du bon de réception
+reprise à l'identique en contenu, rendu QuestPDF (à vérifier en recette) ; logo de marque non
+« assombri » (`logoForLightBackground`) ; `POST /exchanges` reproduit le COD ×100 de Speedy.
+
+**Dettes à solder au module 6** : statut 13 « En cours de livraison » (500 « Mise en circuit
+indisponible », comme Speedy sans `OutForDeliveryPlacer`) ; `replayAutoClose` après changement de
+destination. Module 10 : envoi push (Expo) des notifications.
 
 ## Prochaine action exacte
 
-1. Fusionner la PR du module 4 une fois la CI verte.
-2. Module 5 « Colis » sur `feat/parcels` (inventaire section Module 5) : commencer par
-   `modules/parcels/parcels.service.ts` (création, code colis, tarification), puis statuts/historique,
-   journal d'audit générique (`common/audit/audit.extension.ts`), masque livreur pour les vendeurs
-   (`common/scope/courier-mask.ts`), échanges, import Excel, étiquettes PDF.
+1. CI verte puis fusion de la PR du module 5.
+2. Module 6 « Bons et circuits » sur `feat/routes` : `modules/routes/*`, `modules/courier/*` (statut,
+   scan, activité), `courier-stock`, `bulk-jobs`, `provider-status.service.ts`, notes de ramassage.
 
 ## Blocages / décisions pour Salah
 
