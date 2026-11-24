@@ -40,6 +40,8 @@ const ROUTE_MODULE = [
   [/^\/api\/courier\/me\/(notes|routes|deliveries|scan)/, 6],
   [/^\/api\/courier\/parcels\/:code\/(status|proof)/, 6],
   [/^\/api\/courier-stock/, 6],
+  // Le statut poussé par un prestataire passe par les issues de circuit et la correction de statut.
+  [/^\/api\/provider\/parcels/, 6],
   // Sa caisse (chèques, solde, retour de fonds) : avec la caisse.
   [/^\/api\/courier\/me\/(cheques|balance|remittance)/, 8],
 ];
