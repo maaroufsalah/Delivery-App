@@ -152,4 +152,35 @@ public sealed class ParcelsContractTests(ApiFactory factory)
         var courierList = await courierHttp.GetAsync("/api/parcels");
         if (courierList.StatusCode == HttpStatusCode.OK) (await courierList.JsonAsync()).GetProperty("total").GetInt32().ShouldBe(0);
     }
+
+    [Fact]
+    public async Task Status_change_follows_transitions_and_guards()
+    {
+        var world = await WorldAsync();
+        var code = (await (await world.MerchantHttp.PostAsJsonAsync("/api/parcels", Body(world))).JsonAsync()).GetProperty("code").GetString();
+
+        (await world.MerchantHttp.PostAsJsonAsync($"/api/parcels/{code}/events", new { statusId = 3 })).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        var bad = await world.Admin.PostAsJsonAsync($"/api/parcels/{code}/events", new { statusId = 5 });
+        bad.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        (await bad.JsonAsync()).GetProperty("code").GetString().ShouldBe("TRANSITION_FORBIDDEN");
+
+        var delivered = await world.Admin.PostAsJsonAsync($"/api/parcels/{code}/events", new { statusId = 4 });
+        delivered.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+        var moved = await world.Admin.PostAsJsonAsync($"/api/parcels/{code}/events", new { statusId = "3", comment = "  Ramassé " });
+        moved.StatusCode.ShouldBe(HttpStatusCode.Created);
+        var evt = await moved.JsonAsync();
+        evt.GetProperty("statusId").GetInt32().ShouldBe(3);
+        evt.GetProperty("comment").GetString().ShouldBe("Ramassé");
+        evt.GetProperty("authorName").GetString()!.ShouldStartWith("Test ");
+
+        var deliverDirect = await world.Admin.PostAsJsonAsync($"/api/parcels/{code}/events", new { statusId = 4 });
+        deliverDirect.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await deliverDirect.JsonAsync()).GetProperty("details").GetProperty("reason").GetString().ShouldBe("deliver-through-route");
+
+        var detail = await (await world.Admin.GetAsync($"/api/parcels/{code}")).JsonAsync();
+        detail.GetProperty("statusId").GetInt32().ShouldBe(3);
+        detail.GetProperty("events").GetArrayLength().ShouldBe(2);
+    }
 }

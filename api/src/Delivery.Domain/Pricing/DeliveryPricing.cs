@@ -73,3 +73,30 @@ public sealed record PricingPolicy(long FailureFeeSameCity, long FailureFeeCross
     /// <summary>`DEFAULT_PRICING_POLICY`.</summary>
     public static readonly PricingPolicy Default = new(0, 1000, 2000, 5);
 }
+
+/// <summary>Frais d'échec (`failureFee`, `failureAfterTransition` de `pricing.ts`).</summary>
+public static class FailureFees
+{
+    /// <summary>`FAILURE_FEE_STATUS_IDS` : les statuts qui constituent un échec facturable.</summary>
+    public static readonly int[] StatusIds = [5, 6, 8, 9, 10, 11, 23, 24, 31, 32, 33, 34, 35, 37];
+
+    private static readonly int[] ReturnFlowIds = [20, 21, 22, 23, 24];
+
+    public static bool IsFailureFeeStatus(int statusId) => StatusIds.Contains(statusId);
+
+    public static long? For(int statusId, bool sameCity, PricingPolicy policy) =>
+        !IsFailureFeeStatus(statusId) ? null : sameCity ? policy.FailureFeeSameCity : policy.FailureFeeCrossCity;
+
+    /// <summary>
+    /// L'échec suit le colis dans le circuit retour ; sinon il prend l'état du statut cible.
+    /// <c>Keep</c> vrai : le frais en base ne bouge pas (`undefined` côté Prisma).
+    /// </summary>
+    public static (bool IsFailed, long? FailureFee, bool Keep) AfterTransition(bool isFailed, long? currentFee, int targetStatusId, bool targetIsFailure, long? nextFee)
+    {
+        if (isFailed && ReturnFlowIds.Contains(targetStatusId))
+        {
+            return currentFee is null && nextFee is not null ? (true, nextFee, false) : (true, null, true);
+        }
+        return (targetIsFailure, nextFee, false);
+    }
+}

@@ -38,4 +38,10 @@ public sealed partial class ParcelsController(ISender sender) : ApiControllerBas
     [HttpGet("{code}")]
     [RequirePermission("parcels.read")]
     public Task<IActionResult> Detail(string code, [FromQuery] string? deleted) => Ok(new GetParcelQuery(code, deleted == "true"));
+
+    [HttpPost("{code}/events")]
+    [RequirePermission("parcels.status")]
+    [Guards(Guard.NotMerchant)]
+    public Task<IActionResult> ChangeStatus(string code, [FromBody] ChangeParcelStatusCommand? body) =>
+        Created((body ?? new ChangeParcelStatusCommand()) with { Code = code });
 }
