@@ -17,6 +17,13 @@ public abstract class ApiControllerBase(ISender sender) : ControllerBase
 
     protected async Task<IActionResult> Created<T>(IRequest<T> request) => StatusCode(StatusCodes.Status201Created, await Sender.Send(request, HttpContext.RequestAborted));
 
+    /// <summary>`withJobStatus` : 202 quand le geste est parti en tâche de masse, sinon le code habituel du verbe.</summary>
+    protected async Task<IActionResult> Accepted<T>(IRequest<T> request, int status = StatusCodes.Status201Created)
+    {
+        var result = await Sender.Send(request, HttpContext.RequestAborted);
+        return StatusCode(result is Application.BulkJobs.BulkJobAcceptedDto ? StatusCodes.Status202Accepted : status, result);
+    }
+
     protected async Task<IActionResult> FileOf(IRequest<FileContent> request) => FileResult(await Sender.Send(request, HttpContext.RequestAborted));
 
     protected IActionResult FileResult(FileContent file)
@@ -26,4 +33,10 @@ public abstract class ApiControllerBase(ISender sender) : ControllerBase
         if (file.CacheControl is not null) Response.Headers.CacheControl = file.CacheControl;
         return File(file.Bytes, file.ContentType);
     }
+}
+
+/// <summary>`BULK_JOBS_HEADER` : `x-bulk-jobs: 1` autorise un geste lourd à partir en tâche de masse.</summary>
+public static class BulkJobsHeader
+{
+    public const string Name = "x-bulk-jobs";
 }
