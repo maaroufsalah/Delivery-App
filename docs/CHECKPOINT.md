@@ -165,11 +165,16 @@ d'usage (`scripts/split-module.py`) ; balayage de portée `RoutesScopeSweepContr
 - Non reproduit à l'identique : date `from`/`to` hors calendrier (2026-02-30) recalée comme `Date.UTC`
   mais renvoyée corrigée ; requêtes du tableau de bord en série (un seul DbContext).
 
+## Module 11 « Recette » (`feat/recette`)
+
+`scripts/recette.sh` (curl, parcours admin / vendeur / livreur puis pages web) : PASS 55/55 sur la
+pile docker compose en CI (job `recette`), 49/49 en local (API seule, pas de Docker sur le PC).
+Service `web` ajouté à docker compose (`docker/web.Dockerfile`, front inchangé).
+
 ## Prochaine action exacte
 
-1. PR du module 10, CI, fusion. Puis module 11 : `scripts/recette.sh` (curl, parcours admin /
-   vendeur / livreur) ; Docker absent du PC → jouable contre une pile locale (`API`, `WEB`) et en CI
-   (docker compose api + web + postgres). Puis rapport `docs/chantiers/delivery-app-dotnet.md`.
+Chantier terminé : 494/494 routes, CI verte, recette PASS. Rapport final :
+`docs/chantiers/delivery-app-dotnet.md` (dont la liste « reste pour le déploiement VPS »).
 
 ## Blocages / décisions pour Salah
 
