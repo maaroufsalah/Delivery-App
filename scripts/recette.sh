@@ -13,8 +13,9 @@ API="${API:-http://localhost:5080/api}"
 WEB="${WEB-http://localhost:3000}"
 ADMIN_EMAIL="${ADMIN_EMAIL:-admin@wimo.ma}"
 ADMIN_PASSWORD="${ADMIN_PASSWORD:?ADMIN_PASSWORD requis (celui du seed SEED_ADMIN_PASSWORD)}"
-CITY="${CITY:-cty-casablanca}"
-AGENCY="${AGENCY:-agc-casablanca}"
+# Ville et agence : celles passées, sinon Casablanca (code CAS) et sa première agence, lues par l'API.
+CITY="${CITY:-}"
+AGENCY="${AGENCY:-}"
 RUN="r$(date +%s)"
 PASSWORD="Recette-${RUN}!"
 TMP="$(mktemp -d)"
@@ -76,7 +77,12 @@ call "API en ligne" 200 GET /health - && check "base joignable" 'j.database !== 
 
 step "Admin : référentiel, vendeur, livreur"
 ADMIN="$(login "$ADMIN_EMAIL" "$ADMIN_PASSWORD")" || { ko "admin connecté"; exit 1; }
-call "villes" 200 GET "/cities?pageSize=200" "$ADMIN" && check "Casablanca au référentiel" "j.items.some(c => c.id === '$CITY')"
+call "villes" 200 GET "/cities?pageSize=200" "$ADMIN"
+[ -z "$CITY" ] && CITY="$(json "(j.items.find(c => c.code === 'CAS') || {}).id")"
+check "Casablanca au référentiel" "j.items.some(c => c.id === '$CITY')"
+if [ -z "$AGENCY" ]; then
+  call "agences" 200 GET "/agencies?pageSize=200" "$ADMIN" && AGENCY="$(json "((j.items || j).find(a => a.cityId === '$CITY') || (j.items || j)[0] || {}).id")"
+fi
 MERCHANT_EMAIL="vendeur.$RUN@recette.test"
 call "fiche vendeur" 201 POST /clients "$ADMIN" "{\"name\":\"Boutique $RUN\",\"phone\":\"0612345678\",\"email\":\"$MERCHANT_EMAIL\",\"cityId\":\"$CITY\"}"
 CLIENT_ID="$(json 'j.id')"
