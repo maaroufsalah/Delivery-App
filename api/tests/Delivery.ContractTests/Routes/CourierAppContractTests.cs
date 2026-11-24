@@ -93,4 +93,27 @@ public sealed class CourierAppContractTests(ApiFactory factory)
         (await stranger.GetAsync($"/api/courier/me/routes/{code}")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
         (await stranger.GetAsync($"/api/courier/parcels/{kept.Code}/outcomes")).StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
+
+    [Fact]
+    public async Task Proof_attaches_to_the_last_parcel_after_its_circuit_closed_itself()
+    {
+        var world = await DeliveryNotesContractTests.WorldAsync(factory);
+        var (courier, phone) = await RoutesContractTests.CourierAsync(factory, world.City.Id);
+        var (_, stranger) = await RoutesContractTests.CourierAsync(factory, world.City.Id);
+        var parcel = await DeliveryNotesContractTests.ParcelAsync(world);
+        await RoutesContractTests.ReadyAsync(factory, parcel.Id);
+        var code = (await (await world.Admin.PostAsJsonAsync("/api/routes", new { cityId = world.City.Id, courierId = courier.Id })).JsonAsync()).GetProperty("code").GetString()!;
+        await world.Admin.PostAsJsonAsync($"/api/routes/{code}/parcels", new { parcelIds = new[] { parcel.Id } });
+        await world.Admin.PostAsync($"/api/routes/{code}/dispatch", null);
+        (await phone.PostAsJsonAsync($"/api/courier/parcels/{parcel.Code}/status", new { statusId = 4 })).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await (await world.Admin.GetAsync($"/api/routes/{code}")).JsonAsync()).GetProperty("status").GetString().ShouldBe("closed");
+
+        var photo = new { proof = new { name = "p.jpg", mimeType = "image/jpeg", content = Convert.ToBase64String([0xFF, 0xD8, 0xFF]) } };
+        (await stranger.PostAsJsonAsync($"/api/courier/parcels/{parcel.Code}/proof", photo)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        var attached = await phone.PostAsJsonAsync($"/api/courier/parcels/{parcel.Code}/proof", photo);
+        attached.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await attached.JsonAsync()).GetProperty("attached").GetBoolean().ShouldBeTrue();
+        await factory.ExecuteDbAsync(async db =>
+            (await db.ParcelEvents.AsNoTracking().Where(e => e.ParcelId == parcel.Id && e.StatusId == 4).Select(e => e.AttachmentPath).SingleAsync()).ShouldNotBeNull());
+    }
 }

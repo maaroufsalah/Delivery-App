@@ -69,8 +69,9 @@ reçu d'entreposage, feuille de route, bon) comparés dans `docs/design/labels/`
 Écarts notés pour le rapport final :
 - Bugs Speedy corrigés (argent) : POST /exchanges (centimes/dirhams) ; `collected()` du livreur et du
   stock ignorait « déjà payé » → `codToCollect` (performance, stock livreur).
-- Reproduits (sans impact financier) : une photo de preuve sur le dernier colis d'un circuit tombe en
-  404 (le circuit vient de se clore automatiquement) ; `GET /courier/me/routes?status=closed` → `[]`.
+- Bug Speedy corrigé (module 7, demande de Salah) : la photo de preuve du dernier colis d'un circuit
+  tombait en 404 (circuit clos automatiquement) ; elle s'attache désormais au colis du livreur.
+- Reproduit (sans impact financier) : `GET /courier/me/routes?status=closed` → `[]`.
 - Choix d'infrastructure : débit des prestataires compté sur `provider_calls` (fenêtre glissante,
   multi-instance) au lieu d'un compteur en mémoire ; rejeu idempotent sérialisé par
   `pg_advisory_lock` de session au lieu d'une attente en mémoire.
