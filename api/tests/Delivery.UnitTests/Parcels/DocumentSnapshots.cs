@@ -89,5 +89,34 @@ public sealed class DocumentSnapshots
             S(n, "cityName")!, Date(n, "createdAt")!.Value, Date(n, "validatedAt"), n.GetProperty("pickupWaived").GetBoolean(), noteLines, Int(n, "pickedCount"), Int(n, "removedCount"))));
     }
 
+    [Fact]
+    public void Render_return_document_snapshots_when_asked()
+    {
+        var outDir = Environment.GetEnvironmentVariable("DOCUMENT_SNAPSHOTS");
+        var sampleFile = Environment.GetEnvironmentVariable("DOCUMENT_RETURNS_SAMPLE");
+        if (string.IsNullOrEmpty(outDir) || string.IsNullOrEmpty(sampleFile)) return;
+        using var sample = JsonDocument.Parse(File.ReadAllText(sampleFile));
+        string? S(JsonElement e, string key) => e.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
+        DateTime? Date(JsonElement e, string key) => S(e, key) is { } text ? DateTime.Parse(text, null, System.Globalization.DateTimeStyles.AdjustToUniversal) : null;
+        var c = sample.RootElement.GetProperty("company");
+        var company = new PdfCompany(S(c, "name")!, S(c, "legalName"), S(c, "taxId"), S(c, "rc"), S(c, "address"), S(c, "city"), S(c, "phone"), S(c, "email"), S(c, "website"), S(c, "shortName"));
+        var pdf = new PdfService();
+        var n = sample.RootElement.GetProperty("note");
+        File.WriteAllBytes(Path.Combine(outDir, "dotnet-bl-note.pdf"), pdf.Render(new BlNoteSheet(company, S(n, "code")!, S(n, "status")!, S(n, "agencyName")!, Date(n, "createdAt")!.Value,
+            S(n, "clientName")!, S(n, "courierName")!, Date(n, "receivedAt"), Date(n, "handedOverAt"), S(n, "returnedToName"), n.GetProperty("slipCount").GetInt32(),
+            n.GetProperty("items").EnumerateArray().Select(i => new BlNoteSheetLine(S(i, "parcelCode")!, S(i, "recipientName")!, S(i, "reference"))).ToList())));
+        var h = sample.RootElement.GetProperty("handover");
+        File.WriteAllBytes(Path.Combine(outDir, "dotnet-return-handover.pdf"), pdf.Render(new ReturnHandoverSheet(company, S(h, "code")!, S(h, "status")!, S(h, "origin")!, S(h, "agencyName")!,
+            Date(h, "createdAt")!.Value, S(h, "courierName")!, S(h, "createdByName"), h.GetProperty("clientNames").EnumerateArray().Select(x => x.GetString()!).ToList(), Date(h, "confirmedAt"),
+            Date(h, "pickedUpAt"), S(h, "confirmedByName"), h.GetProperty("parcelCount").GetInt32(),
+            h.GetProperty("items").EnumerateArray().Select(i => new ReturnHandoverSheetLine(S(i, "parcelCode")!, S(i, "recipientName")!, S(i, "clientName")!, i.GetProperty("quantity").GetInt32(),
+                i.GetProperty("statusId").GetInt32())).ToList())));
+        var r = sample.RootElement.GetProperty("slip");
+        File.WriteAllBytes(Path.Combine(outDir, "dotnet-return-slip.pdf"), pdf.Render(new ReturnSlipSheet(company, S(r, "code")!, S(r, "status")!, S(r, "agencyName")!, S(r, "clientName")!,
+            Date(r, "deliveredAt"), S(r, "receivedByName"), r.GetProperty("parcelCount").GetInt32(), r.GetProperty("totalFees").GetInt64(),
+            r.GetProperty("items").EnumerateArray().Select(i => new ReturnSlipSheetLine(S(i, "parcelCode")!, S(i, "recipientName")!, S(i, "reason")!, i.GetProperty("quantity").GetInt32(),
+                i.GetProperty("feeApplied").GetInt64())).ToList())));
+    }
+
     private static byte[]? Bytes(string? dataUri) => dataUri is null ? null : Convert.FromBase64String(dataUri[(dataUri.IndexOf(',') + 1)..]);
 }

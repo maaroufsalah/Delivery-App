@@ -28,6 +28,9 @@ logo noirci sur la bande claire (`logoForLightBackground`).
 | Bon de réception d'entreposage | identique (blocs, colonnes, cadre arrondi, pied à 20 pt du bas) |
 | Feuille de route (livraison, ramassage) | identique, sauf une adresse très longue : React-PDF rétrécit la colonne du code (flex-shrink) et garde l'adresse sur une ligne ; .NET garde les colonnes et passe à la ligne |
 | Situation du stock livreur | identique (récapitulatif, sections, blocs de 100 lignes, « Page n / N ») |
+| Bon de retour BL (BRB-) | identique (Client Pro, livreur, état « Reçu par &lt;nom court&gt; », référence BL, deux signatures) |
+| Bon de retour colis (RL-) | identique (vendeurs, cartons, statut, « Créé par &lt;nom court&gt; — auteur ») |
+| Bon de retour client (BRT-) | identique (motif, frais, total des frais, « Reçu par » et signature) |
 | Bon de ramassage | identique, sauf une ligne « client corrigé » : chez Speedy le code chevauche le nom et les frais passent à la ligne (même effet flex-shrink) ; .NET garde les colonnes |
 
 Le texte arabe garde sa police ; dans ces tableaux, React-PDF le pose à gauche : .NET aussi.

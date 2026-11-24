@@ -14,8 +14,15 @@ public sealed class BlController(ISender sender) : ApiControllerBase(sender)
         new(string.IsNullOrWhiteSpace(search) ? null : search.Trim(), string.IsNullOrWhiteSpace(status) ? null : status.Trim(), MultiValue.AsList(clientId), MultiValue.AsList(courierId),
             string.IsNullOrWhiteSpace(from) ? null : from.Trim(), string.IsNullOrWhiteSpace(to) ? null : to.Trim());
 
+    /// <summary>Les listes BL se lisent de la plus récente à la plus ancienne par défaut (`order` vaut `desc`).</summary>
+    private static ListQuery Paging(ListQueryParams query)
+    {
+        query.Order ??= "desc";
+        return query.ToQueryWithDefault(25);
+    }
+
     private static BlNoteFilter NoteFilter(ListQueryParams query, string[]? status, string[]? clientId, string[]? courierId, string[]? agencyId) =>
-        new(query.ToQueryWithDefault(25), MultiValue.AsList(status), MultiValue.AsList(clientId), MultiValue.AsList(courierId), MultiValue.AsList(agencyId));
+        new(Paging(query), MultiValue.AsList(status), MultiValue.AsList(clientId), MultiValue.AsList(courierId), MultiValue.AsList(agencyId));
 
     [HttpPost("parcels/{code}/collect")]
     [RequirePermission("returns.write")]
@@ -29,13 +36,13 @@ public sealed class BlController(ISender sender) : ApiControllerBase(sender)
     [RequirePermission("returns.read")]
     public Task<IActionResult> Slips([FromQuery] ListQueryParams query, [FromQuery] string? status, [FromQuery] string[]? clientId, [FromQuery] string[]? courierId, [FromQuery] string? from,
         [FromQuery] string? to) =>
-        Ok(new GetDeliverySlipsQuery(query.ToQueryWithDefault(25), SlipFilter(query.Search, status, clientId, courierId, from, to)));
+        Ok(new GetDeliverySlipsQuery(Paging(query), SlipFilter(query.Search, status, clientId, courierId, from, to)));
 
     [HttpGet("delivery-slips/export")]
     [RequirePermission("returns.read")]
     public Task<IActionResult> ExportSlips([FromQuery] ListQueryParams query, [FromQuery] string? status, [FromQuery] string[]? clientId, [FromQuery] string[]? courierId,
         [FromQuery] string? from, [FromQuery] string? to) =>
-        FileOf(new ExportDeliverySlipsQuery(query.ToQueryWithDefault(25), SlipFilter(query.Search, status, clientId, courierId, from, to)));
+        FileOf(new ExportDeliverySlipsQuery(Paging(query), SlipFilter(query.Search, status, clientId, courierId, from, to)));
 
     [HttpPost("delivery-slips/advance")]
     [RequirePermission("returns.confirm")]

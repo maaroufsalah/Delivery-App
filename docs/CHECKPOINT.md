@@ -44,7 +44,7 @@ le COD du nouveau colis vaut désormais `amount / 100` MAD (`ExchangeWrites.CodM
 indisponible », comme Speedy sans `OutForDeliveryPlacer`) ; `replayAutoClose` après changement de
 destination. Module 10 : envoi push (Expo) des notifications.
 
-## En cours — module 6 « Bons et circuits » sur `feat/routes` (non poussée)
+## Fait — module 6 « Bons et circuits » (#6, fusionnée)
 
 Lots : (A) bons BR-/BD- + demandes vendeur + tâches de masse — FAIT (commit `feat(notes)…`) ;
 (B) circuits : liste, stats, export, fiche, création, modif, suppression, candidats, ajout/retrait de
@@ -77,19 +77,38 @@ reçu d'entreposage, feuille de route, bon) comparés dans `docs/design/labels/`
   `pg_advisory_lock` de session au lieu d'une attente en mémoire.
 - Poste Windows : la base de fuseaux Windows donne UTC+0 au Maroc d'octobre 2026 à mars 2027
   (faux) ; tzdata Linux (VPS, CI) est juste. Les tests de fuseau utilisent une date de juin.
-- À brancher plus tard : `bl.collectOnDelivery` (module 7), recalcul des relevés livreur brouillons
-  après une annulation de livraison (module 8).
+- À brancher plus tard : recalcul des relevés livreur brouillons après une annulation de livraison
+  (module 8).
 
 Module 6 TERMINÉ sur `feat/routes` : PR #6 ouverte (https://github.com/maaroufsalah/Delivery-App/pull/6),
 289/494 routes, 55 tests unitaires et 91 tests de contrat verts en local. Lot (F) : PDF alignés sur
 Speedy, comparaison et écarts mesurés dans `docs/design/labels/README.md`. Fichiers éclatés un par cas
 d'usage (`scripts/split-module.py`) ; balayage de portée `RoutesScopeSweepContractTests`.
 
+## En cours — module 7 « Retours et BL » sur `feat/returns`
+
+54 routes : `bl/*` (19), `return-handovers/*` (19), `return-slips/*` (14), `returns/pending` (+ export).
+343/494 routes cochées. 56 tests unitaires et 99 tests de contrat verts en local.
+- BL : récupéré à la livraison (`collectOnDelivery` branché dans `CourierParcels.ReportAsync`, un refus
+  n'annule jamais la livraison), bons BRB- (brouillon → remis → reçu → rendu au vendeur → clos),
+  avance en masse et retour arrière administrateur, notifications `bl-ready`, `bl-returned`,
+  `bl-note-awaiting` (personnel détenteur de `returns.confirm`, `Notifier.NotifyStaffAsync`).
+- Bons de retour livreur RL- : ouverture livreur ou agence, scan, prise en charge, remise, réception
+  (colis → 22, clôture automatique du circuit), clôture, annulation (relâche les colis), masse
+  idempotente sous `pg_advisory_xact_lock`.
+- Bons de retour client BRT- : colis rentrés en agence, frais d'échec de la politique de l'agence,
+  remise (colis → 23, frais d'échec posés sur un colis en échec qui n'en avait pas, test avant/après).
+- Masque livreur : `/api/bl/notes/:code/pdf` et `/api/return-slips/:code/pdf` imprimés par un vendeur
+  passent par `CourierMasks.ForReaderAsync`.
+- PDF BRB-, RL-, BRT- comparés à Speedy dans `docs/design/labels/` (identiques).
+- Reproduit (sans impact financier) : à la remise d'un bon BRT-, seuls le nom et le type de la pièce
+  jointe sont gardés, pas son contenu (Speedy fait de même).
+- Balayage de portée : `ReturnsContractTests.Returns_stay_within_their_owner`.
+
 ## Prochaine action exacte
 
-1. Attendre la CI de la PR #6, la fusionner (`gh pr merge 6 --squash --delete-branch`), puis
-   `git checkout main && git pull` et ouvrir `feat/returns` pour le module 7 (Retours, BL) :
-   y brancher `bl.collectOnDelivery` dans `CourierParcels.ReportAsync`.
+1. Ouvrir la PR du module 7 (`feat/returns`), attendre la CI (`gh pr checks <n> --watch --fail-fast`),
+   fusionner, puis module 8.
 
 ## Blocages / décisions pour Salah
 
