@@ -367,14 +367,14 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 
 ### `modules/courier-stock/courier-stock.controller.ts`
 
-- [ ] `GET /api/courier-stock` — `list` (L100) · perm: routes.stock · entrée: courierStockListQuerySchema
-- [ ] `GET /api/courier-stock/export` — `export` (L115) · perm: routes.stock · entrée: courierStockListQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/courier-stock` — `list` (L100) · perm: routes.stock · entrée: courierStockListQuerySchema
+- [x] `GET /api/courier-stock/export` — `export` (L115) · perm: routes.stock · entrée: courierStockListQuerySchema · sortie: `Promise<StreamableFile>`
 - [ ] `GET /api/courier-stock/pdf` — `globalPdf` (L127) · perm: routes.stock · entrée: courierStockListQuerySchema · sortie: `Promise<StreamableFile>`
 - [ ] `POST /api/courier-stock/pdf-jobs` — `createPdfJob` (L142) · perm: routes.stock · entrée: courierStockPdfJobSchema
 - [ ] `GET /api/courier-stock/pdf-jobs/:id` — `pdfJob` (L153) · perm: routes.stock
 - [ ] `GET /api/courier-stock/pdf-jobs/:id/file` — `pdfJobFile` (L161) · perm: routes.stock · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/courier-stock/parcels/export` — `exportParcels` (L170) · perm: routes.stock · entrée: courierStockParcelExportQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/courier-stock/:courierId` — `detail` (L183) · perm: routes.stock · entrée: courierStockParcelQuerySchema
+- [x] `GET /api/courier-stock/parcels/export` — `exportParcels` (L170) · perm: routes.stock · entrée: courierStockParcelExportQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/courier-stock/:courierId` — `detail` (L183) · perm: routes.stock · entrée: courierStockParcelQuerySchema
 - [ ] `GET /api/courier-stock/:courierId/pdf` — `courierPdf` (L195) · perm: routes.stock · entrée: courierStockParcelQuerySchema · sortie: `Promise<StreamableFile>`
 
 ### `modules/merchant/merchant.controller.ts`
