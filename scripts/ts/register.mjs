@@ -14,6 +14,13 @@ registerHooks({
         if (existsSync(path)) return next(candidate.href, context);
       }
     }
-    return next(specifier, context);
+    try {
+      return next(specifier, context);
+    } catch (error) {
+      // Paquets npm (zod…) : résolus depuis l'installation de Speedy, en lecture seule.
+      const speedy = process.env.SPEEDY_SHARED ?? 'D:/Work/Projects/Freelance/Anass/delivery-platform/packages/shared/package.json';
+      if (specifier.startsWith('.') || !existsSync(speedy)) throw error;
+      return next(specifier, { ...context, parentURL: new URL(`file:///${speedy}`).href });
+    }
   },
 });
