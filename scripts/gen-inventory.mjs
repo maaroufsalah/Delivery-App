@@ -36,6 +36,12 @@ const ROUTE_MODULE = [
   [/^\/api\/staff\/me\/alerts/, 6],
   [/^\/api\/merchant\/me\/summary/, 5],
   [/^\/api\/merchant\/me\/(pickups|dropoffs|notes)/, 6],
+  // Le livreur dans ses circuits (tournées, scan, issues) : avec les circuits.
+  [/^\/api\/courier\/me\/(notes|routes|deliveries|scan)/, 6],
+  [/^\/api\/courier\/parcels\/:code\/(status|proof)/, 6],
+  [/^\/api\/courier-stock/, 6],
+  // Sa caisse (chèques, solde, retour de fonds) : avec la caisse.
+  [/^\/api\/courier\/me\/(cheques|balance|remittance)/, 8],
 ];
 
 const VERBS = ['Get', 'Post', 'Put', 'Patch', 'Delete'];

@@ -236,38 +236,11 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 ### `modules/courier/courier-parcels.controller.ts`
 
 - [ ] `GET /api/courier/parcels/:code/outcomes` — `outcomes` (L44) · gardes: CourierGuard · perm: parcels.read
-- [ ] `POST /api/courier/parcels/:code/status` — `report` (L54) · gardes: CourierGuard · perm: parcels.status · entrée: routeConfirmSchema
-- [ ] `POST /api/courier/parcels/:code/proof` — `proof` (L80) · gardes: CourierGuard · perm: parcels.status · entrée: proofPhotoSchema
 
 ### `modules/courier/courier.controller.ts`
 
 - [ ] `GET /api/courier/me/performance` — `performance` (L96) · gardes: CourierGuard · perm: parcels.read · entrée: courierPerformanceQuerySchema
-- [ ] `GET /api/courier/me/notes` — `notes` (L114) · gardes: CourierGuard · perm: routes.read · entrée: courierNotesQuerySchema
-- [ ] `GET /api/courier/me/cheques` — `chequeList` (L130) · gardes: CourierGuard · perm: finance.read
-- [ ] `GET /api/courier/me/balance` — `balance` (L147) · gardes: CourierGuard · perm: finance.read
-- [ ] `GET /api/courier/me/remittance` — `openRemittance` (L168) · gardes: CourierGuard · perm: finance.read · sortie: `Promise<CourierOpenRemittance>`
-- [ ] `POST /api/courier/me/remittance/close` — `closeRemittance` (L189) · gardes: CourierGuard · perm: finance.read · sortie: `Promise<CourierOpenRemittance>`
 - [ ] `GET /api/courier/me` — `me` (L196) · gardes: CourierGuard · perm: parcels.read
-- [ ] `GET /api/courier/me/routes` — `routes` (L205) · gardes: CourierGuard · perm: routes.read · entrée: courierRoutesQuerySchema
-- [ ] `GET /api/courier/me/deliveries` — `deliveries` (L218) · gardes: CourierGuard · perm: routes.read
-- [ ] `GET /api/courier/me/routes/:code` — `route` (L225) · gardes: CourierGuard · perm: routes.read
-- [ ] `POST /api/courier/me/scan` — `scan` (L242) · gardes: CourierGuard · perm: routes.scan · entrée: scanSchema
-- [ ] `DELETE /api/courier/me/routes/:code/parcels/:parcelId` — `removeParcel` (L264) · gardes: CourierGuard · perm: routes.scan
-- [ ] `POST /api/courier/me/cheques` — `cheque` (L294) · gardes: CourierGuard · perm: finance.read · entrée: courierChequeSchema
-- [ ] `POST /api/courier/me/routes/:code/dispatch` — `dispatch` (L305) · gardes: CourierGuard · perm: routes.confirm
-- [ ] `POST /api/courier/me/routes/:code/notes/:noteId/pickup` — `pickupNote` (L329) · gardes: CourierGuard · perm: routes.confirm · entrée: routeNotePickupSchema
-
-### `modules/courier-stock/courier-stock.controller.ts`
-
-- [ ] `GET /api/courier-stock` — `list` (L100) · perm: routes.stock · entrée: courierStockListQuerySchema
-- [ ] `GET /api/courier-stock/export` — `export` (L115) · perm: routes.stock · entrée: courierStockListQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/courier-stock/pdf` — `globalPdf` (L127) · perm: routes.stock · entrée: courierStockListQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/courier-stock/pdf-jobs` — `createPdfJob` (L142) · perm: routes.stock · entrée: courierStockPdfJobSchema
-- [ ] `GET /api/courier-stock/pdf-jobs/:id` — `pdfJob` (L153) · perm: routes.stock
-- [ ] `GET /api/courier-stock/pdf-jobs/:id/file` — `pdfJobFile` (L161) · perm: routes.stock · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/courier-stock/parcels/export` — `exportParcels` (L170) · perm: routes.stock · entrée: courierStockParcelExportQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/courier-stock/:courierId` — `detail` (L183) · perm: routes.stock · entrée: courierStockParcelQuerySchema
-- [ ] `GET /api/courier-stock/:courierId/pdf` — `courierPdf` (L195) · perm: routes.stock · entrée: courierStockParcelQuerySchema · sortie: `Promise<StreamableFile>`
 
 ### `modules/merchant/merchant.controller.ts`
 
@@ -290,20 +263,20 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 - [x] `GET /api/parcels/stats` — `stats` (L217) · perm: parcels.read · entrée: parcelListQuerySchema
 - [x] `GET /api/parcels/next-code` — `nextCode` (L227) · perm: parcels.write · entrée: nextCodeQuerySchema
 - [x] `POST /api/parcels/quote` — `quote` (L239) · perm: parcels.write · entrée: quoteSchema
-- [ ] `GET /api/parcels/import/template.xlsx` — `importTemplate` (L256) · perm: parcels.write · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/parcels/import/preview` — `previewImport` (L267) · perm: parcels.write · entrée: parcelImportSourceSchema
-- [ ] `POST /api/parcels/import/anomalies.xlsx` — `importAnomalies` (L284) · perm: parcels.write · entrée: parcelImportSourceSchema · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/parcels/import` — `runImport` (L296) · perm: parcels.write · entrée: parcelImportApplySchema
-- [ ] `GET /api/parcels/imports` — `importHistory` (L306) · perm: parcels.read · entrée: parcelImportHistorySchema
-- [ ] `GET /api/parcels/imports/:id/report.xlsx` — `importReport` (L317) · perm: parcels.read · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/parcels/labels` — `labelBatch` (L344) · perm: parcels.read · entrée: labelBatchQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/parcels/labels` — `labelSelection` (L367) · perm: parcels.read · entrée: labelSelectionSchema · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/parcels/label-jobs` — `createLabelJob` (L403) · perm: parcels.read · entrée: labelSelectionSchema
-- [ ] `GET /api/parcels/label-jobs` — `labelJobList` (L414) · perm: parcels.read
-- [ ] `GET /api/parcels/label-jobs/:id` — `labelJob` (L422) · perm: parcels.read
-- [ ] `GET /api/parcels/label-jobs/:id/file` — `labelJobFile` (L430) · perm: parcels.read · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/parcels/import/template.xlsx` — `importTemplate` (L256) · perm: parcels.write · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/parcels/import/preview` — `previewImport` (L267) · perm: parcels.write · entrée: parcelImportSourceSchema
+- [x] `POST /api/parcels/import/anomalies.xlsx` — `importAnomalies` (L284) · perm: parcels.write · entrée: parcelImportSourceSchema · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/parcels/import` — `runImport` (L296) · perm: parcels.write · entrée: parcelImportApplySchema
+- [x] `GET /api/parcels/imports` — `importHistory` (L306) · perm: parcels.read · entrée: parcelImportHistorySchema
+- [x] `GET /api/parcels/imports/:id/report.xlsx` — `importReport` (L317) · perm: parcels.read · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/parcels/labels` — `labelBatch` (L344) · perm: parcels.read · entrée: labelBatchQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/parcels/labels` — `labelSelection` (L367) · perm: parcels.read · entrée: labelSelectionSchema · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/parcels/label-jobs` — `createLabelJob` (L403) · perm: parcels.read · entrée: labelSelectionSchema
+- [x] `GET /api/parcels/label-jobs` — `labelJobList` (L414) · perm: parcels.read
+- [x] `GET /api/parcels/label-jobs/:id` — `labelJob` (L422) · perm: parcels.read
+- [x] `GET /api/parcels/label-jobs/:id/file` — `labelJobFile` (L430) · perm: parcels.read · sortie: `Promise<StreamableFile>`
 - [x] `GET /api/parcels/:code` — `detail` (L446) · perm: parcels.read · query: deleted
-- [ ] `GET /api/parcels/:code/label` — `label` (L463) · perm: parcels.read · entrée: labelQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/parcels/:code/label` — `label` (L463) · perm: parcels.read · entrée: labelQuerySchema · sortie: `Promise<StreamableFile>`
 - [x] `POST /api/parcels` — `create` (L479) · perm: parcels.write · entrée: createParcelSchema · sortie: `l'appli envoie la * même clé au premier envoi et à chaque rejeu de sa file hors-ligne. * Bornée à 80 caractères imprimables ; autre chose est ignoré. */ @Headers('idempotency-key') idempotencyKey?: string, )`
 - [x] `POST /api/parcels/:code/events` — `changeStatus` (L510) · gardes: NotMerchantGuard · perm: parcels.status · entrée: changeStatusBodySchema
 - [x] `PATCH /api/parcels/:code/fees` — `editFees` (L534) · perm: parcels.editFees · entrée: editParcelFeesSchema
@@ -335,53 +308,81 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 
 ### `modules/public/public.controller.ts`
 
-- [ ] `GET /api/public/track/:code` — `track` (L132) · public · gardes: PublicRateLimitGuard
+- [x] `GET /api/public/track/:code` — `track` (L132) · public · gardes: PublicRateLimitGuard
 
 ### `modules/warehouse/orders.controller.ts`
 
-- [ ] `GET /api/orders` — `list` (L71) · perm: warehouse.read · entrée: orderListQuerySchema
-- [ ] `GET /api/orders/export` — `export` (L88) · perm: warehouse.read · entrée: orderListQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/orders/import` — `import` (L104) · perm: warehouse.write · entrée: warehouseImportSchema
-- [ ] `GET /api/orders/:code` — `detail` (L118) · perm: warehouse.read
-- [ ] `POST /api/orders` — `create` (L125) · perm: warehouse.write · entrée: orderSchema
-- [ ] `POST /api/orders/:code/confirm` — `confirm` (L132) · perm: warehouse.write
-- [ ] `POST /api/orders/:code/parcel` — `createParcel` (L141) · perm: warehouse.write · entrée: orderToParcelSchema
-- [ ] `POST /api/orders/:code/cancel` — `cancel` (L152) · perm: warehouse.write
-- [ ] `DELETE /api/orders/:code` — `remove` (L159) · perm: warehouse.write
+- [x] `GET /api/orders` — `list` (L71) · perm: warehouse.read · entrée: orderListQuerySchema
+- [x] `GET /api/orders/export` — `export` (L88) · perm: warehouse.read · entrée: orderListQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/orders/import` — `import` (L104) · perm: warehouse.write · entrée: warehouseImportSchema
+- [x] `GET /api/orders/:code` — `detail` (L118) · perm: warehouse.read
+- [x] `POST /api/orders` — `create` (L125) · perm: warehouse.write · entrée: orderSchema
+- [x] `POST /api/orders/:code/confirm` — `confirm` (L132) · perm: warehouse.write
+- [x] `POST /api/orders/:code/parcel` — `createParcel` (L141) · perm: warehouse.write · entrée: orderToParcelSchema
+- [x] `POST /api/orders/:code/cancel` — `cancel` (L152) · perm: warehouse.write
+- [x] `DELETE /api/orders/:code` — `remove` (L159) · perm: warehouse.write
 
 ### `modules/warehouse/products.controller.ts`
 
-- [ ] `GET /api/products` — `list` (L75) · perm: warehouse.read · entrée: productListQuerySchema
-- [ ] `GET /api/products/export` — `export` (L92) · perm: warehouse.read · entrée: productListQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/products/attributes` — `attributes` (L108) · perm: warehouse.read
-- [ ] `POST /api/products/attributes` — `createAttribute` (L115) · perm: warehouse.write · entrée: productAttributeSchema
-- [ ] `POST /api/products/attributes/values` — `createAttributeValue` (L125) · perm: warehouse.write · entrée: productAttributeValueSchema
-- [ ] `POST /api/products/import` — `import` (L137) · perm: warehouse.write · entrée: warehouseImportSchema
-- [ ] `GET /api/products/:id` — `detail` (L151) · perm: warehouse.read
-- [ ] `GET /api/products/:id/image` — `image` (L159) · perm: warehouse.read · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/products` — `create` (L167) · perm: warehouse.write · entrée: productSchema
-- [ ] `PATCH /api/products/:id` — `update` (L174) · perm: warehouse.write · entrée: productSchema
-- [ ] `POST /api/products/:id/image` — `setImage` (L185) · perm: warehouse.write · entrée: productImageSchema
-- [ ] `DELETE /api/products/:id` — `remove` (L196) · perm: warehouse.write
+- [x] `GET /api/products` — `list` (L75) · perm: warehouse.read · entrée: productListQuerySchema
+- [x] `GET /api/products/export` — `export` (L92) · perm: warehouse.read · entrée: productListQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/products/attributes` — `attributes` (L108) · perm: warehouse.read
+- [x] `POST /api/products/attributes` — `createAttribute` (L115) · perm: warehouse.write · entrée: productAttributeSchema
+- [x] `POST /api/products/attributes/values` — `createAttributeValue` (L125) · perm: warehouse.write · entrée: productAttributeValueSchema
+- [x] `POST /api/products/import` — `import` (L137) · perm: warehouse.write · entrée: warehouseImportSchema
+- [x] `GET /api/products/:id` — `detail` (L151) · perm: warehouse.read
+- [x] `GET /api/products/:id/image` — `image` (L159) · perm: warehouse.read · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/products` — `create` (L167) · perm: warehouse.write · entrée: productSchema
+- [x] `PATCH /api/products/:id` — `update` (L174) · perm: warehouse.write · entrée: productSchema
+- [x] `POST /api/products/:id/image` — `setImage` (L185) · perm: warehouse.write · entrée: productImageSchema
+- [x] `DELETE /api/products/:id` — `remove` (L196) · perm: warehouse.write
 
 ### `modules/warehouse/stock.controller.ts`
 
-- [ ] `GET /api/stock` — `list` (L45) · perm: warehouse.read · entrée: stockListQuerySchema
-- [ ] `GET /api/stock/export` — `export` (L62) · perm: warehouse.read · entrée: stockListQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/stock/:id` — `detail` (L76) · perm: warehouse.read
-- [ ] `POST /api/stock/adjust` — `adjust` (L83) · perm: warehouse.write · entrée: stockAdjustSchema
+- [x] `GET /api/stock` — `list` (L45) · perm: warehouse.read · entrée: stockListQuerySchema
+- [x] `GET /api/stock/export` — `export` (L62) · perm: warehouse.read · entrée: stockListQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/stock/:id` — `detail` (L76) · perm: warehouse.read
+- [x] `POST /api/stock/adjust` — `adjust` (L83) · perm: warehouse.write · entrée: stockAdjustSchema
 
 ### `modules/warehouse/storage-requests.controller.ts`
 
-- [ ] `GET /api/storage-requests` — `list` (L60) · perm: warehouse.read · entrée: storageListQuerySchema
-- [ ] `GET /api/storage-requests/export` — `export` (L77) · perm: warehouse.read · entrée: storageListQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/storage-requests/:code` — `detail` (L91) · perm: warehouse.read
-- [ ] `GET /api/storage-requests/:code/receipt` — `receipt` (L99) · perm: warehouse.read · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/storage-requests` — `create` (L114) · perm: warehouse.write · entrée: storageRequestSchema
-- [ ] `POST /api/storage-requests/:code/decision` — `decide` (L126) · perm: warehouse.validate · entrée: storageDecisionSchema
-- [ ] `DELETE /api/storage-requests/:code` — `remove` (L137) · perm: warehouse.write
+- [x] `GET /api/storage-requests` — `list` (L60) · perm: warehouse.read · entrée: storageListQuerySchema
+- [x] `GET /api/storage-requests/export` — `export` (L77) · perm: warehouse.read · entrée: storageListQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/storage-requests/:code` — `detail` (L91) · perm: warehouse.read
+- [x] `GET /api/storage-requests/:code/receipt` — `receipt` (L99) · perm: warehouse.read · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/storage-requests` — `create` (L114) · perm: warehouse.write · entrée: storageRequestSchema
+- [x] `POST /api/storage-requests/:code/decision` — `decide` (L126) · perm: warehouse.validate · entrée: storageDecisionSchema
+- [x] `DELETE /api/storage-requests/:code` — `remove` (L137) · perm: warehouse.write
 
 ## Module 6 — Bons et circuits
+
+### `modules/courier/courier-parcels.controller.ts`
+
+- [ ] `POST /api/courier/parcels/:code/status` — `report` (L54) · gardes: CourierGuard · perm: parcels.status · entrée: routeConfirmSchema
+- [ ] `POST /api/courier/parcels/:code/proof` — `proof` (L80) · gardes: CourierGuard · perm: parcels.status · entrée: proofPhotoSchema
+
+### `modules/courier/courier.controller.ts`
+
+- [ ] `GET /api/courier/me/notes` — `notes` (L114) · gardes: CourierGuard · perm: routes.read · entrée: courierNotesQuerySchema
+- [ ] `GET /api/courier/me/routes` — `routes` (L205) · gardes: CourierGuard · perm: routes.read · entrée: courierRoutesQuerySchema
+- [ ] `GET /api/courier/me/deliveries` — `deliveries` (L218) · gardes: CourierGuard · perm: routes.read
+- [ ] `GET /api/courier/me/routes/:code` — `route` (L225) · gardes: CourierGuard · perm: routes.read
+- [ ] `POST /api/courier/me/scan` — `scan` (L242) · gardes: CourierGuard · perm: routes.scan · entrée: scanSchema
+- [ ] `DELETE /api/courier/me/routes/:code/parcels/:parcelId` — `removeParcel` (L264) · gardes: CourierGuard · perm: routes.scan
+- [ ] `POST /api/courier/me/routes/:code/dispatch` — `dispatch` (L305) · gardes: CourierGuard · perm: routes.confirm
+- [ ] `POST /api/courier/me/routes/:code/notes/:noteId/pickup` — `pickupNote` (L329) · gardes: CourierGuard · perm: routes.confirm · entrée: routeNotePickupSchema
+
+### `modules/courier-stock/courier-stock.controller.ts`
+
+- [ ] `GET /api/courier-stock` — `list` (L100) · perm: routes.stock · entrée: courierStockListQuerySchema
+- [ ] `GET /api/courier-stock/export` — `export` (L115) · perm: routes.stock · entrée: courierStockListQuerySchema · sortie: `Promise<StreamableFile>`
+- [ ] `GET /api/courier-stock/pdf` — `globalPdf` (L127) · perm: routes.stock · entrée: courierStockListQuerySchema · sortie: `Promise<StreamableFile>`
+- [ ] `POST /api/courier-stock/pdf-jobs` — `createPdfJob` (L142) · perm: routes.stock · entrée: courierStockPdfJobSchema
+- [ ] `GET /api/courier-stock/pdf-jobs/:id` — `pdfJob` (L153) · perm: routes.stock
+- [ ] `GET /api/courier-stock/pdf-jobs/:id/file` — `pdfJobFile` (L161) · perm: routes.stock · sortie: `Promise<StreamableFile>`
+- [ ] `GET /api/courier-stock/parcels/export` — `exportParcels` (L170) · perm: routes.stock · entrée: courierStockParcelExportQuerySchema · sortie: `Promise<StreamableFile>`
+- [ ] `GET /api/courier-stock/:courierId` — `detail` (L183) · perm: routes.stock · entrée: courierStockParcelQuerySchema
+- [ ] `GET /api/courier-stock/:courierId/pdf` — `courierPdf` (L195) · perm: routes.stock · entrée: courierStockParcelQuerySchema · sortie: `Promise<StreamableFile>`
 
 ### `modules/merchant/merchant.controller.ts`
 
@@ -502,6 +503,14 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 - [ ] `GET /api/returns/pending/export` — `exportPending` (L717) · perm: returns.read · entrée: pendingQuerySchema · sortie: `Promise<StreamableFile>`
 
 ## Module 8 — Caisse et chèques
+
+### `modules/courier/courier.controller.ts`
+
+- [ ] `GET /api/courier/me/cheques` — `chequeList` (L130) · gardes: CourierGuard · perm: finance.read
+- [ ] `GET /api/courier/me/balance` — `balance` (L147) · gardes: CourierGuard · perm: finance.read
+- [ ] `GET /api/courier/me/remittance` — `openRemittance` (L168) · gardes: CourierGuard · perm: finance.read · sortie: `Promise<CourierOpenRemittance>`
+- [ ] `POST /api/courier/me/remittance/close` — `closeRemittance` (L189) · gardes: CourierGuard · perm: finance.read · sortie: `Promise<CourierOpenRemittance>`
+- [ ] `POST /api/courier/me/cheques` — `cheque` (L294) · gardes: CourierGuard · perm: finance.read · entrée: courierChequeSchema
 
 ### `modules/finance/cheque-slip.controller.ts`
 
