@@ -503,11 +503,11 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 
 ### `modules/courier/courier.controller.ts`
 
-- [ ] `GET /api/courier/me/cheques` — `chequeList` (L130) · gardes: CourierGuard · perm: finance.read
+- [x] `GET /api/courier/me/cheques` — `chequeList` (L130) · gardes: CourierGuard · perm: finance.read
 - [x] `GET /api/courier/me/balance` — `balance` (L147) · gardes: CourierGuard · perm: finance.read
 - [x] `GET /api/courier/me/remittance` — `openRemittance` (L168) · gardes: CourierGuard · perm: finance.read · sortie: `Promise<CourierOpenRemittance>`
 - [x] `POST /api/courier/me/remittance/close` — `closeRemittance` (L189) · gardes: CourierGuard · perm: finance.read · sortie: `Promise<CourierOpenRemittance>`
-- [ ] `POST /api/courier/me/cheques` — `cheque` (L294) · gardes: CourierGuard · perm: finance.read · entrée: courierChequeSchema
+- [x] `POST /api/courier/me/cheques` — `cheque` (L294) · gardes: CourierGuard · perm: finance.read · entrée: courierChequeSchema
 
 ### `modules/finance/cheque-slip.controller.ts`
 
@@ -526,10 +526,10 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 
 ### `modules/finance/finance.controller.ts`
 
-- [ ] `GET /api/payments` — `list` (L470) · perm: finance.read · entrée: paymentListQuerySchema
-- [ ] `GET /api/payments/export` — `export` (L481) · perm: finance.read · entrée: paymentListQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/payments` — `create` (L495) · perm: finance.pay · entrée: paymentSchema
-- [ ] `DELETE /api/payments/:id` — `remove` (L504) · perm: finance.pay
+- [x] `GET /api/payments` — `list` (L470) · perm: finance.read · entrée: paymentListQuerySchema
+- [x] `GET /api/payments/export` — `export` (L481) · perm: finance.read · entrée: paymentListQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/payments` — `create` (L495) · perm: finance.pay · entrée: paymentSchema
+- [x] `DELETE /api/payments/:id` — `remove` (L504) · perm: finance.pay
 - [x] `GET /api/remittances` — `list` (L588) · gardes: NotMerchantGuard · perm: finance.read · entrée: remittanceListQuerySchema
 - [x] `GET /api/remittances/export` — `export` (L599) · gardes: NotMerchantGuard · perm: finance.read · entrée: remittanceListQuerySchema · sortie: `Promise<StreamableFile>`
 - [x] `GET /api/remittances/candidates` — `candidates` (L613) · gardes: NotMerchantGuard · perm: finance.read · entrée: remittanceCandidateQuerySchema
@@ -583,66 +583,66 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 
 ### `modules/finance/finance.controller.ts`
 
-- [ ] `GET /api/invoices` — `list` (L193) · perm: finance.read · entrée: invoiceListQuerySchema
-- [ ] `GET /api/invoices/export` — `export` (L210) · perm: finance.read · entrée: invoiceListQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/invoices/days` — `days` (L228) · perm: finance.read · entrée: invoiceDaysQuerySchema
-- [ ] `GET /api/invoices/day-pdf` — `dayPdf` (L240) · perm: finance.read · entrée: invoiceDayPdfQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/invoices/billable` — `billable` (L259) · gardes: NotMerchantGuard · perm: finance.read · entrée: billableQuerySchema
-- [ ] `GET /api/invoices/bulk-candidates` — `bulkCandidates` (L283) · perm: finance.write
-- [ ] `GET /api/invoices/:code` — `detail` (L290) · perm: finance.read
-- [ ] `POST /api/invoices` — `create` (L297) · perm: finance.write · entrée: invoiceCreateSchema
-- [ ] `POST /api/invoices/monthly` — `createMonthly` (L315) · perm: finance.write · entrée: invoiceMonthlySchema
-- [ ] `POST /api/invoices/bulk` — `createBulk` (L325) · perm: finance.write · entrée: bulkInvoiceSchema
-- [ ] `POST /api/invoices/:code/parcels` — `addParcels` (L337) · perm: finance.write · entrée: invoiceParcelsSchema
-- [ ] `DELETE /api/invoices/:code/parcels/:parcelId` — `removeParcel` (L348) · perm: finance.write
-- [ ] `POST /api/invoices/:code/adjustments` — `addAdjustment` (L364) · perm: finance.validate · entrée: invoiceAdjustmentSchema
-- [ ] `DELETE /api/invoices/:code/adjustments/:id` — `removeAdjustment` (L375) · perm: finance.validate
-- [ ] `GET /api/invoices/:code/export` — `exportInvoice` (L396) · perm: finance.read · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/invoices/:code/pdf` — `pdf` (L416) · perm: finance.read · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/invoices/:code/issue` — `issue` (L432) · perm: finance.validate · entrée: invoiceIssueSchema
-- [ ] `DELETE /api/invoices/:code` — `remove` (L443) · perm: finance.write
-- [ ] `GET /api/courier-statements` — `list` (L801) · gardes: NotMerchantGuard · perm: finance.read · entrée: statementListQuerySchema
-- [ ] `GET /api/courier-statements/export` — `export` (L812) · gardes: NotMerchantGuard · perm: finance.read · entrée: statementListQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/courier-statements/:code` — `detail` (L826) · gardes: NotMerchantGuard · perm: finance.read
-- [ ] `GET /api/courier-statements/:code/pdf` — `pdf` (L834) · gardes: NotMerchantGuard · perm: finance.read · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/courier-statements` — `create` (L848) · gardes: NotMerchantGuard · perm: finance.write · entrée: courierStatementSchema
-- [ ] `POST /api/courier-statements/:code/recompute` — `recompute` (L858) · gardes: NotMerchantGuard · perm: finance.write
-- [ ] `POST /api/courier-statements/:code/validate` — `validate` (L865) · gardes: NotMerchantGuard · perm: finance.validate
-- [ ] `POST /api/courier-statements/:code/pay` — `pay` (L874) · gardes: NotMerchantGuard · perm: finance.pay · entrée: statementPaySchema
-- [ ] `GET /api/courier-statements/:code/cheque-photo` — `chequePhoto` (L902) · gardes: NotMerchantGuard · perm: finance.read · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/courier-statements/:code/cheque-photo` — `attachChequePhoto` (L919) · gardes: NotMerchantGuard · perm: finance.read · entrée: chequePhotoSchema
-- [ ] `DELETE /api/courier-statements/:code` — `remove` (L930) · gardes: NotMerchantGuard · perm: finance.write
-- [ ] `GET /api/cod-payouts` — `list` (L1030) · perm: finance.read · entrée: codPayoutListQuerySchema
-- [ ] `GET /api/cod-payouts/export` — `export` (L1041) · perm: finance.read · entrée: codPayoutListQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/cod-payouts/candidates` — `candidates` (L1056) · perm: finance.write · entrée: codPayoutCandidateQuerySchema
-- [ ] `GET /api/cod-payouts/bulk-candidates` — `bulkCandidates` (L1070) · perm: finance.validate · entrée: codPayoutBulkQuerySchema
-- [ ] `POST /api/cod-payouts/bulk` — `createBulk` (L1080) · perm: finance.validate · entrée: codPayoutBulkSchema
-- [ ] `GET /api/cod-payouts/:code` — `detail` (L1090) · perm: finance.read
-- [ ] `GET /api/cod-payouts/:code/export` — `exportParcels` (L1099) · perm: finance.read · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/cod-payouts/:code/pdf` — `pdf` (L1118) · perm: finance.read · sortie: `Promise<StreamableFile>`
-- [ ] `POST /api/cod-payouts` — `create` (L1130) · perm: finance.write · entrée: codPayoutCreateSchema
-- [ ] `POST /api/cod-payouts/:code/parcels` — `addParcels` (L1140) · perm: finance.write · entrée: codPayoutParcelsSchema
-- [ ] `DELETE /api/cod-payouts/:code/parcels/:parcelId` — `removeParcel` (L1151) · perm: finance.write
-- [ ] `POST /api/cod-payouts/:code/pay` — `pay` (L1164) · perm: finance.pay · entrée: codPayoutPaySchema
-- [ ] `DELETE /api/cod-payouts/:code` — `remove` (L1175) · perm: finance.write
+- [x] `GET /api/invoices` — `list` (L193) · perm: finance.read · entrée: invoiceListQuerySchema
+- [x] `GET /api/invoices/export` — `export` (L210) · perm: finance.read · entrée: invoiceListQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/invoices/days` — `days` (L228) · perm: finance.read · entrée: invoiceDaysQuerySchema
+- [x] `GET /api/invoices/day-pdf` — `dayPdf` (L240) · perm: finance.read · entrée: invoiceDayPdfQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/invoices/billable` — `billable` (L259) · gardes: NotMerchantGuard · perm: finance.read · entrée: billableQuerySchema
+- [x] `GET /api/invoices/bulk-candidates` — `bulkCandidates` (L283) · perm: finance.write
+- [x] `GET /api/invoices/:code` — `detail` (L290) · perm: finance.read
+- [x] `POST /api/invoices` — `create` (L297) · perm: finance.write · entrée: invoiceCreateSchema
+- [x] `POST /api/invoices/monthly` — `createMonthly` (L315) · perm: finance.write · entrée: invoiceMonthlySchema
+- [x] `POST /api/invoices/bulk` — `createBulk` (L325) · perm: finance.write · entrée: bulkInvoiceSchema
+- [x] `POST /api/invoices/:code/parcels` — `addParcels` (L337) · perm: finance.write · entrée: invoiceParcelsSchema
+- [x] `DELETE /api/invoices/:code/parcels/:parcelId` — `removeParcel` (L348) · perm: finance.write
+- [x] `POST /api/invoices/:code/adjustments` — `addAdjustment` (L364) · perm: finance.validate · entrée: invoiceAdjustmentSchema
+- [x] `DELETE /api/invoices/:code/adjustments/:id` — `removeAdjustment` (L375) · perm: finance.validate
+- [x] `GET /api/invoices/:code/export` — `exportInvoice` (L396) · perm: finance.read · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/invoices/:code/pdf` — `pdf` (L416) · perm: finance.read · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/invoices/:code/issue` — `issue` (L432) · perm: finance.validate · entrée: invoiceIssueSchema
+- [x] `DELETE /api/invoices/:code` — `remove` (L443) · perm: finance.write
+- [x] `GET /api/courier-statements` — `list` (L801) · gardes: NotMerchantGuard · perm: finance.read · entrée: statementListQuerySchema
+- [x] `GET /api/courier-statements/export` — `export` (L812) · gardes: NotMerchantGuard · perm: finance.read · entrée: statementListQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/courier-statements/:code` — `detail` (L826) · gardes: NotMerchantGuard · perm: finance.read
+- [x] `GET /api/courier-statements/:code/pdf` — `pdf` (L834) · gardes: NotMerchantGuard · perm: finance.read · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/courier-statements` — `create` (L848) · gardes: NotMerchantGuard · perm: finance.write · entrée: courierStatementSchema
+- [x] `POST /api/courier-statements/:code/recompute` — `recompute` (L858) · gardes: NotMerchantGuard · perm: finance.write
+- [x] `POST /api/courier-statements/:code/validate` — `validate` (L865) · gardes: NotMerchantGuard · perm: finance.validate
+- [x] `POST /api/courier-statements/:code/pay` — `pay` (L874) · gardes: NotMerchantGuard · perm: finance.pay · entrée: statementPaySchema
+- [x] `GET /api/courier-statements/:code/cheque-photo` — `chequePhoto` (L902) · gardes: NotMerchantGuard · perm: finance.read · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/courier-statements/:code/cheque-photo` — `attachChequePhoto` (L919) · gardes: NotMerchantGuard · perm: finance.read · entrée: chequePhotoSchema
+- [x] `DELETE /api/courier-statements/:code` — `remove` (L930) · gardes: NotMerchantGuard · perm: finance.write
+- [x] `GET /api/cod-payouts` — `list` (L1030) · perm: finance.read · entrée: codPayoutListQuerySchema
+- [x] `GET /api/cod-payouts/export` — `export` (L1041) · perm: finance.read · entrée: codPayoutListQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/cod-payouts/candidates` — `candidates` (L1056) · perm: finance.write · entrée: codPayoutCandidateQuerySchema
+- [x] `GET /api/cod-payouts/bulk-candidates` — `bulkCandidates` (L1070) · perm: finance.validate · entrée: codPayoutBulkQuerySchema
+- [x] `POST /api/cod-payouts/bulk` — `createBulk` (L1080) · perm: finance.validate · entrée: codPayoutBulkSchema
+- [x] `GET /api/cod-payouts/:code` — `detail` (L1090) · perm: finance.read
+- [x] `GET /api/cod-payouts/:code/export` — `exportParcels` (L1099) · perm: finance.read · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/cod-payouts/:code/pdf` — `pdf` (L1118) · perm: finance.read · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/cod-payouts` — `create` (L1130) · perm: finance.write · entrée: codPayoutCreateSchema
+- [x] `POST /api/cod-payouts/:code/parcels` — `addParcels` (L1140) · perm: finance.write · entrée: codPayoutParcelsSchema
+- [x] `DELETE /api/cod-payouts/:code/parcels/:parcelId` — `removeParcel` (L1151) · perm: finance.write
+- [x] `POST /api/cod-payouts/:code/pay` — `pay` (L1164) · perm: finance.pay · entrée: codPayoutPaySchema
+- [x] `DELETE /api/cod-payouts/:code` — `remove` (L1175) · perm: finance.write
 
 ### `modules/finance/pro-invoices.controller.ts`
 
-- [ ] `GET /api/invoices-pro` — `list` (L65) · gardes: NotMerchantGuard · perm: finance.read · entrée: invoiceListQuerySchema
-- [ ] `GET /api/invoices-pro/export` — `export` (L76) · gardes: NotMerchantGuard · perm: finance.read · entrée: invoiceListQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/invoices-pro/days` — `days` (L91) · gardes: NotMerchantGuard · perm: finance.read · entrée: invoiceDaysQuerySchema
-- [ ] `GET /api/invoices-pro/day-pdf` — `dayPdf` (L103) · gardes: NotMerchantGuard · perm: finance.read · entrée: invoiceDayPdfQuerySchema · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/invoices-pro/bulk-candidates` — `bulkCandidates` (L118) · gardes: NotMerchantGuard · perm: finance.write
-- [ ] `POST /api/invoices-pro` — `create` (L125) · gardes: NotMerchantGuard · perm: finance.write · entrée: invoiceCreateSchema
-- [ ] `POST /api/invoices-pro/monthly` — `createMonthly` (L135) · gardes: NotMerchantGuard · perm: finance.write · entrée: invoiceMonthlySchema
-- [ ] `POST /api/invoices-pro/bulk` — `createBulk` (L145) · gardes: NotMerchantGuard · perm: finance.write · entrée: bulkInvoiceSchema
+- [x] `GET /api/invoices-pro` — `list` (L65) · gardes: NotMerchantGuard · perm: finance.read · entrée: invoiceListQuerySchema
+- [x] `GET /api/invoices-pro/export` — `export` (L76) · gardes: NotMerchantGuard · perm: finance.read · entrée: invoiceListQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/invoices-pro/days` — `days` (L91) · gardes: NotMerchantGuard · perm: finance.read · entrée: invoiceDaysQuerySchema
+- [x] `GET /api/invoices-pro/day-pdf` — `dayPdf` (L103) · gardes: NotMerchantGuard · perm: finance.read · entrée: invoiceDayPdfQuerySchema · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/invoices-pro/bulk-candidates` — `bulkCandidates` (L118) · gardes: NotMerchantGuard · perm: finance.write
+- [x] `POST /api/invoices-pro` — `create` (L125) · gardes: NotMerchantGuard · perm: finance.write · entrée: invoiceCreateSchema
+- [x] `POST /api/invoices-pro/monthly` — `createMonthly` (L135) · gardes: NotMerchantGuard · perm: finance.write · entrée: invoiceMonthlySchema
+- [x] `POST /api/invoices-pro/bulk` — `createBulk` (L145) · gardes: NotMerchantGuard · perm: finance.write · entrée: bulkInvoiceSchema
 
 ### `modules/finance/transfer-orders.controller.ts`
 
-- [ ] `POST /api/transfer-orders` — `create` (L28) · perm: finance.write · entrée: transferOrderCreateSchema
-- [ ] `GET /api/transfer-orders/:code` — `detail` (L38) · perm: finance.write
-- [ ] `GET /api/transfer-orders/:code/pdf` — `pdf` (L46) · perm: finance.write · sortie: `Promise<StreamableFile>`
-- [ ] `GET /api/transfer-orders/:code/xlsx` — `xlsx` (L59) · perm: finance.write · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/transfer-orders` — `create` (L28) · perm: finance.write · entrée: transferOrderCreateSchema
+- [x] `GET /api/transfer-orders/:code` — `detail` (L38) · perm: finance.write
+- [x] `GET /api/transfer-orders/:code/pdf` — `pdf` (L46) · perm: finance.write · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/transfer-orders/:code/xlsx` — `xlsx` (L59) · perm: finance.write · sortie: `Promise<StreamableFile>`
 
 ## Module 10 — Réclamations, notifications, tableaux de bord
 
