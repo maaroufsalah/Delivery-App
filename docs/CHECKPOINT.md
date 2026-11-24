@@ -22,21 +22,27 @@ Rapport final : `docs/chantiers/delivery-app-dotnet.md` (en fin de chantier). Ch
 
 ## En cours — module 5 « Colis » sur `feat/parcels` (non poussée)
 
-Fait et commité : liste, export, stats, fiche, next-code, quote, création (idempotence), changement
-de statut (gardes terminal/contestation/argent/circuit), fees, expected-payment, bl, notes, PATCH/DELETE
-vendeur, admin-delete (échange annulé avec), client (+preview, empreinte). 7 tests de contrat verts.
-`Notifications/Notifier.cs` : lignes en base + préférences ; l'envoi push viendra au module 10.
+Fait et commité : liste, export, stats, fiche, next-code, quote, création (idempotence), statut,
+fees, expected-payment, bl, notes, PATCH/DELETE vendeur, admin-delete, client (+preview), destination
+(retarification, sortie des circuits), échanges (`/exchanges` + `POST /parcels/:code/exchange`, RET-/ECH-),
+étiquettes PDF QuestPDF (classique et à la marque, Noto copiées de Speedy, QR, Code 128), label-jobs
+(file en mémoire + `LabelJobWorker`), suivi public, import Excel (modèle, aperçu, anomalies, historique,
+rapport ; tables générées par `scripts/ts/dump-import.mjs`). 12 tests de contrat colis, 74 au total.
 
-**Reste au module 5** : destination ; exchange + `/exchanges` ; import Excel ; étiquettes PDF +
-label-jobs ; bulk-jobs ; audit ; entrepôt (products, stock, storage-requests, orders) ; provider tokens
-+ API ; courier/me ; public/track ; merchant/me/summary ; masque livreur.
+**Reste au module 5** : entrepôt (products, stock, storage-requests, orders) ; provider tokens + API ;
+audit + journal ; bulk-jobs ; merchant/me/summary ; courier/parcels/:code/outcomes, courier/me,
+performance ; masque livreur. Les routes `courier/me/*` liées aux circuits (routes, scan, dispatch,
+notes, deliveries, removeParcel, pickupNote, `courier/parcels/:code/status|proof`) et `courier-stock`
+→ module 6 ; `courier/me/cheques|balance|remittance` → module 8 (remap `gen-inventory.mjs`).
 
 **Dettes à solder au module 6** : statut 13 « En cours de livraison » lève 500 « Mise en circuit
-indisponible » (comme Speedy sans `OutForDeliveryPlacer`) — brancher la mise en circuit.
+indisponible » (comme Speedy sans `OutForDeliveryPlacer`) — brancher la mise en circuit ; rejouer la
+clôture automatique des circuits quittés après un changement de destination (`replayAutoClose`).
+Module 10 : envoi push des notifications (Expo).
 
 ## Prochaine action exacte
 
-1. `PATCH /parcels/:code/destination` (`parcels.service.ts` l. 2095-2471), puis la suite de la liste.
+1. Entrepôt (`modules/warehouse/*`), puis la suite de la liste « Reste au module 5 ».
 
 ## Blocages / décisions pour Salah
 
