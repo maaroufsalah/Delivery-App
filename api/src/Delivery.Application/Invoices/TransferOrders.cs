@@ -12,6 +12,7 @@ using Delivery.Application.Parcels;
 using Delivery.Domain.Common;
 using Delivery.Domain.Entities;
 using Delivery.Domain.Enums;
+using Delivery.Domain.Finance;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -39,16 +40,21 @@ public static class TransferOrders
 
     public static string BaseName(TransferOrderDetailDto order) => $"Ordre-Virement-{order.CreatedAt.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}";
 
-    /// <summary>`transferLinesForInvoices` : des factures émises au solde positif, dont aucun colis n'a déjà été viré.</summary>
-    public static async Task<List<(TransferLineDto Line, List<string> ParcelIds)>> ForInvoicesAsync(IAppDbContext db, ICurrentUser caller, IReadOnlyList<string> codes,
-        CancellationToken cancellationToken)
+    /// <summary>
+    /// `transferLinesForInvoices` : des factures émises à net ≥ 0 (ou payées à net 0, nées soldées), dont aucun colis n'a déjà
+    /// été viré. Chaque ligne porte les factures qu'elle vire réellement : l'OV n'enregistre qu'elles.
+    /// </summary>
+    public static async Task<List<(TransferLineDto Line, List<string> ParcelIds, IReadOnlyList<string> InvoiceCodes)>> ForInvoicesAsync(IAppDbContext db, ICurrentUser caller,
+        IReadOnlyList<string> codes, CancellationToken cancellationToken)
     {
-        var invoices = await InvoiceRows.Scoped(db.Invoices.AsNoTracking(), caller).Where(i => codes.Contains(i.Code) && i.Status == InvoiceStatus.ISSUED && i.TotalDue > 0)
+        var candidates = await InvoiceRows.Scoped(db.Invoices.AsNoTracking(), caller)
+            .Where(i => codes.Contains(i.Code) && (i.Status == InvoiceStatus.ISSUED || i.Status == InvoiceStatus.PAID) && i.TotalDue >= 0)
             .Select(i => new
             {
-                i.Code, i.ClientId, Client = i.Client.Name, i.TotalDeliveryFee, i.TotalFailureFee, i.TotalAdjustment, i.TotalVat, i.TotalDue,
+                i.Code, i.Status, i.ClientId, Client = i.Client.Name, i.TotalDeliveryFee, i.TotalFailureFee, i.TotalAdjustment, i.TotalVat, i.TotalDue,
                 Lines = i.Lines.Select(l => new { l.ParcelId, l.Parcel.Code, Orders = l.Parcel.TransferOrders.Select(t => t.TransferOrder.Code).ToList() }).ToList(),
             }).ToListAsync(cancellationToken);
+        var invoices = candidates.Where(i => TransferRules.EntersTransferOrder(i.Status, Money.ToCents(i.TotalDue))).ToList();
         foreach (var invoice in invoices)
         {
             var transferred = invoice.Lines.Where(l => l.Orders.Count > 0).ToList();
@@ -57,21 +63,22 @@ public static class TransferOrders
             throw BusinessException.Conflict($"La facture {invoice.Code} porte {transferred.Count} colis déjà viré(s) par {string.Join(", ", orders)} : elle ne peut pas être virée une seconde fois.",
                 new { reason = "invoice-parcels-already-transferred", invoiceCode = invoice.Code, transferOrders = orders, parcelCodes = transferred.Take(20).Select(l => l.Code).ToList() });
         }
-        var byClient = new List<(TransferLineDto Line, List<string> ParcelIds)>();
-        foreach (var invoice in invoices)
-        {
-            var fees = Money.ToCents(invoice.TotalDeliveryFee) + Money.ToCents(invoice.TotalFailureFee) + Money.ToCents(invoice.TotalAdjustment) + Money.ToCents(invoice.TotalVat);
-            var due = Money.ToCents(invoice.TotalDue);
-            var index = byClient.FindIndex(b => b.Line.ClientId == invoice.ClientId);
-            var current = index < 0 ? (new TransferLineDto(invoice.ClientId, invoice.Client, 0, 0, 0, 0), new List<string>()) : byClient[index];
-            current.Item2.AddRange(invoice.Lines.Select(l => l.ParcelId));
-            var next = (current.Item1 with
-            {
-                ParcelCount = current.Item1.ParcelCount + invoice.Lines.Count, Fees = current.Item1.Fees + fees, Due = current.Item1.Due + due, Collected = current.Item1.Collected + due + fees,
-            }, current.Item2);
-            if (index < 0) byClient.Add(next);
-            else byClient[index] = next;
-        }
-        return byClient.OrderBy(b => b.Line.ClientName, StringComparer.Create(CultureInfo.InvariantCulture, false)).ToList();
+        var lines = TransferRules.LinesFor(invoices.Select(i => new TransferInvoice(i.Code, i.ClientId, i.Client,
+            Money.ToCents(i.TotalDeliveryFee) + Money.ToCents(i.TotalFailureFee) + Money.ToCents(i.TotalAdjustment) + Money.ToCents(i.TotalVat), Money.ToCents(i.TotalDue), i.Lines.Count)));
+        return lines.Select(l => (new TransferLineDto(l.ClientId, l.ClientName, l.ParcelCount, l.Collected, l.Fees, l.Due),
+                invoices.Where(i => l.InvoiceCodes.Contains(i.Code)).SelectMany(i => i.Lines.Select(x => x.ParcelId)).ToList(), l.InvoiceCodes))
+            .OrderBy(b => b.Item1.ClientName, StringComparer.Create(CultureInfo.InvariantCulture, false)).ToList();
+    }
+
+    /// <summary>
+    /// Le lien OV → facture à l'émission : un OV « sélection » est tiré avant ses factures, il estampille ses colis mais ne
+    /// peut pas nommer une facture qui n'existe pas encore. La facture s'inscrit ici dans tout OV qui a déjà viré un de ses colis.
+    /// </summary>
+    public static async Task LinkIssuedInvoiceAsync(IAppDbContext db, string invoiceCode, IReadOnlyList<string> parcelIds, CancellationToken cancellationToken)
+    {
+        if (parcelIds.Count == 0) return;
+        var orders = await db.TransferOrders.Where(o => o.Parcels.Any(p => parcelIds.Contains(p.ParcelId)) && !o.InvoiceCodes.Contains(invoiceCode)).ToListAsync(cancellationToken);
+        foreach (var order in orders) order.InvoiceCodes = [.. order.InvoiceCodes, invoiceCode];
+        if (orders.Count > 0) await db.SaveChangesAsync(cancellationToken);
     }
 }

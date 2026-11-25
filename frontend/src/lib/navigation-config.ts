@@ -11,6 +11,7 @@ import {
   CreditCard,
   FileText,
   HandCoins,
+  Landmark,
   Inbox,
   Layers,
   LayoutDashboard,
@@ -281,6 +282,18 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: HandCoins,
         ready: true,
         permission: 'finance.read',
+      },
+      /*
+       * LES ORDRES DE VIREMENT déjà générés — consultation seule. Même clé que
+       * les routes `/transfer-orders` (`finance.write`) : un OV liste les
+       * montants de TOUS les clients, l'e-commerçant ne le voit pas.
+       */
+      {
+        key: 'transferOrders',
+        href: '/transfer-orders',
+        icon: Landmark,
+        ready: true,
+        permission: 'finance.write',
       },
       /*
        * La petite caisse — chantier « Caisse, OV, Petite caisse », point 3.

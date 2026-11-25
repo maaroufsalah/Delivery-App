@@ -2,7 +2,7 @@
 
 Produit par `node scripts/gen-inventory.mjs <speedy>/apps/api/src` — ne pas éditer à la main sauf pour cocher.
 
-Total : **506 endpoints** dans 47 contrôleurs. Préfixe global `/api`.
+Total : **507 endpoints** dans 47 contrôleurs. Préfixe global `/api`.
 
 Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permissions sont celles de `@RequirePermission` (toutes requises).
 
@@ -639,10 +639,11 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 
 ### `modules/finance/transfer-orders.controller.ts`
 
-- [x] `POST /api/transfer-orders` — `create` (L28) · perm: finance.write · entrée: transferOrderCreateSchema
-- [x] `GET /api/transfer-orders/:code` — `detail` (L38) · perm: finance.write
-- [x] `GET /api/transfer-orders/:code/pdf` — `pdf` (L46) · perm: finance.write · sortie: `Promise<StreamableFile>`
-- [x] `GET /api/transfer-orders/:code/xlsx` — `xlsx` (L59) · perm: finance.write · sortie: `Promise<StreamableFile>`
+- [x] `POST /api/transfer-orders` — `create` (L29) · perm: finance.write · entrée: transferOrderCreateSchema
+- [x] `GET /api/transfer-orders` — `list` (L39) · perm: finance.write · entrée: transferOrderListQuerySchema
+- [x] `GET /api/transfer-orders/:code` — `detail` (L49) · perm: finance.write
+- [x] `GET /api/transfer-orders/:code/pdf` — `pdf` (L57) · perm: finance.write · sortie: `Promise<StreamableFile>`
+- [x] `GET /api/transfer-orders/:code/xlsx` — `xlsx` (L70) · perm: finance.write · sortie: `Promise<StreamableFile>`
 
 ## Module 10 — Réclamations, notifications, tableaux de bord
 

@@ -114,6 +114,7 @@ internal sealed class IssueInvoiceHandler(IAppDbContext db, ICurrentUser caller,
             row.TotalDue = Money.FromCents(totals.Due);
             row.UpdatedAt = now;
             await db.SaveChangesAsync(cancellationToken);
+            await TransferOrders.LinkIssuedInvoiceAsync(db, invoice.Code, invoice.Lines.Select(l => l.ParcelId).ToList(), cancellationToken);
             if (totals.Due == 0) await InvoiceRows.SettleAsync(db, invoice.Id, now, caller.UserId, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
         }

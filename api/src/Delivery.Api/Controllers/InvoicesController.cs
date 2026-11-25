@@ -200,6 +200,12 @@ public sealed class TransferOrdersController(ISender sender) : ApiControllerBase
     [RequirePermission("finance.write")]
     public Task<IActionResult> Create([FromBody] CreateTransferOrderCommand? body) => Created(body ?? new CreateTransferOrderCommand());
 
+    /// <summary>`transferOrderListQuerySchema` : page, pageSize, search seuls ; le tri est fixe.</summary>
+    [HttpGet]
+    [RequirePermission("finance.write")]
+    public Task<IActionResult> List([FromQuery] ListQueryParams query) =>
+        Ok(new GetTransferOrdersQuery(new ListQueryParams { Page = query.Page, PageSize = query.PageSize, Search = query.Search }.ToQueryWithDefault(25)));
+
     [HttpGet("{code}")]
     [RequirePermission("finance.write")]
     public Task<IActionResult> Detail(string code) => Ok(new GetTransferOrderQuery(code));

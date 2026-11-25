@@ -46,6 +46,7 @@ import type {
   RemittanceParcelsPayload,
   TransferOrderCreateInput,
   TransferOrderDetail,
+  TransferOrderListItem,
 } from '@delivery/shared';
 import { apiFetch, apiFetchBase64 } from '@/lib/http';
 
@@ -602,6 +603,15 @@ export async function createTransferOrder(
   body: TransferOrderCreateInput,
 ): Promise<TransferOrderDetail> {
   return apiFetch<TransferOrderDetail>('/transfer-orders', { method: 'POST', body });
+}
+
+/** Les ordres déjà générés, le plus récent d'abord — consultation seule. */
+export async function getTransferOrderPage(
+  query: Query,
+): Promise<Paginated<TransferOrderListItem>> {
+  return apiFetch<Paginated<TransferOrderListItem>>('/transfer-orders', {
+    query: toSearch(query),
+  });
 }
 
 export async function downloadTransferOrderPdf(code: string): Promise<string> {
