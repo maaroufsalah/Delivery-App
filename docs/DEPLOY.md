@@ -16,6 +16,7 @@
 | Base | **propre pour les tests** : aucun colis, facture, réclamation, vendeur ni livreur ; compteurs de numérotation à zéro ; seul compte : `wimo@gmail.com` ; aucun compte de démo |
 | Sauvegarde | quotidienne 03h30 (root, `/etc/cron.d/wimo-delivery-backup` → `/opt/wimo-delivery/backup.sh` → `app-dotnet/deploy/backup.sh`), dumps `backups/wimo_dotnet_*.dump` vérifiés par `pg_restore -l`, rotation 14 jours |
 | Ancienne pile NestJS | **arrêtée** (`docker compose stop`), conteneurs, volumes et images conservés ; base intacte |
+| APK Android | **Wimo Delivery 1.0.0**, versionCode **4**, build EAS `32a7a5fa-b464-4069-9a4f-f293c2a10825` (profil `preview`, canal `preview`, 2026-11-24), API `https://api-new.wimodelivery.ma` ; APK : https://expo.dev/artifacts/eas/O1JVe7F01VODNS_wwtmMHueldS4AyhUlgYk22c_YGyg.apk ; build : https://expo.dev/accounts/maaroufsalaheddine/projects/wimo-delivery/builds/32a7a5fa-b464-4069-9a4f-f293c2a10825 ; reconstruire : Actions → « Mobile APK » → Run workflow |
 | Dumps | avant bascule : `backups/wimo_avant-dotnet_20261124_163926.dump` (572 Ko, sha256 `32fd65a4…833f000e8b`) ; avant nettoyage : `backups/wimo_dotnet_avant-nettoyage_20261124_172239.dump` ; avant `240c4fd` : `backups/wimo_dotnet_avant-240c4fd_20261124_174200.dump` |
 
 ### Données reprises
@@ -95,13 +96,12 @@ Elle demande un super-admin temporaire.
 
 ## Ce qui reste
 
-1. **APK Wimo** : reconstruire l'application mobile pointée sur `https://api-new.wimodelivery.ma/api`.
-2. **Retrait définitif de la pile NestJS** après une semaine sans incident :
+1. **Retrait définitif de la pile NestJS** après une semaine sans incident :
    - supprimer ses conteneurs, ses images et son volume de base, avec un dump conservé ;
    - supprimer `backup-nestjs.sh` ;
    - nettoyer la rotation des anciens `backups/wimo_*.dump`.
-3. **Bascule future vers app.wimodelivery.ma** :
+2. **Bascule future vers app.wimodelivery.ma** :
    - certificat et vhost nginx (diff à montrer avant toute modification de `/etc/nginx`) ;
    - `WEB_ORIGIN` et `PUBLIC_API_URL` ;
    - reconstruction de l'image web (`NEXT_PUBLIC_API_URL` est figé au build).
-4. **`LUCKYPENNY_LICENSE_KEY`** (licence MediatR / AutoMapper) : absente de `app-dotnet.env`. Sans elle, l'API tourne mais journalise un avertissement de licence. À renseigner, puis `up -d api`.
+3. **`LUCKYPENNY_LICENSE_KEY`** (licence MediatR / AutoMapper) : absente de `app-dotnet.env`. Sans elle, l'API tourne mais journalise un avertissement de licence. À renseigner, puis `up -d api`.
