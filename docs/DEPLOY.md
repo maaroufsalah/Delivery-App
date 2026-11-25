@@ -4,19 +4,20 @@
 
 | | |
 | --- | --- |
-| Mise en ligne | 2026-11-24, bascule à 17h04 (environ 20 s d'interruption) ; redéploiement `240c4fd` à 17h42 |
+| Mise en ligne | 2026-11-24, bascule à 17h04 (environ 20 s d'interruption) ; redéploiement `240c4fd` à 17h42 ; `e692511` le 2026-11-25 à 19h35 |
 | Domaines | https://new.wimodelivery.ma (web), https://api-new.wimodelivery.ma (API) ; nginx inchangé |
-| Commit déployé | `240c4fd` (`main`), checkout détaché dans `/opt/wimo-delivery/app-dotnet` ; précédent : `127c914` |
-| Images | `wimo-delivery-dotnet-api:240c4fd`, `wimo-delivery-dotnet-web:240c4fd` (construites sur le VPS) ; celles de `127c914` sont gardées pour le rollback |
+| Commit déployé | `e692511` (`main`, #19 : liste des OV, Espèces signées, lien OV ↔ factures, OV à net 0), checkout détaché dans `/opt/wimo-delivery/app-dotnet` ; précédent : `240c4fd` |
+| Images | `wimo-delivery-dotnet-api:e692511`, `wimo-delivery-dotnet-web:e692511` (construites sur le VPS) ; celles de `240c4fd` (rollback) et `127c914` sont gardées |
 | Pile Docker | projet `wimo-delivery-dotnet` : `deploy/docker-compose.prod.yml` + `/opt/wimo-delivery/app-dotnet.env` (600, hors Git) |
 | Ports | web `127.0.0.1:3102`, api `127.0.0.1:3103` (recette avant bascule : 3112 / 3113) |
 | Base | `wimo_dotnet` (conteneur `wimo-delivery-dotnet-postgres-1`, volume `wimo-delivery-dotnet-postgres-data`), **nouvelle base** ; pièces jointes : volume `wimo-delivery-dotnet-uploads-data` |
-| Migrations EF | `20261123223924_InitialSchema`, `20261124111629_RemittanceOneOpenPerCourier` |
-| Recette | `scripts/recette.sh --cleanup` PASS **66/66** sur les URL publiques (`240c4fd`) ; tout ce qu'elle a créé est supprimé en base, compteurs restaurés |
-| Base | **propre pour les tests** : aucun colis, facture, réclamation, vendeur ni livreur ; compteurs de numérotation à zéro ; seul compte : `wimo@gmail.com` ; aucun compte de démo |
+| Migrations EF | `20261123223924_InitialSchema`, `20261124111629_RemittanceOneOpenPerCourier` (aucune nouvelle avec `e692511`) |
+| Recette | `scripts/recette.sh --cleanup` PASS **66/66** sur les URL publiques (`e692511`, 2026-11-25) ; tout ce qu'elle a créé est supprimé en base, compteurs restaurés, super-admin de recette supprimé, `SEED_ADMIN_*` vidés |
+| Base | **propre pour les tests** : aucun colis, facture, ordre de virement, réclamation, vendeur ni livreur ; compteurs de numérotation à zéro ; seul compte : `wimo@gmail.com` ; aucun compte de démo |
 | Sauvegarde | quotidienne 03h30 (root, `/etc/cron.d/wimo-delivery-backup` → `/opt/wimo-delivery/backup.sh` → `app-dotnet/deploy/backup.sh`), dumps `backups/wimo_dotnet_*.dump` vérifiés par `pg_restore -l`, rotation 14 jours |
 | Ancienne pile NestJS | **arrêtée** (`docker compose stop`), conteneurs, volumes et images conservés ; base intacte |
-| Dumps | avant bascule : `backups/wimo_avant-dotnet_20261124_163926.dump` (572 Ko, sha256 `32fd65a4…833f000e8b`) ; avant nettoyage : `backups/wimo_dotnet_avant-nettoyage_20261124_172239.dump` ; avant `240c4fd` : `backups/wimo_dotnet_avant-240c4fd_20261124_174200.dump` |
+| Dumps | avant bascule : `backups/wimo_avant-dotnet_20261124_163926.dump` (572 Ko, sha256 `32fd65a4…833f000e8b`) ; avant nettoyage : `backups/wimo_dotnet_avant-nettoyage_20261124_172239.dump` ; avant `240c4fd` : `backups/wimo_dotnet_avant-240c4fd_20261124_174200.dump` ; avant `e692511` : `backups/wimo_dotnet_avant-e692511_20261125_191631.dump` (sha256 `eb1740eb9f247995…`) |
+| Disque | 2026-11-25 : `docker builder prune -f` + `docker image prune -f` (aucun volume touché), 5,1 Go → 12 Go libres (85 %) |
 
 ### Données reprises
 
@@ -62,11 +63,11 @@ curl -s https://api-new.wimodelivery.ma/health
 
 Les données écrites dans la pile .NET depuis la bascule ne remontent pas dans l'ancienne base.
 
-Revenir seulement au commit .NET précédent (`127c914`, images gardées) :
+Revenir seulement au commit .NET précédent (`240c4fd`, images gardées) :
 
 ```bash
-cd /opt/wimo-delivery/app-dotnet && git checkout -q --detach 127c914b4ceefc15abd2344f4116c0b83acf77a2
-sed -i 's/^APP_VERSION=.*/APP_VERSION=127c914/' ../app-dotnet.env
+cd /opt/wimo-delivery/app-dotnet && git checkout -q --detach 240c4fd
+sed -i 's/^APP_VERSION=.*/APP_VERSION=240c4fd/' ../app-dotnet.env
 docker compose -p wimo-delivery-dotnet -f deploy/docker-compose.prod.yml --env-file ../app-dotnet.env up -d --no-build api web
 ```
 
@@ -105,3 +106,4 @@ Elle demande un super-admin temporaire.
    - `WEB_ORIGIN` et `PUBLIC_API_URL` ;
    - reconstruction de l'image web (`NEXT_PUBLIC_API_URL` est figé au build).
 4. **`LUCKYPENNY_LICENSE_KEY`** (licence MediatR / AutoMapper) : absente de `app-dotnet.env`. Sans elle, l'API tourne mais journalise un avertissement de licence. À renseigner, puis `up -d api`.
+5. **Lint web** : `frontend/scripts/check-messages.mjs` échoue sur 15 tirets cadratins des catalogues de traduction (hérités de Speedy, déjà présents avant `e692511`) — à corriger dans un chantier dédié.
