@@ -47,7 +47,9 @@ internal sealed class GetInvoiceDaysHandler(IAppDbContext db, ICurrentUser calle
         if (calendar.Count > 0) (start, end) = ReturnRows.DayRange(calendar[0], calendar[^1]);
         var hasCalendar = calendar.Count > 0;
         var rows = await where.Where(i => (wantsDraft && i.IssuedAt == null) || (hasCalendar && i.IssuedAt >= start && i.IssuedAt < end))
-            .Select(i => new { i.Code, i.IssuedAt, i.TotalDue, Payments = i.Payments.Select(p => new { p.Amount, p.Method }).ToList(), Lines = i.Lines.Count }).ToListAsync(cancellationToken);
+            .Select(i => new { i.Code, i.IssuedAt, i.TotalDue, Payments = i.Payments.Select(p => new { p.Amount, p.Method }).ToList(), Lines = i.Lines.Count,
+                // Un colis déjà viré (estampillé par un OV, même « sélection ») : la facture l'est aussi.
+                Stamped = i.Lines.Any(l => l.Parcel.TransferOrders.Any()) }).ToListAsync(cancellationToken);
         var summaries = new Dictionary<string, (int Invoices, int Parcels, long Due, long Cash, long Cheque, long Transfer, List<string> Codes)>();
         var issued = new List<string>();
         foreach (var row in rows)
@@ -57,15 +59,14 @@ internal sealed class GetInvoiceDaysHandler(IAppDbContext db, ICurrentUser calle
             var s = summaries.GetValueOrDefault(day, (0, 0, 0, 0, 0, 0, new List<string>()));
             s.Invoices++;
             s.Parcels += row.Lines;
-            s.Due += Money.ToCents(row.TotalDue);
-            foreach (var payment in row.Payments)
-            {
-                var amount = Money.ToCents(payment.Amount);
-                if (payment.Method == PaymentMethod.CASH) s.Cash += amount;
-                else if (payment.Method == PaymentMethod.CHECK) s.Cheque += amount;
-                else s.Transfer += amount;
-            }
-            if (day != InvoiceRows.DraftDay) { s.Codes.Add(row.Code); issued.Add(row.Code); }
+            var due = Money.ToCents(row.TotalDue);
+            s.Due += due;
+            // Un règlement est saisi en positif ; il prend le sens de sa facture (encaissé d'un vendeur à net négatif = −).
+            var (cash, cheque, transfer) = TransferRules.PaymentSplit(due, row.Payments.Select(p => (p.Method, Money.ToCents(p.Amount))));
+            s.Cash += cash;
+            s.Cheque += cheque;
+            s.Transfer += transfer;
+            if (day != InvoiceRows.DraftDay && TransferRules.IsTransferable(due, row.Stamped, false)) { s.Codes.Add(row.Code); issued.Add(row.Code); }
             summaries[day] = s;
         }
         var transferred = new HashSet<string>();

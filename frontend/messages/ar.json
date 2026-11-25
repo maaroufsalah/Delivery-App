@@ -93,6 +93,7 @@
       "remittances": "الصندوق",
       "cheques": "الشيكات المستلمة",
       "codPayouts": "سندات الدفع",
+      "transferOrders": "أوامر التحويل",
       "pettyCash": "الصندوق الصغير",
       "products": "المنتجات",
       "stock": "المخزون",
@@ -4706,6 +4707,27 @@
       "chequesToHandOver": "{count} شيك للتسليم",
       "noBank": "البنك غير مسجّل",
       "chequeCount": "{count} شيك"
+    },
+    "transferOrders": {
+      "title": "أوامر التحويل",
+      "subtitle": "أوامر التحويل التي تم إنشاؤها للعملاء والعملاء المحترفين. للاطلاع والتنزيل فقط.",
+      "searchPlaceholder": "الرقم OV-…",
+      "empty": "لا يوجد أمر تحويل",
+      "emptyHint": "ستظهر هنا الأوامر المنشأة من الفواتير.",
+      "kind": {
+        "clients": "العملاء",
+        "pro": "محترف"
+      },
+      "columns": {
+        "code": "الرقم",
+        "createdAt": "تاريخ الإنشاء",
+        "kind": "النوع",
+        "clientCount": "عدد العملاء",
+        "totalDue": "المبلغ الواجب تحويله",
+        "createdBy": "أنشأه"
+      },
+      "pdf": "PDF",
+      "excel": "Excel"
     },
     "codPayouts": {
       "title": "سندات الدفع",

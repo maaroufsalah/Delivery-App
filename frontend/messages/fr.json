@@ -93,6 +93,7 @@
       "remittances": "Caisse",
       "cheques": "Chèques reçus",
       "codPayouts": "Bons de versement",
+      "transferOrders": "Ordres de virement",
       "pettyCash": "Petite caisse",
       "products": "Produits",
       "stock": "Stock",
@@ -4706,6 +4707,27 @@
       "chequesToHandOver": "{count} chèque(s) à remettre",
       "noBank": "Banque non relevée",
       "chequeCount": "{count} chèque(s)"
+    },
+    "transferOrders": {
+      "title": "Ordres de virement",
+      "subtitle": "Les ordres de virement déjà générés, clients et clients pro. Consultation et téléchargement seulement.",
+      "searchPlaceholder": "Numéro OV-…",
+      "empty": "Aucun ordre de virement",
+      "emptyHint": "Les ordres générés depuis les factures apparaîtront ici.",
+      "kind": {
+        "clients": "Clients",
+        "pro": "Pro"
+      },
+      "columns": {
+        "code": "Numéro",
+        "createdAt": "Date de génération",
+        "kind": "Type",
+        "clientCount": "Nb clients",
+        "totalDue": "Total à verser",
+        "createdBy": "Généré par"
+      },
+      "pdf": "PDF",
+      "excel": "Excel"
     },
     "codPayouts": {
       "title": "Bons de versement",

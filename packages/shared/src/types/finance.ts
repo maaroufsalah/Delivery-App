@@ -1053,3 +1053,19 @@ export interface TransferOrderDetail {
   createdAt: IsoDateTime;
   createdByName: string | null;
 }
+
+/**
+ * Une ligne de la LISTE des ordres de virement — chantier « Page Ordres de
+ * virement », consultation seule.
+ *
+ * `kind` n'est pas une colonne : il se lit sur les clients des lignes, `pro`
+ * quand tous sont des Clients Pro, `clients` sinon.
+ */
+export interface TransferOrderListItem {
+  code: string;
+  createdAt: IsoDateTime;
+  kind: 'clients' | 'pro';
+  clientCount: number;
+  totalDue: AmountInCents;
+  createdByName: string | null;
+}

@@ -12,6 +12,7 @@ using Delivery.Application.Parcels;
 using Delivery.Domain.Common;
 using Delivery.Domain.Entities;
 using Delivery.Domain.Enums;
+using Delivery.Domain.Finance;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -65,8 +66,8 @@ internal sealed class CreateTransferOrderHandler(IAppDbContext db, ICurrentUser 
         }
         var lines = fromInvoices
             ? await TransferOrders.ForInvoicesAsync(db, caller, invoiceCodes, cancellationToken)
-            : (await InvoiceRows.PendingByClientAsync(db, caller, clientIds, null, true, cancellationToken)).Where(r => r.Due > 0)
-                .Select(r => (Line: new TransferLineDto(r.ClientId, r.ClientName, r.ParcelCount, r.Due + r.Fees, r.Fees, r.Due), ParcelIds: r.ParcelIds)).ToList();
+            : (await InvoiceRows.PendingByClientAsync(db, caller, clientIds, null, true, cancellationToken)).Where(r => TransferRules.EntersSelection(r.Due))
+                .Select(r => (Line: new TransferLineDto(r.ClientId, r.ClientName, r.ParcelCount, r.Due + r.Fees, r.Fees, r.Due), ParcelIds: r.ParcelIds, InvoiceCodes: (IReadOnlyList<string>)[])).ToList();
         if (lines.Count == 0)
         {
             var already = fromInvoices ? 0 : await ParcelFilters.Scoped(db.Parcels.AsNoTracking(), caller)
@@ -83,7 +84,7 @@ internal sealed class CreateTransferOrderHandler(IAppDbContext db, ICurrentUser 
             var order = new TransferOrder
             {
                 Code = code, Source = fromInvoices ? TransferOrderSource.INVOICES : TransferOrderSource.SELECTION, AgencyId = caller.IsSuperAdmin() ? null : caller.AgencyId,
-                Lines = JsonSerializer.Serialize(lines.Select(l => l.Line).ToList(), JsonSerializerOptions.Web), InvoiceCodes = fromInvoices ? invoiceCodes.ToList() : [],
+                Lines = JsonSerializer.Serialize(lines.Select(l => l.Line).ToList(), JsonSerializerOptions.Web), InvoiceCodes = fromInvoices ? lines.SelectMany(l => l.InvoiceCodes).Distinct().ToList() : [],
                 TotalCollected = Money.FromCents(lines.Sum(l => l.Line.Collected)), TotalFees = Money.FromCents(lines.Sum(l => l.Line.Fees)), TotalDue = Money.FromCents(lines.Sum(l => l.Line.Due)),
                 CreatedById = caller.UserId, CreatedAt = now,
             };

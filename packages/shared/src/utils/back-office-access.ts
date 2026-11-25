@@ -83,6 +83,8 @@ export const BACK_OFFICE_ROUTES = [
   '/storage',
   '/storage-requests',
   '/team',
+  // Les ordres de virement déjà générés — consultation seule, back-office seul.
+  '/transfer-orders',
   '/users',
   '/zones',
 ] as const;
