@@ -4,6 +4,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="MediatR" />
+    <PackageReference Include="BCrypt.Net-Next" />
     <PackageReference Include="Konscious.Security.Cryptography.Argon2" />
     <PackageReference Include="AutoMapper" />
     <PackageReference Include="FluentValidation" />

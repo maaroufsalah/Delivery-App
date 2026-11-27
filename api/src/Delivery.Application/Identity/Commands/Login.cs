@@ -103,6 +103,8 @@ internal sealed class LoginHandler(
         if (!user.IsActive) throw invalid;
 
         var companyId = await Sessions.CompanyIdAsync(db, cancellationToken);
+        // Compte repris de Wimo Laravel : son empreinte bcrypt devient argon2id, le mot de passe ne change pas.
+        if (PasswordHasher.NeedsRehash(user.PasswordHash)) user.PasswordHash = PasswordHasher.Hash(password);
         user.LastLoginAt = clock.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
         return await Sessions.IssueAsync(db, jwt, clock, Sessions.IdentityOf(user, companyId), kind, false, null, cancellationToken);

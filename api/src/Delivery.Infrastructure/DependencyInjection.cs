@@ -27,6 +27,7 @@ public static class DependencyInjection
         services.AddSingleton<IFileStorage, LocalFileStorage>();
         services.AddScoped<DatabaseSeeder>();
         services.AddScoped<ReferentialImporter>();
+        services.AddScoped<LaravelImporter>();
         services.AddDbContext<AppDbContext>((provider, options) =>
         {
             // Lue à la résolution, pas à l'enregistrement : la configuration finale fait foi.

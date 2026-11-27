@@ -17,6 +17,22 @@ public sealed class PasswordHasherTests
         const string speedy = "$argon2id$v=19$m=19456,t=2,p=1$PN9G8dqJLHd8Sng92kEcXg$g7+mSo0p9ihGICuRqULfZk88a9qvz5RBbVPDr0Ipooc";
         PasswordHasher.Verify(speedy, "Speedy-2026!").ShouldBeTrue();
         PasswordHasher.Verify(speedy, "speedy-2026!").ShouldBeFalse();
+        PasswordHasher.NeedsRehash(speedy).ShouldBeFalse();
+    }
+
+    /// <summary>Empreinte produite par PHP 7.4 `password_hash("Wimo-Laravel-2026!", PASSWORD_BCRYPT)`, comme celles de Wimo Laravel.</summary>
+    public const string LaravelHash = "$2y$10$6.zqBSjhlL2CzvM7Vahv2ept8qxW7HjTIVFGaF9mUJMNEf2s94SWu";
+
+    [Fact]
+    public void Verifies_a_bcrypt_hash_produced_by_php_password_hash_and_asks_for_a_rehash()
+    {
+        PasswordHasher.Verify(LaravelHash, "Wimo-Laravel-2026!").ShouldBeTrue();
+        PasswordHasher.Verify(LaravelHash, "wimo-laravel-2026!").ShouldBeFalse();
+        PasswordHasher.Verify("$2y$10$tronque", "Wimo-Laravel-2026!").ShouldBeFalse();
+        PasswordHasher.NeedsRehash(LaravelHash).ShouldBeTrue();
+        var rehashed = PasswordHasher.Hash("Wimo-Laravel-2026!");
+        PasswordHasher.NeedsRehash(rehashed).ShouldBeFalse();
+        PasswordHasher.Verify(rehashed, "Wimo-Laravel-2026!").ShouldBeTrue();
     }
 
     [Fact]

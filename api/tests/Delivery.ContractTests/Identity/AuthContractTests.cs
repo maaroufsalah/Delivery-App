@@ -54,6 +54,30 @@ public sealed class AuthContractTests(ApiFactory factory)
     }
 
     [Fact]
+    public async Task A_Laravel_bcrypt_account_logs_in_and_is_rehashed_to_argon2id()
+    {
+        // `password_hash("Wimo-Laravel-2026!", PASSWORD_BCRYPT)` de PHP 7.4 : l'empreinte reprise de Wimo Laravel telle quelle.
+        const string laravel = "$2y$10$YPotekj30Lsbl2jUeUQJhuoENKhmBRW55IFS.9aRUaA.sTTPv2ury";
+        var user = await TestData.UserAsync(factory, RoleName.SUPER_ADMIN);
+        await factory.ExecuteDbAsync(async db =>
+        {
+            (await db.Users.SingleAsync(u => u.Id == user.Id)).PasswordHash = laravel;
+            await db.SaveChangesAsync();
+        });
+        var client = factory.CreateClient();
+        (await client.PostAsJsonAsync("/api/auth/login", new { identifier = user.Email, password = "wrong" })).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        (await factory.QueryDbAsync(db => db.Users.Where(u => u.Id == user.Id).Select(u => u.PasswordHash).SingleAsync())).ShouldBe(laravel);
+
+        (await client.PostAsJsonAsync("/api/auth/login", new { identifier = user.Email, password = "Wimo-Laravel-2026!" })).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var stored = await factory.QueryDbAsync(db => db.Users.Where(u => u.Id == user.Id).Select(u => u.PasswordHash).SingleAsync());
+        stored.ShouldStartWith("$argon2id$");
+        Delivery.Application.Common.Security.PasswordHasher.Verify(stored, "Wimo-Laravel-2026!").ShouldBeTrue();
+        (await factory.CreateClient().PostAsJsonAsync("/api/auth/login", new { identifier = user.Email, password = "Wimo-Laravel-2026!" })).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var journal = await factory.QueryDbAsync(db => db.AuditLogs.Where(a => a.Entity == "User" && a.EntityId == user.Id && a.Action == AuditAction.UPDATE).Select(a => a.After).ToListAsync());
+        journal.ShouldAllBe(a => a == null || !a.Contains("argon2id"));
+    }
+
+    [Fact]
     public async Task Mobile_login_returns_tokens_and_durations()
     {
         var user = await TestData.UserAsync(factory, RoleName.STAFF);

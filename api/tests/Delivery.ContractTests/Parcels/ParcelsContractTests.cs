@@ -13,9 +13,9 @@ public sealed class ParcelsContractTests(ApiFactory factory)
 {
     private sealed record World(City City, Agency Agency, Client Merchant, HttpClient MerchantHttp, HttpClient Admin);
 
-    private async Task<World> WorldAsync()
+    private async Task<World> WorldAsync(string cityName = "Casablanca")
     {
-        var (_, city) = await TestData.CityAsync(factory);
+        var (_, city) = await TestData.CityAsync(factory, cityName);
         var agency = await TestData.AgencyAsync(factory, city.Id);
         var merchant = await TestData.MerchantAsync(factory, city.Id);
         var merchantUser = new User { Id = merchant.UserId!, Email = merchant.Email };
@@ -436,7 +436,9 @@ public sealed class ParcelsContractTests(ApiFactory factory)
     [Fact]
     public async Task Excel_import_previews_then_creates_the_valid_rows()
     {
-        var world = await WorldAsync();
+        // L'import résout la ville PAR SON NOM : un nom unique, sinon une autre « Casablanca » de la base de test partagée
+        // peut être retenue selon l'ordre des tests (frais inter-villes au lieu de même ville).
+        var world = await WorldAsync("Casablanca " + new string(Guid.NewGuid().ToString("N").Select(c => (char)('a' + (c % 16))).ToArray()));
         var noAddress = await world.MerchantHttp.PostAsJsonAsync("/api/parcels/import/preview", new { rows = new[] { new { recipientName = "A" } } });
         noAddress.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
         (await noAddress.JsonAsync()).GetProperty("details").GetProperty("reason").GetString().ShouldBe("missing-pickup-address");

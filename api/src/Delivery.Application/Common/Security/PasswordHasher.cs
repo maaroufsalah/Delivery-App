@@ -7,7 +7,9 @@ namespace Delivery.Application.Common.Security;
 /// <summary>
 /// Argon2id au format PHC, compatible avec `@node-rs/argon2` (paramètres par
 /// défaut : m=19456, t=2, p=1, sel 16 octets, empreinte 32 octets) : les comptes
-/// de Speedy se reconnectent sans réinitialisation.
+/// de Speedy se reconnectent sans réinitialisation. Les comptes repris de Wimo Laravel gardent leur
+/// empreinte bcrypt (`$2y$`, `password_hash` de PHP) : vérifiée telle quelle, puis remplacée par un
+/// argon2id à la première connexion réussie (<see cref="NeedsRehash"/>).
 /// </summary>
 public static class PasswordHasher
 {
@@ -24,8 +26,12 @@ public static class PasswordHasher
         return $"$argon2id$v=19$m={MemoryKb},t={Iterations},p={Parallelism}${B64(salt)}${B64(hash)}";
     }
 
+    /// <summary>Une empreinte héritée (bcrypt) : à refaire en argon2id dès que le mot de passe est connu.</summary>
+    public static bool NeedsRehash(string encoded) => !encoded.StartsWith("$argon2id$", StringComparison.Ordinal);
+
     public static bool Verify(string encoded, string password)
     {
+        if (IsBcrypt(encoded)) return VerifyBcrypt(encoded, password);
         try
         {
             var parts = encoded.Split('$');
@@ -37,6 +43,22 @@ public static class PasswordHasher
             return CryptographicOperations.FixedTimeEquals(actual, expected);
         }
         catch (Exception exception) when (exception is FormatException or KeyNotFoundException or IndexOutOfRangeException or ArgumentException)
+        {
+            return false;
+        }
+    }
+
+    private static bool IsBcrypt(string encoded) =>
+        encoded.Length == 60 && (encoded.StartsWith("$2y$", StringComparison.Ordinal) || encoded.StartsWith("$2a$", StringComparison.Ordinal)
+                                 || encoded.StartsWith("$2b$", StringComparison.Ordinal));
+
+    private static bool VerifyBcrypt(string encoded, string password)
+    {
+        try
+        {
+            return BCrypt.Net.BCrypt.Verify(password, encoded);
+        }
+        catch (BCrypt.Net.SaltParseException)
         {
             return false;
         }

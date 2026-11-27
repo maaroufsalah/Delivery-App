@@ -23,6 +23,20 @@ try
             report.Zones, report.Cities, report.Districts, report.Agencies, report.Rules, report.Warnings.Count);
         return;
     }
+    if (args.Length >= 2 && args[0] == "import-laravel")
+    {
+        // `dotnet Delivery.Api.dll import-laravel <dossier-csv> [--apply]` : reprise de Wimo Laravel, À BLANC sans `--apply`.
+        builder.AddDeliveryApi();
+        var tool = builder.Build();
+        using var scope = tool.Services.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<Delivery.Infrastructure.Persistence.AppDbContext>().Database.MigrateAsync();
+        var apply = args.Contains("--apply");
+        var report = await scope.ServiceProvider.GetRequiredService<Delivery.Infrastructure.Persistence.Seed.LaravelImporter>().ImportAsync(args[1], apply);
+        // Le seed APRÈS l'import, comme pour le référentiel : il ne pose rien de ce que l'import a créé.
+        if (apply) await scope.ServiceProvider.GetRequiredService<Delivery.Infrastructure.Persistence.Seed.DatabaseSeeder>().SeedAsync();
+        Console.WriteLine(Delivery.Api.LaravelImportReport.Render(report));
+        return;
+    }
     builder.AddDeliveryApi();
     var app = builder.Build();
     app.UseDeliveryApi();
