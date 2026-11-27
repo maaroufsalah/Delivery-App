@@ -293,7 +293,7 @@ public static class RouteConfirmation
         var grid = await db.CourierCities.AsNoTracking().Where(c => c.CourierId == route.CourierId).Select(c => new { c.CityId, c.PickupFee, c.DeliveryFee }).ToListAsync(cancellationToken);
         var failed = await db.GetSettingAsync(SettingKeys.CourierFailedCommission, 0L, cancellationToken);
         return CourierPay.CommissionFor(outcome, outcome == CourseOutcome.Pickup ? parcel.OriginCityId : parcel.DestinationCityId, Money.ToCentsOrNull(link.CourierFee),
-            grid.Select(g => new CourierGridRate(g.CityId, Money.ToCents(g.PickupFee), Money.ToCents(g.DeliveryFee))).ToList(), failed, route.CityId);
+            grid.Select(g => new CourierGridRate(g.CityId, Money.ToCents(g.PickupFee), Money.ToCents(g.DeliveryFee))).ToList(), failed);
     }
 
     private static DateOnly? ParseDay(string? text) =>
@@ -309,6 +309,18 @@ public static class RouteClosing
     public static async Task CloseAsync(IAppDbContext db, ICurrentUser caller, ILogger logger, Route route, bool removeUnpicked, Automatic? automatic, CancellationToken cancellationToken)
     {
         if (route.Status == RouteStatus.CLOSED) throw BusinessException.Conflict("Ce circuit est déjà clôturé.");
+        // La fiche ne propose la clôture qu'aux circuits non brouillons de ramassage et de retour (`closable`) : l'API refuse
+        // ce que l'écran refuse. Un circuit de LIVRAISON se clôt automatiquement (D-155), quand chaque colis est livré ou
+        // rendu à l'agence — jamais à la main, sans quoi ses colis à retenter se retrouvent hors de toute tournée.
+        if (automatic is null && route.Kind == RouteKind.DELIVERY)
+        {
+            throw BusinessException.Conflict("Un circuit de livraison se clôture automatiquement, quand chaque colis est livré ou rendu à l’agence.",
+                new { reason = "delivery-route-auto-close" });
+        }
+        if (automatic is null && route.Status == RouteStatus.DRAFT)
+        {
+            throw BusinessException.Conflict("Un circuit brouillon ne se clôture pas : supprimez-le ou faites-le partir.", new { reason = "route-draft" });
+        }
         var links = await db.RouteParcels.AsNoTracking().Where(l => l.RouteId == route.Id).Select(l => new ClosurePlans.Link(l.ParcelId, l.Parcel.Code, l.Confirmed, l.Parcel.StatusId)).ToListAsync(cancellationToken);
         var total = links.Count;
         if (total == 0 && automatic is null) throw BusinessException.Validation("Un circuit vide ne se clôture pas.", new { total });

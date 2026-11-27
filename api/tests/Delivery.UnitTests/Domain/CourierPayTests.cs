@@ -19,12 +19,12 @@ public sealed class CourierPayTests
     [Fact]
     public void Commission_is_negotiated_then_failure_setting_then_grid_with_route_city_fallback()
     {
-        CourierPay.CommissionFor(CourseOutcome.Delivery, "casa", 1234, Grid, 300, null).ShouldBe((1234L, "NEGOTIATED"));
-        CourierPay.CommissionFor(CourseOutcome.Failure, "casa", null, Grid, 300, null).ShouldBe((300L, "FAILURE_SETTING"));
-        CourierPay.CommissionFor(CourseOutcome.Delivery, "rabat", null, Grid, 300, null).ShouldBe((2250L, "GRID"));
-        CourierPay.CommissionFor(CourseOutcome.Pickup, "rabat", null, Grid, 300, null).ShouldBe((700L, "GRID"));
-        CourierPay.CommissionFor(CourseOutcome.Delivery, "fes", null, Grid, 300, "casa").ShouldBe((1500L, "GRID"));
-        CourierPay.CommissionFor(CourseOutcome.Delivery, "fes", null, Grid, 300, null).ShouldBe((0L, "GRID"));
+        CourierPay.CommissionFor(CourseOutcome.Delivery, "casa", 1234, Grid, 300).ShouldBe((1234L, "NEGOTIATED"));
+        CourierPay.CommissionFor(CourseOutcome.Failure, "casa", null, Grid, 300).ShouldBe((300L, "FAILURE_SETTING"));
+        CourierPay.CommissionFor(CourseOutcome.Delivery, "rabat", null, Grid, 300).ShouldBe((2250L, "GRID"));
+        CourierPay.CommissionFor(CourseOutcome.Pickup, "rabat", null, Grid, 300).ShouldBe((700L, "GRID"));
+        // Ville du colis absente de la grille : 0, sans repli sur une autre ville (Wimo Laravel).
+        CourierPay.CommissionFor(CourseOutcome.Delivery, "fes", null, Grid, 300).ShouldBe((0L, "GRID"));
     }
 
     [Fact]
