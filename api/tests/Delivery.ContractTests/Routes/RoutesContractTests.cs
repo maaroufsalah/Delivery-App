@@ -87,7 +87,8 @@ public sealed class RoutesContractTests(ApiFactory factory)
         (await dispatched.JsonAsync()).GetProperty("status").GetString().ShouldBe("dispatched");
         (await (await world.Admin.GetAsync($"/api/parcels/{cash.Code}")).JsonAsync()).GetProperty("statusId").GetInt32().ShouldBe(13);
         (await world.Admin.PostAsync($"/api/routes/{code}/dispatch", null)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
-        (await world.Admin.PostAsJsonAsync($"/api/routes/{code}/close", new { })).StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        // Un circuit de livraison ne se clôt jamais à la main (D-155) : refusé, comme l'écran (`closable`).
+        (await world.Admin.PostAsJsonAsync($"/api/routes/{code}/close", new { })).StatusCode.ShouldBe(HttpStatusCode.Conflict);
 
         (await courierClient.PostAsJsonAsync($"/api/routes/{code}/parcels/{cash.Id}/confirm", new { statusId = 4, collectedAmount = 10 })).StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
         (await courierClient.PostAsJsonAsync($"/api/routes/{code}/parcels/{cash.Id}/confirm", new { statusId = "4" })).StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
@@ -123,9 +124,9 @@ public sealed class RoutesContractTests(ApiFactory factory)
         (await world.Admin.PostAsJsonAsync($"/api/routes/{code}/outcomes", new { parcelIds = Array.Empty<string>(), statusId = 8 })).StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
 
         var closed = await world.Admin.PostAsJsonAsync($"/api/routes/{code}/close", new { });
-        closed.StatusCode.ShouldBe(HttpStatusCode.Created);
-        (await closed.JsonAsync()).GetProperty("status").GetString().ShouldBe("closed");
-        (await courierClient.PostAsJsonAsync($"/api/routes/{code}/parcels/{refused.Id}/confirm", new { statusId = 4 })).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        closed.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await closed.JsonAsync()).GetProperty("details").GetProperty("reason").GetString().ShouldBe("delivery-route-auto-close");
+        (await (await world.Admin.GetAsync($"/api/routes/{code}")).JsonAsync()).GetProperty("status").GetString().ShouldBe("dispatched");
         (await (await world.Admin.PostAsync("/api/routes/auto-close-sweep", null)).JsonAsync()).GetArrayLength().ShouldBeGreaterThanOrEqualTo(0);
     }
 

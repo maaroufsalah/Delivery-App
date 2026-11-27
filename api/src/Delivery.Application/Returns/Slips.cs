@@ -79,6 +79,12 @@ public static class Slips
         var parcel = await db.Parcels.AsNoTracking().Where(p => p.Id == parcelId && p.DeletedAt == null)
                          .Select(p => new { p.Id, p.Code, p.StatusId, p.ClientId, p.OriginCityId, p.DestinationCityId }).FirstOrDefaultAsync(cancellationToken)
                      ?? throw BusinessException.NotFound("Colis introuvable.");
+        // Livré ou en route : refusé ici comme dans la liste (`SlipEligible`) et à la remise (`CloseSlip`) — Speedy fb033cc.
+        if (!StatusCatalog.IsReturnEligible(parcel.StatusId))
+        {
+            throw BusinessException.Conflict($"Le colis {parcel.Code} n'est pas en retour : il est livré ou en route vers le destinataire.",
+                new { reason = "parcel-not-returnable", code = parcel.Code, statusId = parcel.StatusId });
+        }
         var received = await db.ReturnHandoverItems.AsNoTracking()
             .AnyAsync(i => i.ParcelId == parcel.Id && i.CorrectedAt == null && (i.Handover.Status == ReturnHandoverStatus.CONFIRMED || i.Handover.Status == ReturnHandoverStatus.CLOSED), cancellationToken);
         if (!received)

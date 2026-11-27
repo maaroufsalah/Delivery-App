@@ -67,8 +67,13 @@ public static class ReturnRows
     public static IQueryable<Parcel> ReceivedAtAgency(IQueryable<Parcel> parcels) =>
         parcels.Where(p => p.HandoverItems.Any(i => i.CorrectedAt == null && Received.Contains(i.Handover.Status)));
 
-    /// <summary>`SLIP_ELIGIBLE` : rentré en agence et sur aucun bon de retour client.</summary>
-    public static IQueryable<Parcel> SlipEligible(IQueryable<Parcel> parcels) => ReceivedAtAgency(parcels).Where(p => !p.SlipItems.Any());
+    /// <summary>
+    /// `SLIP_ELIGIBLE` : rentré en agence, PAS REPARTI (jamais un colis livré ou en route vers le destinataire, le même garde
+    /// que la remise du bon), et sur aucun bon de retour client. Un colis rentré peut repartir sans que sa ligne de RL- soit
+    /// marquée corrigée : la ligne dit encore « rentré » (Speedy fb033cc, bug UAT CAS120042611AGA).
+    /// </summary>
+    public static IQueryable<Parcel> SlipEligible(IQueryable<Parcel> parcels) =>
+        ReceivedAtAgency(parcels).Where(p => !StatusCatalog.ReturnExcludedStatusIds.Contains(p.StatusId) && !p.SlipItems.Any());
 
     public static IQueryable<ReturnParcelLineDto> Lines(IQueryable<Parcel> parcels) => parcels.Select(p => new ReturnParcelLineDto(p.Id, p.Code, p.ExternalCode, p.ClientId, p.Client.Name,
         p.RecipientName, p.RecipientPhone, p.DestinationCity.Name, p.Description, p.StatusId, (long)Math.Round(p.CodAmount * 100m), (long)Math.Round(p.DeliveryFee * 100m),

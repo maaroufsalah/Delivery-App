@@ -61,9 +61,16 @@ public static partial class StatusCatalog
 
     private static string Key(string kind) => kind.ToLowerInvariant();
 
+    /// <summary>
+    /// Une nouvelle tentative de livraison : « Injoignable » (9), « Pas de réponse » (11, 32 à 35), « Boîte vocale » (25),
+    /// « Client en voyage » (26), « Reporté » (14). Comme dans Wimo Laravel (`CircuitController` : un circuit de livraison
+    /// reprend tout colis non livré, non retourné et non annulé), ils repartent dans le circuit suivant.
+    /// </summary>
+    public static readonly int[] RedeliveryStatusIds = [9, 11, 14, 25, 26, 32, 33, 34, 35];
+
     public static int[] RouteEligibleStatusIds(string kind) => Key(kind) switch
     {
-        "delivery" => [3],
+        "delivery" => [3, .. RedeliveryStatusIds],
         "pickup" => [1, 17],
         "return" => [20, 22],
         _ => [],

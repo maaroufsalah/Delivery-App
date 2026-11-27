@@ -91,15 +91,17 @@ public static class CourierStatements
         : null;
 
     /// <summary>
-    /// `computeLines` : chaque course confirmée sur la période et pas encore payée ; montant figé à la confirmation,
-    /// sinon tarif négocié, sinon grille du livreur (ville du colis, puis ville du circuit), retour au forfait.
+    /// `computeLines` : chaque course confirmée sur la période et pas encore payée ; montant figé à la confirmation, sinon
+    /// tarif négocié, sinon grille du livreur pour la ville du colis seule, retour au forfait. Comme la fiche de paie de
+    /// Wimo Laravel (`print/facture-livreur`, `FactureController` : traçages 4 et 18 confirmés, `frais_livreur > 0`) : les
+    /// ramassages sont payés au colis (frais de ramassage de la ville de ramassage), une course à 0 n'est pas une ligne.
     /// </summary>
     public static async Task<List<ComputedLine>> ComputeLinesAsync(IAppDbContext db, string courierId, DateTime start, DateTime end, CancellationToken cancellationToken)
     {
         var links = await db.RouteParcels.AsNoTracking().Where(l => l.Confirmed && l.ConfirmedAt >= start && l.ConfirmedAt <= end && l.Route.CourierId == courierId).OrderBy(l => l.ConfirmedAt)
             .Select(l => new
             {
-                l.ParcelId, l.FinalStatusId, l.CourierCommission, l.CourierFee, l.ConfirmedAt, RouteKind = l.Route.Kind, RouteCityId = l.Route.CityId, l.Parcel.Code, l.Parcel.OriginCityId,
+                l.ParcelId, l.FinalStatusId, l.CourierCommission, l.CourierFee, l.ConfirmedAt, RouteKind = l.Route.Kind, l.Parcel.Code, l.Parcel.OriginCityId,
                 l.Parcel.DestinationCityId, Origin = l.Parcel.OriginCity.Name, Destination = l.Parcel.DestinationCity.Name,
             }).ToListAsync(cancellationToken);
         var grid = await db.CourierCities.AsNoTracking().Where(c => c.CourierId == courierId).Select(c => new { c.CityId, c.PickupFee, c.DeliveryFee }).ToListAsync(cancellationToken);
@@ -120,11 +122,12 @@ public static class CourierStatements
             var cityId = pickup ? link.OriginCityId : link.DestinationCityId;
             var fromGrid = kind switch
             {
-                CourierStatementLineKind.PICKUP => pickupFee.TryGetValue(cityId, out var p) ? p : pickupFee.GetValueOrDefault(link.RouteCityId),
-                CourierStatementLineKind.DELIVERY => deliveryFee.TryGetValue(cityId, out var d) ? d : deliveryFee.GetValueOrDefault(link.RouteCityId),
+                CourierStatementLineKind.PICKUP => pickupFee.GetValueOrDefault(cityId),
+                CourierStatementLineKind.DELIVERY => deliveryFee.GetValueOrDefault(cityId),
                 _ => returnFee,
             };
             var amount = Money.ToCentsOrNull(link.CourierCommission) ?? Money.ToCentsOrNull(link.CourierFee) ?? fromGrid;
+            if (amount <= 0) continue;
             lines.Add(new ComputedLine(link.ParcelId, kind, link.Code, pickup ? link.Origin : link.Destination, link.FinalStatusId ?? 0, amount,
                 kind == CourierStatementLineKind.DELIVERY && deducted.Contains(link.ParcelId), link.ConfirmedAt ?? start));
         }
