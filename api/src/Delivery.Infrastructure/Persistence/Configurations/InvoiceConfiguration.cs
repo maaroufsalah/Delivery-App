@@ -32,6 +32,7 @@ internal sealed class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>
         builder.Property(e => e.DueAt).HasColumnName("dueAt").HasColumnType("timestamptz(3)");
         builder.Property(e => e.PaidAt).HasColumnName("paidAt").HasColumnType("timestamptz(3)");
         builder.Property(e => e.PaidById).HasColumnName("paidById");
+        builder.Property(e => e.CarriedIntoId).HasColumnName("carriedIntoId");
         builder.Property(e => e.CreatedById).HasColumnName("createdById");
         builder.Property(e => e.CreatedAt).HasColumnName("createdAt").HasColumnType("timestamptz(3)").IsRequired().HasAnnotation(PersistenceAnnotations.DefaultNow, true);
         builder.Property(e => e.UpdatedAt).HasColumnName("updatedAt").HasColumnType("timestamptz(3)").IsRequired().HasAnnotation(PersistenceAnnotations.UpdatedAt, true);
@@ -42,6 +43,7 @@ internal sealed class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>
         builder.HasOne(e => e.Client).WithMany(e => e.Invoices).HasForeignKey(e => e.ClientId).OnDelete(DeleteBehavior.Restrict).IsRequired();
         builder.HasOne(e => e.Agency).WithMany(e => e.Invoices).HasForeignKey(e => e.AgencyId).OnDelete(DeleteBehavior.Restrict).IsRequired();
         builder.HasOne(e => e.IssuedBy).WithMany(e => e.IssuedInvoices).HasForeignKey(e => e.IssuedById).OnDelete(DeleteBehavior.SetNull);
+        builder.HasOne(e => e.CarriedInto).WithMany().HasForeignKey(e => e.CarriedIntoId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(e => e.PaidBy).WithMany(e => e.PaidInvoices).HasForeignKey(e => e.PaidById).OnDelete(DeleteBehavior.SetNull);
     }
 }

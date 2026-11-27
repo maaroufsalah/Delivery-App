@@ -8,8 +8,6 @@ namespace Delivery.Application.Invoices;
 /// <summary>`invoice-export.ts` : la facture en deux feuilles, les colis puis le récapitulatif.</summary>
 public static class InvoiceSheets
 {
-    public static readonly Dictionary<string, string> StatusLabels = new() { ["draft"] = "Brouillon, non émise", ["issued"] = "Émise", ["paid"] = "Payée" };
-
     private static readonly string[] ParcelHeaders = ["Expédition", "Référence", "Date de livraison", "Nom complet", "Téléphone", "Ville", "Prix", "Frais HT", "Net", "Statut"];
 
     /// <summary>`formatVatRate` : « 20 % », « 0 % (exonéré) ».</summary>
@@ -34,7 +32,7 @@ public static class InvoiceSheets
         var rows = new List<Row>
         {
             new("Numéro", invoice.Code), new("Document", period is null ? "Facture" : "Facture mensuelle"), new("E-commerçant", invoice.ClientName), new("Agence", invoice.AgencyName),
-            new("État", StatusLabels[invoice.Status]),
+            new("État", InvoicePdfs.Page(invoice).StateLabel),
         };
         if (period is not null) rows.Add(new Row("Période", period));
         if (invoice.IssuedAt is { } issued) rows.Add(new Row("Émise le", Exports.DateText(issued)));

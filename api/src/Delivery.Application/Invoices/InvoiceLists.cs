@@ -44,7 +44,7 @@ internal static class InvoiceLists
         Validate(filter);
         var where = InvoiceRows.Scoped(db.Invoices.AsNoTracking(), caller);
         if (filter.Kind is { } kind) { var pro = kind == "pro"; where = where.Where(i => i.Client.IsPro == pro); }
-        if (filter.Status is { } statuses) { var values = statuses.Select(s => Enum.Parse<InvoiceStatus>(s.ToUpperInvariant())).ToList(); where = where.Where(i => values.Contains(i.Status)); }
+        if (filter.Status is { } statuses) { var values = statuses.Select(s => Enum.Parse<InvoiceStatus>(s.ToUpperInvariant().Replace('-', '_'))).ToList(); where = where.Where(i => values.Contains(i.Status)); }
         if (filter.ClientId is { } clients && caller.MayFilterBy(caller.ClientId)) where = where.Where(i => clients.Contains(i.ClientId));
         if (filter.AgencyId is { } agencies && caller.MayFilterBy(caller.AgencyId)) where = where.Where(i => agencies.Contains(i.AgencyId));
         if (filter.UnpaidOnly) where = where.Where(i => i.Status == InvoiceStatus.DRAFT || i.Status == InvoiceStatus.ISSUED);

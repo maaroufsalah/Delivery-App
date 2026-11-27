@@ -27,6 +27,7 @@ public partial class Invoice
     public DateTime? DueAt { get; set; }
     public DateTime? PaidAt { get; set; }
     public string? PaidById { get; set; }
+    public string? CarriedIntoId { get; set; }
     public string? CreatedById { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
@@ -34,6 +35,8 @@ public partial class Invoice
     public Agency Agency { get; set; } = null!;
     public User? IssuedBy { get; set; }
     public User? PaidBy { get; set; }
+    public Invoice? CarriedInto { get; set; }
+    public InvoiceAdjustment? CarryOverLine { get; set; }
     public ICollection<InvoiceLine> Lines { get; set; } = [];
     public ICollection<InvoiceAdjustment> Adjustments { get; set; } = [];
     public ICollection<Payment> Payments { get; set; } = [];

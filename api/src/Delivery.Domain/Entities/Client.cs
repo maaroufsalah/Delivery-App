@@ -19,6 +19,7 @@ public partial class Client
     public string? Notes { get; set; }
     public bool IsActive { get; set; } = true;
     public bool IsPro { get; set; } = false;
+    public bool IsInternal { get; set; } = false;
     public BillingType BillingType { get; set; } = BillingType.NORMAL;
     public bool MonthlyBilling { get; set; } = false;
     public int? VatRate { get; set; }

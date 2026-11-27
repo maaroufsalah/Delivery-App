@@ -46,7 +46,18 @@ public sealed record InvoiceSheetPayment(DateTime PaidAt, string? BankAccountLab
 public sealed record InvoiceSheetPage(string Code, string Status, string ClientName, bool ClientIsPro, string AgencyName, string BillingType, DateTime? PeriodStart, DateTime? PeriodEnd,
     DateTime? IssuedAt, DateTime? DueAt, int ParcelCount, long TotalCod, long TotalDeliveryFee, long TotalFailureFee, long TotalAdjustment, long TotalVat, int VatRate, int? ProVatRate,
     long TotalDue, long TotalPaid, long Balance, string? Note, IReadOnlyList<InvoiceSheetLine> Lines, IReadOnlyList<InvoiceSheetAdjustment> Adjustments,
-    IReadOnlyList<InvoiceSheetPayment> Payments);
+    IReadOnlyList<InvoiceSheetPayment> Payments, string? CarriedIntoCode = null)
+{
+    /// <summary>`invoiceStateLabel` : l'état imprimé, avec la facture qui absorbe le report quand elle existe.</summary>
+    public string StateLabel => Status == "carried-over"
+        ? CarriedIntoCode is { } into ? $"Reportée sur {into}" : "Reportée sur la prochaine facture"
+        : InvoiceStateLabels.GetValueOrDefault(Status, Status);
+
+    public static readonly IReadOnlyDictionary<string, string> InvoiceStateLabels = new Dictionary<string, string>
+    {
+        ["draft"] = "Brouillon, non émise", ["issued"] = "Émise", ["paid"] = "Payée", ["carried-over"] = "Reportée",
+    };
+}
 
 /// <summary>`InvoiceDocument` / `InvoicesDayDocument` : une ou plusieurs factures dans un PDF.</summary>
 public sealed record InvoiceSheet(PdfCompany Company, string? ProLegalName, string? ProTaxId, byte[]? Logo, string? Footer, string Title, IReadOnlyList<InvoiceSheetPage> Invoices);

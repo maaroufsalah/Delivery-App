@@ -96,7 +96,14 @@ export default function MerchantFinanceScreen() {
           <EmptyState icon={FileText} title={t('finance.noInvoices')} />
         ) : (
           (invoices.data?.items ?? []).map((invoice) => {
-            const settled = invoice.totalPaid >= invoice.totalDue;
+            /*
+             * REPORTÉE (chantier « Report des factures négatives ») : le net
+             * négatif part sur la facture suivante. Lu sur l'ÉTAT, pas sur les
+             * montants : « payé ≥ dû » est vrai pour tout net négatif, et la
+             * carte disait « Réglée » pour une facture que personne n'a réglée.
+             */
+            const carried = invoice.status === 'carried-over';
+            const settled = !carried && invoice.totalPaid >= invoice.totalDue;
 
             return (
               <Card key={invoice.id} className="gap-2">
@@ -104,17 +111,25 @@ export default function MerchantFinanceScreen() {
                   <Text className="flex-1 font-mono text-[15px] text-muted-foreground">
                     {invoice.code}
                   </Text>
-                  {settled ? (
+                  {carried ? (
+                    <StatusBadge label={t('invoiceStatus.carried-over')} color={tokens.warning} />
+                  ) : settled ? (
                     <StatusBadge label={t('finance.paid')} color={tokens.success} />
                   ) : null}
                 </View>
 
                 <View className="flex-row items-baseline justify-between gap-3">
-                  <Text className="text-[15px] text-muted-foreground">
-                    {settled ? t('finance.paid') : t('finance.due')}
+                  <Text className="flex-1 text-[15px] text-muted-foreground">
+                    {carried
+                      ? invoice.carriedIntoCode
+                        ? t('finance.carriedInto', { code: invoice.carriedIntoCode })
+                        : t('finance.carriedPending')
+                      : settled
+                        ? t('finance.paid')
+                        : t('finance.due')}
                   </Text>
                   <Text className="text-[18px] font-bold tabular-nums text-foreground">
-                    {money(invoice.totalDue - invoice.totalPaid)}
+                    {money(carried ? invoice.totalDue : invoice.totalDue - invoice.totalPaid)}
                   </Text>
                 </View>
               </Card>

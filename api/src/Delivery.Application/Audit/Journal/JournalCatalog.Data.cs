@@ -593,6 +593,7 @@ public static partial class JournalCatalog
             "awaiting-validation": "À valider",
             "cancelled": "Annulé",
             "car": "Voiture",
+            "carried-over": "Reportée",
             "cash": "Espèces",
             "changed": "modifié",
             "check": "Chèque",

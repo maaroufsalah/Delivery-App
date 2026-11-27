@@ -33,6 +33,8 @@ public class ClientListItemDto
 
     public bool IsPro { get; set; }
 
+    public bool IsInternal { get; set; }
+
     public int? VatRate { get; set; }
 
     public long? PickupFee { get; set; }

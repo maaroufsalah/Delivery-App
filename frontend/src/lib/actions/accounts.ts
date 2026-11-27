@@ -57,6 +57,7 @@ import {
   setClientActive,
   setClientPro,
   setClientVatRate,
+  setClientInternal,
   setClientPickupTerms,
   setClientValidated,
   validateClient,
@@ -339,6 +340,20 @@ export async function saveClientAction(
 export async function setClientProAction(id: string, isPro: boolean): Promise<ReferentialResult> {
   try {
     await setClientPro(id, isPro);
+    revalidateAccounts('clients');
+    return { ok: true, data: undefined };
+  } catch (error) {
+    return toFailure(error);
+  }
+}
+
+/** Client interne — exclu du report des factures négatives (administration, `finance.validate`). */
+export async function setClientInternalAction(
+  id: string,
+  isInternal: boolean,
+): Promise<ReferentialResult> {
+  try {
+    await setClientInternal(id, isInternal);
     revalidateAccounts('clients');
     return { ok: true, data: undefined };
   } catch (error) {

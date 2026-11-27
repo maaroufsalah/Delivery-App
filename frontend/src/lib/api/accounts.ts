@@ -189,6 +189,11 @@ export async function setClientPro(id: string, isPro: boolean): Promise<ClientDe
   return apiFetch<ClientDetail>(`/clients/${id}`, { method: 'PATCH', body: { isPro } });
 }
 
+/** Client interne (compte de la société), exclu du report des factures négatives — administration. */
+export async function setClientInternal(id: string, isInternal: boolean): Promise<ClientDetail> {
+  return apiFetch<ClientDetail>(`/clients/${id}/internal`, { method: 'PATCH', body: { isInternal } });
+}
+
 /** Lot R (D-230) — taux de TVA du Client Pro, en centièmes ; `null` = défaut société. */
 export async function setClientVatRate(id: string, vatRate: number | null): Promise<ClientDetail> {
   return apiFetch<ClientDetail>(`/clients/${id}/vat-rate`, { method: 'PATCH', body: { vatRate } });

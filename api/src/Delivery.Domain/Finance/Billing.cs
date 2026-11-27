@@ -80,10 +80,15 @@ public static class InvoiceMath
     }
 
     /// <summary>`proInvoiceTotals` : la TVA du client Pro se calcule sur le total HT des frais.</summary>
-    public static InvoiceTotals ProTotals(InvoiceLineSums lines, IEnumerable<long> adjustments, int vatRate)
+    public static InvoiceTotals ProTotals(InvoiceLineSums lines, IEnumerable<long> adjustments, int vatRate) => ProTotals(lines, adjustments.Select(a => (a, false)), vatRate);
+
+    /// <summary>`proInvoiceTotals` : `VatExempt` (un report `CARRY_OVER`, déjà TTC) n'entre pas dans la base HT taxée.</summary>
+    public static InvoiceTotals ProTotals(InvoiceLineSums lines, IEnumerable<(long Amount, bool VatExempt)> adjustments, int vatRate)
     {
-        var adjustment = adjustments.Sum();
-        var vat = Billing.VatOnTotal(lines.DeliveryFee + lines.FailureFee + adjustment, vatRate);
+        var list = adjustments.ToList();
+        var adjustment = list.Sum(a => a.Amount);
+        var taxable = list.Sum(a => a.VatExempt ? 0 : a.Amount);
+        var vat = Billing.VatOnTotal(lines.DeliveryFee + lines.FailureFee + taxable, vatRate);
         return new InvoiceTotals(lines.Cod, lines.DeliveryFee, lines.FailureFee, adjustment, vat, lines.Due + lines.Vat - adjustment - vat);
     }
 }

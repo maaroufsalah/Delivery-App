@@ -20,7 +20,7 @@ public static class InvoiceRows
 {
     public const string DraftDay = "draft";
     public const int DayPdfMax = 200;
-    public static readonly string[] Statuses = ["draft", "issued", "paid"];
+    public static readonly string[] Statuses = ["draft", "issued", "paid", "carried-over"];
 
     /// <summary>`invoiceWhere` : administrateur tout, vendeur ses factures émises, livreur rien, agent son agence.</summary>
     public static IQueryable<Invoice> Scoped(IQueryable<Invoice> invoices, ICurrentUser caller)
@@ -46,12 +46,12 @@ public static class InvoiceRows
 
     public static IQueryable<InvoiceListItemDto> Project(IQueryable<Invoice> invoices) => invoices.Select(i => new InvoiceListItemDto
     {
-        Id = i.Id, Code = i.Code, Status = i.Status == InvoiceStatus.DRAFT ? "draft" : i.Status == InvoiceStatus.ISSUED ? "issued" : "paid", ClientId = i.ClientId, ClientName = i.Client.Name,
+        Id = i.Id, Code = i.Code, Status = i.Status == InvoiceStatus.DRAFT ? "draft" : i.Status == InvoiceStatus.ISSUED ? "issued" : i.Status == InvoiceStatus.CARRIED_OVER ? "carried-over" : "paid", ClientId = i.ClientId, ClientName = i.Client.Name,
         ClientIsPro = i.Client.IsPro, AgencyId = i.AgencyId, AgencyName = i.Agency.Name, ParcelCount = i.Lines.Count, TotalCod = (long)Math.Round(i.TotalCod * 100m),
         TotalDeliveryFee = (long)Math.Round(i.TotalDeliveryFee * 100m), TotalFailureFee = (long)Math.Round(i.TotalFailureFee * 100m), TotalAdjustment = (long)Math.Round(i.TotalAdjustment * 100m),
         TotalVat = (long)Math.Round(i.TotalVat * 100m), VatRate = i.VatRate, ProVatRate = i.ProVatRate, TotalDue = (long)Math.Round(i.TotalDue * 100m),
         BillingType = i.BillingType == Domain.Enums.BillingType.PROFESSIONAL ? "professional" : "normal", PeriodStart = i.PeriodStart, PeriodEnd = i.PeriodEnd,
-        TotalPaid = (long)Math.Round(i.Payments.Sum(p => p.Amount) * 100m), IssuedAt = i.IssuedAt, DueAt = i.DueAt, PaidAt = i.PaidAt, CreatedAt = i.CreatedAt,
+        TotalPaid = (long)Math.Round(i.Payments.Sum(p => p.Amount) * 100m), CarriedIntoCode = i.CarriedInto != null ? i.CarriedInto.Code : null, IssuedAt = i.IssuedAt, DueAt = i.DueAt, PaidAt = i.PaidAt, CreatedAt = i.CreatedAt,
     });
 
     public static IQueryable<PaymentListItemDto> ProjectPayments(IQueryable<Payment> payments) => payments.Select(p => new PaymentListItemDto(p.Id, p.InvoiceId,
@@ -97,7 +97,7 @@ public static class InvoiceRows
             Id = item.Id, Code = item.Code, Status = item.Status, ClientId = item.ClientId, ClientName = item.ClientName, ClientIsPro = item.ClientIsPro, AgencyId = item.AgencyId,
             AgencyName = item.AgencyName, ParcelCount = item.ParcelCount, TotalCod = item.TotalCod, TotalDeliveryFee = item.TotalDeliveryFee, TotalFailureFee = item.TotalFailureFee,
             TotalAdjustment = item.TotalAdjustment, TotalVat = item.TotalVat, VatRate = item.VatRate, ProVatRate = item.ProVatRate, TotalDue = item.TotalDue, BillingType = item.BillingType,
-            PeriodStart = item.PeriodStart, PeriodEnd = item.PeriodEnd, TotalPaid = item.TotalPaid, IssuedAt = item.IssuedAt, DueAt = item.DueAt, PaidAt = item.PaidAt, CreatedAt = item.CreatedAt,
+            PeriodStart = item.PeriodStart, PeriodEnd = item.PeriodEnd, TotalPaid = item.TotalPaid, CarriedIntoCode = item.CarriedIntoCode, IssuedAt = item.IssuedAt, DueAt = item.DueAt, PaidAt = item.PaidAt, CreatedAt = item.CreatedAt,
             Note = extra.Note, IssuedByName = extra.IssuedBy,
             Lines = lines.Select(l => l.DeletedAt is not null
                 ? new InvoiceLineDto(l.Id, l.ParcelId, l.ParcelCode, null, null, null, null, null, l.StatusId, Money.ToCents(l.CodAmount), Money.ToCents(l.DeliveryFee), Money.ToCents(l.FailureFee),
@@ -110,7 +110,8 @@ public static class InvoiceRows
             Payments = payments,
             Issuable = item.Status == "draft" && (lines.Count > 0 || adjustments.Count > 0),
             Adjustable = item.Status == "draft",
-            Balance = Outstanding(item.TotalDue, item.TotalPaid),
+            // Reportée : plus rien à régler sur elle, le net vit sur la facture qui l'absorbe.
+            Balance = item.Status == "carried-over" ? 0 : Outstanding(item.TotalDue, item.TotalPaid),
         };
         return detail;
     }
@@ -256,6 +257,20 @@ public static class InvoiceRows
             if (!proRates.TryGetValue(groups[i].ClientId, out var rate)) continue;
             var vat = Billing.VatOnTotal(groups[i].Fees, rate);
             groups[i] = groups[i] with { Fees = groups[i].Fees + vat, Due = groups[i].Due - vat };
+        }
+        // Les reports en attente : la prochaine facture du vendeur les absorbera. Un OV « sélection » tiré avant elle, ou la liste
+        // à cocher, doivent déjà les retrancher (comptés comme des frais, comme la ligne de report : l'encaissé reste le COD hors chèques).
+        if (groups.Count > 0)
+        {
+            var groupIds = groups.Select(g => g.ClientId).ToList();
+            var carried = await db.Invoices.AsNoTracking().Where(i => groupIds.Contains(i.ClientId) && i.Status == InvoiceStatus.CARRIED_OVER && i.CarriedIntoId == null)
+                .Select(i => new { i.ClientId, i.TotalDue }).ToListAsync(cancellationToken);
+            foreach (var from in carried)
+            {
+                var index = groups.FindIndex(g => g.ClientId == from.ClientId);
+                var owed = CarryOver.LineAmount(Money.ToCents(from.TotalDue));
+                groups[index] = groups[index] with { Fees = groups[index].Fees + owed, Due = groups[index].Due - owed };
+            }
         }
         return groups.OrderBy(g => g.ClientName, StringComparer.Create(CultureInfo.InvariantCulture, false)).ToList();
     }

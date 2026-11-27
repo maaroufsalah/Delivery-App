@@ -82,12 +82,18 @@ internal sealed class CreatePaymentHandler(IAppDbContext db, ICurrentUser caller
         }
         var invoiceId = ReturnRows.Text(input.InvoiceId);
         var invoice = invoiceId is null ? null
-            : await InvoiceRows.Scoped(db.Invoices.AsNoTracking(), caller).Where(i => i.Id == invoiceId).Select(i => new { i.Id, i.Status, i.ClientId, i.TotalDue }).FirstOrDefaultAsync(cancellationToken)
+            : await InvoiceRows.Scoped(db.Invoices.AsNoTracking(), caller).Where(i => i.Id == invoiceId).Select(i => new { i.Id, i.Status, i.ClientId, i.TotalDue, i.BillingType, i.Client.IsPro, i.Client.IsInternal }).FirstOrDefaultAsync(cancellationToken)
               ?? throw BusinessException.NotFound("Facture introuvable.");
         if (invoice is not null)
         {
             if (invoice.Status == InvoiceStatus.DRAFT) throw BusinessException.Conflict("Cette facture n’est pas encore émise.", new { reason = "invoice-draft" });
             if (invoice.Status == InvoiceStatus.PAID) throw BusinessException.Conflict("Cette facture est déjà soldée.", new { reason = "invoice-already-paid" });
+            // Net < 0 : jamais réglé en espèces. Ce que le vendeur doit se reporte sur sa facture suivante ; un règlement ici serait fictif.
+            if (CarryOver.RefusesPayment(invoice.Status, Money.ToCents(invoice.TotalDue), invoice.IsPro, invoice.IsInternal, invoice.BillingType))
+            {
+                throw BusinessException.Conflict("Facture à net négatif : son montant se reporte sur la prochaine facture du vendeur, elle ne se règle pas.",
+                    new { reason = "invoice-negative-carried-over" });
+            }
             if (invoice.ClientId != input.ClientId) throw BusinessException.Conflict("Cette facture appartient à un autre e-commerçant.", new { reason = "invoice-other-client" });
         }
         var now = DateTime.UtcNow;

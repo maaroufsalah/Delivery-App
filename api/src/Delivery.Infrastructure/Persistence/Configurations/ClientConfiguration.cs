@@ -25,6 +25,7 @@ internal sealed class ClientConfiguration : IEntityTypeConfiguration<Client>
         builder.Property(e => e.Notes).HasColumnName("notes");
         builder.Property(e => e.IsActive).HasColumnName("isActive").IsRequired();
         builder.Property(e => e.IsPro).HasColumnName("isPro").IsRequired();
+        builder.Property(e => e.IsInternal).HasColumnName("isInternal").IsRequired();
         builder.Property(e => e.BillingType).HasColumnName("billingType").HasConversion<string>().IsRequired();
         builder.Property(e => e.MonthlyBilling).HasColumnName("monthlyBilling").IsRequired();
         builder.Property(e => e.VatRate).HasColumnName("vatRate");

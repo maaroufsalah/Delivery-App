@@ -1773,6 +1773,7 @@
           "awaiting-validation": "À valider",
           "cancelled": "Annulé",
           "car": "Voiture",
+          "carried-over": "Reportée",
           "cash": "Espèces",
           "changed": "modifié",
           "check": "Chèque",
@@ -1815,8 +1816,8 @@
           "recu-admin": "Reçu par %shortName%",
           "recu-livreur": "Reçu par le livreur",
           "recu-vendeur": "Reçu par le vendeur",
-          "reimbursed": "Remboursé",
           "refused": "Refusé",
+          "reimbursed": "Remboursé",
           "rejected": "Rejeté",
           "rejete": "Rejeté",
           "relay-point": "Point relais",
@@ -3748,7 +3749,13 @@
         "vatDefaultValue": "Défaut société ({rate})",
         "vatPercent": "{rate} %",
         "vatExempt": "0 % (exonéré)",
-        "vatSaved": "Taux de TVA enregistré."
+        "vatSaved": "Taux de TVA enregistré.",
+        "internalTitle": "Client interne",
+        "internalHint": "Compte vendeur de la société elle-même. Comme un Client Pro, ses factures négatives ne sont pas reportées sur la facture suivante.",
+        "internalOn": "Ce vendeur est un compte interne : ses factures négatives se règlent normalement.",
+        "internalOff": "Ce vendeur n’est pas interne : une facture négative est reportée sur sa facture suivante.",
+        "internalEnabled": "Client interne activé.",
+        "internalDisabled": "Client interne désactivé."
       },
       "rejected": "Refusée",
       "tabs": {
@@ -4419,7 +4426,8 @@
       "status": {
         "draft": "Brouillon",
         "issued": "Émise",
-        "paid": "Payée"
+        "paid": "Payée",
+        "carried-over": "Reportée"
       },
       "filters": {
         "state": "État",
@@ -4524,7 +4532,8 @@
         "kind": {
           "adjustment": "Ajustement",
           "pickup-note-fee": "Frais de ramassage par bon",
-          "other": "Autre"
+          "other": "Autre",
+          "carry-over": "Report de facture négative"
         },
         "fields": {
           "amount": "Montant HT (MAD)",
@@ -4532,7 +4541,9 @@
           "reason": "Motif",
           "reference": "Référence (facultative : facture, bon BR-…)"
         }
-      }
+      },
+      "carriedInto": "Net négatif reporté sur la facture {code}.",
+      "carriedPending": "Net négatif reporté : il sera déduit de la prochaine facture du vendeur."
     },
     "payments": {
       "title": "Règlements",

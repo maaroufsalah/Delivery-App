@@ -178,6 +178,7 @@ Légende garde : `public` = sans session ; sinon JWT obligatoire. Les permission
 - [x] `POST /api/clients` — `create` (L127) · gardes: NotMerchantGuard · perm: directory.write · entrée: clientSchema
 - [x] `PATCH /api/clients/:id` — `update` (L142) · gardes: NotMerchantGuard · perm: directory.write · entrée: clientPatchSchema
 - [x] `PATCH /api/clients/:id/vat-rate` — `setVatRate` (L154) · gardes: NotMerchantGuard · perm: finance.validate · entrée: clientVatRateSchema
+- [x] `PATCH /api/clients/:id/internal` — `setInternal` (L166) · gardes: NotMerchantGuard · perm: finance.validate · entrée: clientInternalSchema
 - [x] `PATCH /api/clients/:id/pickup-terms` — `setPickupTerms` (L166) · gardes: NotMerchantGuard · perm: finance.validate · entrée: clientPickupTermsSchema
 - [x] `PATCH /api/clients/:id/active` — `setActive` (L177) · gardes: NotMerchantGuard · perm: directory.write · entrée: toggleActiveSchema
 - [x] `PATCH /api/clients/:id/validation` — `setValidated` (L189) · gardes: NotMerchantGuard · perm: directory.write · entrée: toggleActiveSchema

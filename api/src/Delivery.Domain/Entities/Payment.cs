@@ -21,6 +21,9 @@ public partial class Payment
     public string? ChequeNumber { get; set; }
     public string? ChequeBank { get; set; }
     public DateOnly? ChequeDate { get; set; }
+    public DateTime? CancelledAt { get; set; }
+    public string? CancelledById { get; set; }
+    public string? CancelReason { get; set; }
     public string? CreatedById { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

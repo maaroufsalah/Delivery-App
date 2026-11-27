@@ -128,6 +128,10 @@ public sealed class TransferOrdersContractTests(ApiFactory factory)
         (await TransferableAsync(negative)).ShouldBeEmpty();
         var refused = await negative.Admin.PostAsJsonAsync("/api/transfer-orders", new { invoiceCodes = new[] { minus } });
         (await refused.JsonAsync()).GetProperty("details").GetProperty("reason").GetString().ShouldBe("nothing-to-transfer");
+        // Report des factures négatives : un vendeur ordinaire ne règle pas un net négatif ; un client interne, si.
+        (await negative.Admin.PostAsJsonAsync("/api/payments", new { invoiceId = minusId, clientId = negative.Merchant.Id, agencyId = negative.Agency.Id, amount = 65, method = "cash" }))
+            .StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await negative.Admin.PatchAsJsonAsync($"/api/clients/{negative.Merchant.Id}/internal", new { isInternal = true })).StatusCode.ShouldBe(HttpStatusCode.OK);
         (await negative.Admin.PostAsJsonAsync("/api/payments", new { invoiceId = minusId, clientId = negative.Merchant.Id, agencyId = negative.Agency.Id, amount = 65, method = "cash" }))
             .StatusCode.ShouldBe(HttpStatusCode.Created);
         var day = (await (await negative.Admin.GetAsync($"/api/invoices/days?days={Today}&clientId={negative.Merchant.Id}")).JsonAsync())[0];

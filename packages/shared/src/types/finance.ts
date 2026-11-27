@@ -206,8 +206,13 @@ export interface InvoiceListItem {
   /** Bornes de la période, sur une facture MENSUELLE. `null` sinon. */
   periodStart: IsoDateTime | null;
   periodEnd: IsoDateTime | null;
-  /** Somme des règlements enregistrés. */
+  /** Somme des règlements enregistrés (les règlements annulés n'en font pas partie). */
   totalPaid: AmountInCents;
+  /**
+   * REPORTÉE (`carried-over`) — la facture qui a absorbé ce net négatif ;
+   * `null` tant que le report attend la prochaine facture du vendeur.
+   */
+  carriedIntoCode: string | null;
   issuedAt: IsoDateTime | null;
   dueAt: IsoDateTime | null;
   paidAt: IsoDateTime | null;
@@ -244,7 +249,8 @@ export interface InvoiceDaySummary {
 /** Une ligne de facture hors colis — lot Argent 2, A2-1 (D-181). */
 export interface InvoiceAdjustmentLine {
   id: Id;
-  kind: 'adjustment' | 'pickup-note-fee' | 'other';
+  /** `carry-over` : le report d'une facture négative, posé à l'émission (jamais saisi). */
+  kind: 'adjustment' | 'pickup-note-fee' | 'other' | 'carry-over';
   /** Hors taxes, SIGNÉ : positif = dû par le vendeur. */
   amount: AmountInCents;
   vatAmount: AmountInCents;
