@@ -212,6 +212,12 @@ export interface ClientListItem {
    */
   isPro: boolean;
   /**
+   * CLIENT INTERNE — un compte vendeur de la société elle-même. Comme un
+   * Client Pro, exclu du report automatique des factures négatives (décision
+   * d'Anass, 26/11/2026). Posé par l'administration seule.
+   */
+  isInternal: boolean;
+  /**
    * Lot R (D-230) — taux de TVA du Client Pro, en centièmes (`2000` = 20 %,
    * `0` = exonéré). `null` = le défaut société. Sans effet si `isPro` est faux.
    */

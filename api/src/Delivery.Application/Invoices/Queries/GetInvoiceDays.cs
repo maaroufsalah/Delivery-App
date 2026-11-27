@@ -47,7 +47,7 @@ internal sealed class GetInvoiceDaysHandler(IAppDbContext db, ICurrentUser calle
         if (calendar.Count > 0) (start, end) = ReturnRows.DayRange(calendar[0], calendar[^1]);
         var hasCalendar = calendar.Count > 0;
         var rows = await where.Where(i => (wantsDraft && i.IssuedAt == null) || (hasCalendar && i.IssuedAt >= start && i.IssuedAt < end))
-            .Select(i => new { i.Code, i.IssuedAt, i.TotalDue, Payments = i.Payments.Select(p => new { p.Amount, p.Method }).ToList(), Lines = i.Lines.Count,
+            .Select(i => new { i.Code, i.Status, i.IssuedAt, i.TotalDue, Payments = i.Payments.Select(p => new { p.Amount, p.Method }).ToList(), Lines = i.Lines.Count,
                 // Un colis déjà viré (estampillé par un OV, même « sélection ») : la facture l'est aussi.
                 Stamped = i.Lines.Any(l => l.Parcel.TransferOrders.Any()) }).ToListAsync(cancellationToken);
         var summaries = new Dictionary<string, (int Invoices, int Parcels, long Due, long Cash, long Cheque, long Transfer, List<string> Codes)>();
@@ -60,7 +60,8 @@ internal sealed class GetInvoiceDaysHandler(IAppDbContext db, ICurrentUser calle
             s.Invoices++;
             s.Parcels += row.Lines;
             var due = Money.ToCents(row.TotalDue);
-            s.Due += due;
+            // Reportée : son net vit sur la facture qui l'absorbe — compté ici, il le serait deux fois.
+            if (row.Status != InvoiceStatus.CARRIED_OVER) s.Due += due;
             // Un règlement est saisi en positif ; il prend le sens de sa facture (encaissé d'un vendeur à net négatif = −).
             var (cash, cheque, transfer) = TransferRules.PaymentSplit(due, row.Payments.Select(p => (p.Method, Money.ToCents(p.Amount))));
             s.Cash += cash;

@@ -73,6 +73,7 @@ import {
   rejectClientAction,
   setClientProAction,
   setClientVatRateAction,
+  setClientInternalAction,
 } from '@/lib/actions/accounts';
 
 /**
@@ -126,6 +127,9 @@ export function ClientDetail({
    */
   const [isPro, setIsPro] = useState(client.isPro);
   const [proPending, startProTransition] = useTransition();
+  // Client interne : même mécanique optimiste que « Client Pro », serveur maître.
+  const [isInternal, setIsInternal] = useState(client.isInternal);
+  const [internalPending, startInternalTransition] = useTransition();
   const [vatPending, startVatTransition] = useTransition();
   const vatLabel = (rate: number) =>
     rate === 0 ? tDetail('vatExempt') : tDetail('vatPercent', { rate: String(rate / 100) });
@@ -344,6 +348,39 @@ export function ClientDetail({
               <p className="text-muted-foreground text-xs">{tDetail('vatRateHint')}</p>
             </div>
           ) : null}
+
+          {/*
+            CLIENT INTERNE — chantier « Report des factures négatives » (décision
+            d'Anass, 26/11/2026). Un compte de la société elle-même : comme un
+            Client Pro, exclu du report automatique. Réglable par
+            l'administration seule (`finance.validate`), lu par les autres.
+          */}
+          <div className="mt-3 flex flex-col gap-1.5">
+            <span className="text-sm font-medium">{tDetail('internalTitle')}</span>
+            <label className="hover:bg-muted/40 flex cursor-pointer items-center justify-between gap-3 rounded-lg border p-3">
+              <span className="min-w-0 text-sm">
+                {isInternal ? tDetail('internalOn') : tDetail('internalOff')}
+              </span>
+              <Switch
+                checked={isInternal}
+                disabled={!proVat.canEdit || internalPending}
+                onCheckedChange={(next) => {
+                  setIsInternal(next);
+                  startInternalTransition(async () => {
+                    const result = await setClientInternalAction(client.id, next);
+                    if (result.ok) {
+                      toast.success(next ? tDetail('internalEnabled') : tDetail('internalDisabled'));
+                      router.refresh();
+                    } else {
+                      setIsInternal(!next);
+                      toast.error(result.error);
+                    }
+                  });
+                }}
+              />
+            </label>
+            <p className="text-muted-foreground text-xs">{tDetail('internalHint')}</p>
+          </div>
         </CardContent>
       </Card>
 

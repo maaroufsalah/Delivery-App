@@ -266,7 +266,8 @@ export type ReturnReason = (typeof RETURN_REASONS)[number];
  * FONT : le brouillon se compose, l'émission fige les montants, le règlement
  * solde.
  */
-export const INVOICE_STATUSES = ['draft', 'issued', 'paid'] as const;
+/** `carried-over` : net < 0 reporté sur la facture suivante du vendeur (chantier « Report des factures négatives »). */
+export const INVOICE_STATUSES = ['draft', 'issued', 'paid', 'carried-over'] as const;
 export type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
 
 /** DOMAIN.md §1.16 — `paiement_modes` : espèce (422), virement (38), chèque (0). */

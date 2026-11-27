@@ -50,13 +50,13 @@ internal sealed class IssueInvoiceHandler(IAppDbContext db, ICurrentUser caller,
         var invoice = await InvoiceRows.Scoped(db.Invoices.AsNoTracking(), caller).Where(i => i.Code == input.Code)
                           .Select(i => new
                           {
-                              i.Id, i.Code, i.Status, i.ClientId, i.AgencyId, i.BillingType, i.ProVatRate, i.Client.IsPro, ClientVatRate = i.Client.VatRate,
+                              i.Id, i.Code, i.Status, i.ClientId, i.AgencyId, i.BillingType, i.ProVatRate, i.Client.IsPro, i.Client.IsInternal, ClientVatRate = i.Client.VatRate,
                               Lines = i.Lines.Select(l => new
                               {
                                   l.Id, l.ParcelId, l.CodAmount, l.DeliveryFee, l.FailureFee, l.ChequePaid, l.Parcel.Code,
                                   PaidOut = l.Parcel.CodPayouts.Where(c => c.PaidOutParcelId != null).Select(c => c.Payout.Code).FirstOrDefault(),
                               }).ToList(),
-                              Adjustments = i.Adjustments.Select(a => new { a.Id, a.Amount }).ToList(),
+                              Adjustments = i.Adjustments.Select(a => new { a.Id, a.Amount, a.Kind }).ToList(),
                           }).FirstOrDefaultAsync(cancellationToken)
                       ?? throw BusinessException.NotFound($"Facture introuvable : {input.Code}");
         if (invoice.Status != InvoiceStatus.DRAFT) throw BusinessException.Conflict("Cette facture est déjà émise.", new { reason = "invoice-already-issued" });
@@ -80,11 +80,25 @@ internal sealed class IssueInvoiceHandler(IAppDbContext db, ICurrentUser caller,
             var cheque = professional ? 0 : Money.ToCents(l.ChequePaid);
             return new { l.Id, l.ParcelId, Vat = vat, NetDue = collected - cheque - fee - vat, Cod = Money.ToCents(l.CodAmount), Delivery = Money.ToCents(l.DeliveryFee), Failure = Money.ToCents(l.FailureFee) };
         }).ToList();
-        var adjustments = invoice.Adjustments.Select(a => new { a.Id, Amount = Money.ToCents(a.Amount), Vat = InvoiceMath.SignedVat(Money.ToCents(a.Amount), lineRate) }).ToList();
+        // Les lignes hors colis, au même taux que les colis ; un report n'a pas de TVA (le net reporté est déjà TTC).
+        var adjustments = invoice.Adjustments.Select(a =>
+        {
+            var amount = Money.ToCents(a.Amount);
+            var exempt = a.Kind == InvoiceAdjustmentKind.CARRY_OVER;
+            return new { a.Id, Amount = amount, Vat = exempt ? 0 : InvoiceMath.SignedVat(amount, lineRate), Exempt = exempt };
+        }).ToList();
+        // Les reports en attente du vendeur : chaque facture « Reportée » que rien n'a absorbée devient une ligne
+        // « Report FA-… : −X MAD », due par lui. Absorbée quel que soit le type du client ce jour-là : un report posé ne se perd pas.
+        var carryOvers = (await db.Invoices.AsNoTracking()
+                .Where(i => i.ClientId == invoice.ClientId && i.Status == InvoiceStatus.CARRIED_OVER && i.CarriedIntoId == null && i.Id != invoice.Id)
+                .OrderBy(i => i.IssuedAt).ThenBy(i => i.Code).Select(i => new { i.Id, i.Code, i.TotalDue }).ToListAsync(cancellationToken))
+            .Select(i => new { FromId = i.Id, i.Code, Amount = CarryOver.LineAmount(Money.ToCents(i.TotalDue)) }).ToList();
         var sums = new InvoiceLineSums(lines.Sum(l => l.Cod), lines.Sum(l => l.Delivery), lines.Sum(l => l.Failure), lines.Sum(l => l.Vat), lines.Sum(l => l.NetDue));
         var totals = proRate is { } rate
-            ? InvoiceMath.ProTotals(sums, adjustments.Select(a => a.Amount), rate)
-            : InvoiceMath.Totals(sums, adjustments.Select(a => (a.Amount, a.Vat)));
+            ? InvoiceMath.ProTotals(sums, adjustments.Select(a => (a.Amount, a.Exempt)).Concat(carryOvers.Select(c => (c.Amount, true))), rate)
+            : InvoiceMath.Totals(sums, adjustments.Select(a => (a.Amount, a.Vat)).Concat(carryOvers.Select(c => (c.Amount, 0L))));
+        // Net < 0 d'un vendeur ordinaire : « Reportée », jamais « Émise » à régler. Pro, interne et régime professionnel gardent l'émission.
+        var carriedOver = CarryOver.CarriesOver(totals.Due, invoice.IsPro, invoice.IsInternal, invoice.BillingType);
         try
         {
             await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
@@ -99,8 +113,27 @@ internal sealed class IssueInvoiceHandler(IAppDbContext db, ICurrentUser caller,
             {
                 await db.InvoiceAdjustments.Where(a => a.Id == adjustment.Id).ExecuteUpdateAsync(s => s.SetProperty(a => a.VatAmount, Money.FromCents(adjustment.Vat)), cancellationToken);
             }
+            if (carryOvers.Count > 0)
+            {
+                // Sous transaction : un report absorbé par une émission concurrente ne l'est pas deux fois.
+                var ids = carryOvers.Select(c => c.FromId).ToList();
+                var claimed = await db.Invoices.Where(i => ids.Contains(i.Id) && i.Status == InvoiceStatus.CARRIED_OVER && i.CarriedIntoId == null)
+                    .ExecuteUpdateAsync(s => s.SetProperty(i => i.CarriedIntoId, invoice.Id), cancellationToken);
+                if (claimed != carryOvers.Count)
+                {
+                    throw BusinessException.Conflict("Un report de ce vendeur vient d’être absorbé par une autre facture : réessayez l’émission.", new { reason = "carry-over-already-claimed" });
+                }
+                foreach (var carry in carryOvers)
+                {
+                    db.InvoiceAdjustments.Add(new InvoiceAdjustment
+                    {
+                        InvoiceId = invoice.Id, Kind = InvoiceAdjustmentKind.CARRY_OVER, Amount = Money.FromCents(carry.Amount), VatAmount = 0m, Reason = CarryOver.Reason(carry.Code, carry.Amount),
+                        Reference = carry.Code, CarriedFromInvoiceId = carry.FromId, CreatedById = caller.UserId, CreatedByName = CarryOver.AuthorName, CreatedAt = now,
+                    });
+                }
+            }
             var row = await db.Invoices.FirstAsync(i => i.Id == invoice.Id, cancellationToken);
-            row.Status = InvoiceStatus.ISSUED;
+            row.Status = carriedOver ? InvoiceStatus.CARRIED_OVER : InvoiceStatus.ISSUED;
             row.IssuedAt = now;
             row.IssuedById = caller.UserId;
             row.DueAt = string.IsNullOrEmpty(input.DueAt) ? null : StatementLists.Day(input.DueAt).AddDays(1).AddMilliseconds(-1);
@@ -116,6 +149,13 @@ internal sealed class IssueInvoiceHandler(IAppDbContext db, ICurrentUser caller,
             await db.SaveChangesAsync(cancellationToken);
             await TransferOrders.LinkIssuedInvoiceAsync(db, invoice.Code, invoice.Lines.Select(l => l.ParcelId).ToList(), cancellationToken);
             if (totals.Due == 0) await InvoiceRows.SettleAsync(db, invoice.Id, now, caller.UserId, cancellationToken);
+            else if (carriedOver)
+            {
+                // Reportée : ses colis sont réglés pour elle (le net part sur la suivante), comme à zéro.
+                var parcelIds = lines.Select(l => l.ParcelId).ToList();
+                await db.Parcels.Where(p => parcelIds.Contains(p.Id)).ExecuteUpdateAsync(s => s.SetProperty(p => p.BillingState, BillingState.REIMBURSED)
+                    .SetProperty(p => p.FinancialStatus, FinancialStatus.REMBOURSE), cancellationToken);
+            }
             await transaction.CommitAsync(cancellationToken);
         }
         catch (Npgsql.PostgresException error) when (error.SqlState == Npgsql.PostgresErrorCodes.UniqueViolation)

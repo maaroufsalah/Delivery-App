@@ -1386,6 +1386,10 @@ namespace Delivery.Infrastructure.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("isActive");
 
+                    b.Property<bool>("IsInternal")
+                        .HasColumnType("boolean")
+                        .HasColumnName("isInternal");
+
                     b.Property<bool>("IsPro")
                         .HasColumnType("boolean")
                         .HasColumnName("isPro");
@@ -3236,6 +3240,10 @@ namespace Delivery.Infrastructure.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("billingType");
 
+                    b.Property<string>("CarriedIntoId")
+                        .HasColumnType("text")
+                        .HasColumnName("carriedIntoId");
+
                     b.Property<string>("ClientId")
                         .IsRequired()
                         .HasColumnType("text")
@@ -3337,6 +3345,8 @@ namespace Delivery.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CarriedIntoId");
+
                     b.HasIndex("Code")
                         .IsUnique();
 
@@ -3363,6 +3373,10 @@ namespace Delivery.Infrastructure.Persistence.Migrations
                         .HasPrecision(12, 2)
                         .HasColumnType("numeric(12,2)")
                         .HasColumnName("amount");
+
+                    b.Property<string>("CarriedFromInvoiceId")
+                        .HasColumnType("text")
+                        .HasColumnName("carriedFromInvoiceId");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamptz(3)")
@@ -3406,6 +3420,9 @@ namespace Delivery.Infrastructure.Persistence.Migrations
                         .HasColumnName("vatAmount");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CarriedFromInvoiceId")
+                        .IsUnique();
 
                     b.HasIndex("DeliveryNoteId")
                         .IsUnique();
@@ -4475,6 +4492,18 @@ namespace Delivery.Infrastructure.Persistence.Migrations
                     b.Property<string>("BankAccountId")
                         .HasColumnType("text")
                         .HasColumnName("bankAccountId");
+
+                    b.Property<string>("CancelReason")
+                        .HasColumnType("text")
+                        .HasColumnName("cancelReason");
+
+                    b.Property<DateTime?>("CancelledAt")
+                        .HasColumnType("timestamptz(3)")
+                        .HasColumnName("cancelledAt");
+
+                    b.Property<string>("CancelledById")
+                        .HasColumnType("text")
+                        .HasColumnName("cancelledById");
 
                     b.Property<string>("ChequeBank")
                         .HasColumnType("text")
@@ -7606,6 +7635,11 @@ namespace Delivery.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Delivery.Domain.Entities.Invoice", "CarriedInto")
+                        .WithMany()
+                        .HasForeignKey("CarriedIntoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Delivery.Domain.Entities.Client", "Client")
                         .WithMany("Invoices")
                         .HasForeignKey("ClientId")
@@ -7624,6 +7658,8 @@ namespace Delivery.Infrastructure.Persistence.Migrations
 
                     b.Navigation("Agency");
 
+                    b.Navigation("CarriedInto");
+
                     b.Navigation("Client");
 
                     b.Navigation("IssuedBy");
@@ -7633,6 +7669,11 @@ namespace Delivery.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Delivery.Domain.Entities.InvoiceAdjustment", b =>
                 {
+                    b.HasOne("Delivery.Domain.Entities.Invoice", "CarriedFromInvoice")
+                        .WithOne("CarryOverLine")
+                        .HasForeignKey("Delivery.Domain.Entities.InvoiceAdjustment", "CarriedFromInvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Delivery.Domain.Entities.DeliveryNote", "DeliveryNote")
                         .WithOne("PickupFeeLine")
                         .HasForeignKey("Delivery.Domain.Entities.InvoiceAdjustment", "DeliveryNoteId")
@@ -7643,6 +7684,8 @@ namespace Delivery.Infrastructure.Persistence.Migrations
                         .HasForeignKey("InvoiceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("CarriedFromInvoice");
 
                     b.Navigation("DeliveryNote");
 
@@ -8946,6 +8989,8 @@ namespace Delivery.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Delivery.Domain.Entities.Invoice", b =>
                 {
                     b.Navigation("Adjustments");
+
+                    b.Navigation("CarryOverLine");
 
                     b.Navigation("Cheques");
 

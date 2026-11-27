@@ -13,9 +13,11 @@ public partial class InvoiceAdjustment
     public string Reason { get; set; } = string.Empty;
     public string? Reference { get; set; }
     public string? DeliveryNoteId { get; set; }
+    public string? CarriedFromInvoiceId { get; set; }
     public string? CreatedById { get; set; }
     public string? CreatedByName { get; set; }
     public DateTime CreatedAt { get; set; }
     public Invoice Invoice { get; set; } = null!;
     public DeliveryNote? DeliveryNote { get; set; }
+    public Invoice? CarriedFromInvoice { get; set; }
 }

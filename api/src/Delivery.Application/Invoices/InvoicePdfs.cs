@@ -55,5 +55,5 @@ internal static class InvoicePdfs
         i.Lines.Select(l => new InvoiceSheetLine(l.ParcelCode, l.ExternalCode, l.RecipientName, l.RecipientPhone, l.DestinationCityName, l.DeliveredAt, l.StatusId, l.CodAmount,
             l.DeliveryFee + l.FailureFee, l.NetDue, l.ChequeRejected, l.ChequeNumber)).ToList(),
         i.Adjustments.Select(a => new InvoiceSheetAdjustment(a.Reason, a.Reference, a.Amount)).ToList(),
-        i.Payments.Select(p => new InvoiceSheetPayment(p.PaidAt, p.BankAccountLabel, p.Reference, p.Amount)).ToList());
+        i.Payments.Select(p => new InvoiceSheetPayment(p.PaidAt, p.BankAccountLabel, p.Reference, p.Amount)).ToList(), i.CarriedIntoCode);
 }

@@ -49,6 +49,8 @@ const STATUS_TONE: Record<InvoiceListItem['status'], string> = {
   draft: 'var(--chart-3)',
   issued: 'var(--chart-1)',
   paid: 'var(--chart-4)',
+  // Chantier « Report des factures négatives » : le net vit sur la facture suivante.
+  'carried-over': 'var(--chart-5)',
 };
 
 /**
@@ -158,6 +160,7 @@ export function InvoicesScreen({
           { value: 'draft', label: tStatus('draft') },
           { value: 'issued', label: tStatus('issued') },
           { value: 'paid', label: tStatus('paid') },
+          { value: 'carried-over', label: tStatus('carried-over') },
         ],
         onChange: (value) => setFilter('status', value === ALL_VALUE ? undefined : value),
       },
@@ -233,8 +236,8 @@ export function InvoicesScreen({
                 // Le reste à régler, sous le total : c'est lui qu'on vient
                 // chercher sur cette liste, pas le montant d'origine.
                 sub={
-                  row.status === 'paid'
-                    ? tStatus('paid')
+                  row.status === 'paid' || row.status === 'carried-over'
+                    ? tStatus(row.status)
                     : t('remaining', { amount: format.number(balance / 100, 'currency') })
                 }
               />

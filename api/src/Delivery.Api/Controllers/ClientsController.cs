@@ -39,6 +39,10 @@ public sealed class ClientsController(ISender sender) : ApiControllerBase(sender
     [RequirePermission("finance.validate")]
     public Task<IActionResult> SetVatRate(string id, [FromBody] SetClientVatRateCommand? body) => Ok((body ?? new SetClientVatRateCommand()) with { Id = id });
 
+    [HttpPatch("{id}/internal")]
+    [RequirePermission("finance.validate")]
+    public Task<IActionResult> SetInternal(string id, [FromBody] SetClientInternalCommand? body) => Ok((body ?? new SetClientInternalCommand()) with { Id = id });
+
     [HttpPatch("{id}/pickup-terms")]
     [RequirePermission("finance.validate")]
     public Task<IActionResult> SetPickupTerms(string id, [FromBody] SetClientPickupTermsCommand? body) => Ok((body ?? new SetClientPickupTermsCommand()) with { Id = id });

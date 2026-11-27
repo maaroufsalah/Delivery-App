@@ -426,7 +426,6 @@ internal static class FinanceDocumentsPdf
         })).WithMetadata(new DocumentMetadata { Title = p.Code }).GeneratePdf();
     }
 
-    private static readonly Dictionary<string, string> InvoiceStates = new() { ["draft"] = "Brouillon, non émise", ["issued"] = "Émise", ["paid"] = "Payée" };
 
     /// <summary>`breakLong` : un mot plus long que la colonne est coupé en morceaux, un par ligne.</summary>
     private static string BreakLong(string value, int max) => string.Concat(System.Text.RegularExpressions.Regex.Split(value.Trim(), @"(\s+)").Select(part =>
@@ -481,7 +480,7 @@ internal static class FinanceDocumentsPdf
                 (240, c => c.Column(state =>
                 {
                     BusinessDocuments.Caption(state.Item(), "État");
-                    state.Item().PaddingTop(2).Text(InvoiceStates.GetValueOrDefault(i.Status, i.Status)).FontSize(11);
+                    state.Item().PaddingTop(2).Text(i.StateLabel).FontSize(11);
                     if (period is not null) state.Item().Text($"Période : {period}").FontColor(Muted);
                     if (i.IssuedAt is { } issued) state.Item().Text($"Émise le {Exports.DateText(issued)}").FontColor(Muted);
                     if (i.DueAt is { } due) state.Item().Text($"Échéance : {Exports.CalendarDateText(DateOnly.FromDateTime(due))}").FontColor(Muted);

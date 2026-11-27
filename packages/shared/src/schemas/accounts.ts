@@ -489,6 +489,11 @@ export const clientVatRateSchema = z.object({
 
 export type ClientVatRatePayload = z.output<typeof clientVatRateSchema>;
 
+/** Client interne (compte de la société) — chantier « Report des factures négatives ». */
+export const clientInternalSchema = z.object({ isInternal: z.boolean() });
+
+export type ClientInternalPayload = z.output<typeof clientInternalSchema>;
+
 /**
  * Conditions de ramassage d'un client — lot T (D-232). Frais en CENTIMES,
  * seuil en colis ; `null` = la valeur globale, `0` autorisé (gratuit). Hors du

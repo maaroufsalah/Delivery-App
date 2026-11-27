@@ -38,6 +38,10 @@ public class InvoiceListItemDto
     public DateTime? PeriodStart { get; set; }
     public DateTime? PeriodEnd { get; set; }
     public long TotalPaid { get; set; }
+
+    /// <summary>Reportée : la facture qui a absorbé ce net négatif ; `null` tant que le report attend.</summary>
+    public string? CarriedIntoCode { get; set; }
+
     public DateTime? IssuedAt { get; set; }
     public DateTime? DueAt { get; set; }
     public DateTime? PaidAt { get; set; }

@@ -38,6 +38,8 @@ const STATUS_TONE: Record<Invoice['status'], string> = {
   draft: 'var(--chart-3)',
   issued: 'var(--chart-1)',
   paid: 'var(--chart-4)',
+  // Chantier « Report des factures négatives » : le net vit sur la facture suivante.
+  'carried-over': 'var(--chart-5)',
 };
 
 /**
@@ -194,6 +196,14 @@ export function InvoiceDetailScreen({
           {current.clientName} · {current.agencyName}
           {period ? ` · ${period}` : ''}
         </span>
+        {/* Reportée : où est passé le net négatif (chantier « Report des factures négatives »). */}
+        {current.status === 'carried-over' ? (
+          <span className="text-muted-foreground basis-full text-sm">
+            {current.carriedIntoCode
+              ? t('carriedInto', { code: current.carriedIntoCode })
+              : t('carriedPending')}
+          </span>
+        ) : null}
 
         <span className="ms-auto flex flex-wrap gap-2">
           <Button

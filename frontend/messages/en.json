@@ -1773,6 +1773,7 @@
           "awaiting-validation": "Awaiting validation",
           "cancelled": "Cancelled",
           "car": "Car",
+          "carried-over": "Carried over",
           "cash": "Cash",
           "changed": "changed",
           "check": "Cheque",
@@ -1815,8 +1816,8 @@
           "recu-admin": "Received by %shortName%",
           "recu-livreur": "Received by courier",
           "recu-vendeur": "Received by merchant",
-          "reimbursed": "Reimbursed",
           "refused": "Refused",
+          "reimbursed": "Reimbursed",
           "rejected": "Rejected",
           "rejete": "Rejected",
           "relay-point": "Relay point",
@@ -3748,7 +3749,13 @@
         "vatDefaultValue": "Company default ({rate})",
         "vatPercent": "{rate} %",
         "vatExempt": "0 % (exempt)",
-        "vatSaved": "VAT rate saved."
+        "vatSaved": "VAT rate saved.",
+        "internalTitle": "Internal client",
+        "internalHint": "The company’s own seller account. Like a Pro Client, its negative invoices are not carried over to the next invoice.",
+        "internalOn": "This seller is an internal account: its negative invoices are settled normally.",
+        "internalOff": "This seller is not internal: a negative invoice is carried over to its next invoice.",
+        "internalEnabled": "Internal client enabled.",
+        "internalDisabled": "Internal client disabled."
       },
       "rejected": "Rejected",
       "tabs": {
@@ -4419,7 +4426,8 @@
       "status": {
         "draft": "Draft",
         "issued": "Issued",
-        "paid": "Paid"
+        "paid": "Paid",
+        "carried-over": "Carried over"
       },
       "filters": {
         "state": "State",
@@ -4524,7 +4532,8 @@
         "kind": {
           "adjustment": "Adjustment",
           "pickup-note-fee": "Pickup fee per note",
-          "other": "Other"
+          "other": "Other",
+          "carry-over": "Negative invoice carried over"
         },
         "fields": {
           "amount": "Amount excl. tax (MAD)",
@@ -4532,7 +4541,9 @@
           "reason": "Reason",
           "reference": "Reference (optional: invoice, BR- note…)"
         }
-      }
+      },
+      "carriedInto": "Negative net carried over to invoice {code}.",
+      "carriedPending": "Negative net carried over: it will be deducted from the seller’s next invoice."
     },
     "payments": {
       "title": "Payments",
