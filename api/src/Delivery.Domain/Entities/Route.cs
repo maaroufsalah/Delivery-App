@@ -16,6 +16,9 @@ public partial class Route
     public DateTime? ExitDate { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+
+    /// <summary>Repris de Wimo Laravel (`legacy_mappings`) : document historique, montants d'origine.</summary>
+    public DateTime? ImportedAt { get; set; }
     public City City { get; set; } = null!;
     public City OriginCity { get; set; } = null!;
     public Courier Courier { get; set; } = null!;

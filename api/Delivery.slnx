@@ -5,6 +5,9 @@
     <Project Path="src/Delivery.Domain/Delivery.Domain.csproj" />
     <Project Path="src/Delivery.Infrastructure/Delivery.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/LegacyImport/LegacyImport.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Delivery.ContractTests/Delivery.ContractTests.csproj" />
     <Project Path="tests/Delivery.UnitTests/Delivery.UnitTests.csproj" />

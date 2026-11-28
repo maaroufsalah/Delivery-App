@@ -32,6 +32,7 @@ internal sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.Property(e => e.CreatedById).HasColumnName("createdById");
         builder.Property(e => e.CreatedAt).HasColumnName("createdAt").HasColumnType("timestamptz(3)").IsRequired().HasAnnotation(PersistenceAnnotations.DefaultNow, true);
         builder.Property(e => e.UpdatedAt).HasColumnName("updatedAt").HasColumnType("timestamptz(3)").IsRequired().HasAnnotation(PersistenceAnnotations.UpdatedAt, true);
+        builder.Property(e => e.ImportedAt).HasColumnName("importedAt").HasColumnType("timestamptz(3)");
         builder.HasIndex(e => new { e.ClientId, e.PaidAt });
         builder.HasIndex(e => new { e.AgencyId, e.PaidAt });
         builder.HasIndex(e => e.InvoiceId);

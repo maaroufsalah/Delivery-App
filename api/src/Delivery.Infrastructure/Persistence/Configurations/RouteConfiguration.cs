@@ -21,6 +21,7 @@ internal sealed class RouteConfiguration : IEntityTypeConfiguration<Route>
         builder.Property(e => e.ExitDate).HasColumnName("exitDate").HasColumnType("timestamptz(3)");
         builder.Property(e => e.CreatedAt).HasColumnName("createdAt").HasColumnType("timestamptz(3)").IsRequired().HasAnnotation(PersistenceAnnotations.DefaultNow, true);
         builder.Property(e => e.UpdatedAt).HasColumnName("updatedAt").HasColumnType("timestamptz(3)").IsRequired().HasAnnotation(PersistenceAnnotations.UpdatedAt, true);
+        builder.Property(e => e.ImportedAt).HasColumnName("importedAt").HasColumnType("timestamptz(3)");
         builder.HasIndex(e => e.Code).IsUnique();
         builder.HasIndex(e => e.Status);
         builder.HasIndex(e => e.CreatedAt);

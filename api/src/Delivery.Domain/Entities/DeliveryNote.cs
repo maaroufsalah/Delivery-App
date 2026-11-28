@@ -16,6 +16,9 @@ public partial class DeliveryNote
     public string? ValidatedBy { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+
+    /// <summary>Repris de Wimo Laravel (`legacy_mappings`) : document historique, montants d'origine.</summary>
+    public DateTime? ImportedAt { get; set; }
     public Client Client { get; set; } = null!;
     public Agency Agency { get; set; } = null!;
     public City LocationCity { get; set; } = null!;

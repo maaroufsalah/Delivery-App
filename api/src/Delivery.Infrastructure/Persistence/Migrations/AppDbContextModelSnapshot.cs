@@ -726,6 +726,10 @@ namespace Delivery.Infrastructure.Persistence.Migrations
                         .HasColumnType("numeric(12,2)")
                         .HasColumnName("expectedNet");
 
+                    b.Property<DateTime?>("ImportedAt")
+                        .HasColumnType("timestamptz(3)")
+                        .HasColumnName("importedAt");
+
                     b.Property<string>("Note")
                         .HasColumnType("text")
                         .HasColumnName("note");
@@ -2396,6 +2400,10 @@ namespace Delivery.Infrastructure.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("createdById");
 
+                    b.Property<DateTime?>("ImportedAt")
+                        .HasColumnType("timestamptz(3)")
+                        .HasColumnName("importedAt");
+
                     b.Property<string>("Note")
                         .HasColumnType("text")
                         .HasColumnName("note");
@@ -2595,6 +2603,10 @@ namespace Delivery.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamptz(3)")
                         .HasColumnName("createdAt")
                         .HasAnnotation("Delivery:DefaultNow", true);
+
+                    b.Property<DateTime?>("ImportedAt")
+                        .HasColumnType("timestamptz(3)")
+                        .HasColumnName("importedAt");
 
                     b.Property<string>("LocationCityId")
                         .IsRequired()
@@ -3267,6 +3279,10 @@ namespace Delivery.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamptz(3)")
                         .HasColumnName("dueAt");
 
+                    b.Property<DateTime?>("ImportedAt")
+                        .HasColumnType("timestamptz(3)")
+                        .HasColumnName("importedAt");
+
                     b.Property<DateTime?>("IssuedAt")
                         .HasColumnType("timestamptz(3)")
                         .HasColumnName("issuedAt");
@@ -3568,6 +3584,41 @@ namespace Delivery.Infrastructure.Persistence.Migrations
                     b.HasIndex("RequestedById", "CreatedAt");
 
                     b.ToTable("label_jobs", (string)null);
+                });
+
+            modelBuilder.Entity("Delivery.Domain.Entities.LegacyMapping", b =>
+                {
+                    b.Property<string>("Entity")
+                        .HasColumnType("text")
+                        .HasColumnName("entity");
+
+                    b.Property<string>("LegacyId")
+                        .HasColumnType("text")
+                        .HasColumnName("legacyId");
+
+                    b.Property<string>("Hash")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("hash");
+
+                    b.Property<DateTime>("ImportedAt")
+                        .HasColumnType("timestamptz(3)")
+                        .HasColumnName("importedAt");
+
+                    b.Property<string>("NewId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("newId");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamptz(3)")
+                        .HasColumnName("updatedAt");
+
+                    b.HasKey("Entity", "LegacyId");
+
+                    b.HasIndex("Entity", "NewId");
+
+                    b.ToTable("legacy_mappings", (string)null);
                 });
 
             modelBuilder.Entity("Delivery.Domain.Entities.Notification", b =>
@@ -4530,6 +4581,10 @@ namespace Delivery.Infrastructure.Persistence.Migrations
                     b.Property<string>("CreatedById")
                         .HasColumnType("text")
                         .HasColumnName("createdById");
+
+                    b.Property<DateTime?>("ImportedAt")
+                        .HasColumnType("timestamptz(3)")
+                        .HasColumnName("importedAt");
 
                     b.Property<string>("InvoiceId")
                         .HasColumnType("text")
@@ -5868,6 +5923,10 @@ namespace Delivery.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("ExitDate")
                         .HasColumnType("timestamptz(3)")
                         .HasColumnName("exitDate");
+
+                    b.Property<DateTime?>("ImportedAt")
+                        .HasColumnType("timestamptz(3)")
+                        .HasColumnName("importedAt");
 
                     b.Property<string>("Kind")
                         .IsRequired()

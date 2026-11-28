@@ -15,7 +15,7 @@ namespace Delivery.Infrastructure.Persistence.Seed;
 /// du livreur) ; un rejeu met à jour, ne duplique pas, et n'écrase jamais le mot de passe d'un compte existant.
 /// Décisions de reprise : `docs/chantiers/reprise-wimo-laravel.md`.
 /// </summary>
-public sealed class LaravelImporter(AppDbContext db)
+public sealed partial class LaravelImporter(AppDbContext db)
 {
     public const string OutOfZone = "Hors zone";
     private const string Null = "\\N";
@@ -28,6 +28,8 @@ public sealed class LaravelImporter(AppDbContext db)
         public string Table { get; } = table;
         public int Read { get; set; }
         public int Imported { get; set; }
+        public int Unchanged { get; set; }
+        public int Updated { get; set; }
         public Dictionary<string, List<string>> Ignored { get; } = [];
         public List<string> Notes { get; } = [];
 
@@ -42,8 +44,15 @@ public sealed class LaravelImporter(AppDbContext db)
 
     public sealed record Report(bool Applied, IReadOnlyList<TableReport> Tables);
 
+    /// <summary>`BatchSize` : lignes par lot (une transaction chacun en mode `apply`).</summary>
+    public sealed record ImportOptions(bool Apply, int BatchSize = 500);
+
+    private readonly Dictionary<string, BankAccount> bankAccounts = [];
+
     private sealed class Source(string folder)
     {
+        public bool Has(string table) => File.Exists(Path.Combine(folder, $"{table}.csv"));
+
         public List<Dictionary<string, string?>> Rows(string table)
         {
             var rows = ReferentialImporter.Csv.Read(Path.Combine(folder, $"{table}.csv"))
@@ -83,33 +92,68 @@ public sealed class LaravelImporter(AppDbContext db)
         return TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(local, DateTimeKind.Unspecified), ClockDays.Zone);
     }
 
-    public async Task<Report> ImportAsync(string folder, bool apply, CancellationToken cancellationToken = default)
+    public Task<Report> ImportAsync(string folder, bool apply, CancellationToken cancellationToken = default) =>
+        ImportAsync(folder, new ImportOptions(apply), cancellationToken);
+
+    /// <summary>
+    /// Référentiel et comptes (une transaction), puis l'opérationnel et l'argent par lots (une transaction par lot, reprise
+    /// possible après une coupure : `legacy_mappings` dit ce qui est fait, l'empreinte ce qui a changé). À blanc : tout
+    /// dans une seule transaction annulée à la fin.
+    /// </summary>
+    public async Task<Report> ImportAsync(string folder, ImportOptions options, CancellationToken cancellationToken = default)
     {
         var source = new Source(folder);
         var tables = new List<TableReport>();
-        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
-        await AuditSilence.RunAsync(async () =>
+        await using var dryRun = options.Apply ? null : await db.Database.BeginTransactionAsync(cancellationToken);
+        try
         {
-            var zones = await ZonesAsync(source, tables, cancellationToken);
-            var cities = await CitiesAsync(source, zones, tables, cancellationToken);
-            var districts = await DistrictsAsync(source, cities, tables, cancellationToken);
-            await ZoneRatesAsync(source, zones, tables, cancellationToken);
-            await PricingAsync(source, cities, tables, cancellationToken);
-            var agencies = await AgenciesAsync(source, cities, tables, cancellationToken);
-            var banks = await BanksAsync(source, tables, cancellationToken);
-            await SettingsAsync(source, tables, cancellationToken);
-            StatusesReport(source, tables);
-            var users = await UsersAsync(source, agencies, tables, cancellationToken);
-            var clients = await ClientsAsync(source, users, cities, agencies, tables, cancellationToken);
-            await DiscountsAsync(source, clients, zones, tables, cancellationToken);
-            await PickupAddressesAsync(source, clients, cities, districts, users, tables, cancellationToken);
-            var couriers = await CouriersAsync(source, users, cities, agencies, banks, tables, cancellationToken);
-            await CourierCitiesAsync(source, couriers, cities, tables, cancellationToken);
-        });
-        if (apply) await transaction.CommitAsync(cancellationToken);
-        else await transaction.RollbackAsync(cancellationToken);
+            await AuditSilence.RunAsync(async () =>
+            {
+                await InBatchAsync(options, async () =>
+                {
+                    var zones = await ZonesAsync(source, tables, cancellationToken);
+                    var cities = await CitiesAsync(source, zones, tables, cancellationToken);
+                    var districts = await DistrictsAsync(source, cities, tables, cancellationToken);
+                    await ZoneRatesAsync(source, zones, tables, cancellationToken);
+                    await PricingAsync(source, cities, tables, cancellationToken);
+                    var agencies = await AgenciesAsync(source, cities, tables, cancellationToken);
+                    var banks = await BanksAsync(source, tables, cancellationToken);
+                    await SettingsAsync(source, tables, cancellationToken);
+                    StatusesReport(source, tables);
+                    var users = await UsersAsync(source, agencies, tables, cancellationToken);
+                    var clients = await ClientsAsync(source, users, cities, agencies, tables, cancellationToken);
+                    await DiscountsAsync(source, clients, zones, tables, cancellationToken);
+                    await PickupAddressesAsync(source, clients, cities, districts, users, tables, cancellationToken);
+                    var couriers = await CouriersAsync(source, users, cities, agencies, banks, tables, cancellationToken);
+                    await CourierCitiesAsync(source, couriers, cities, tables, cancellationToken);
+                    await ClaimTypesAsync(source, tables, cancellationToken);
+                    await MapReferentialAsync(source, zones, cities, districts, agencies, banks, users, clients, couriers, cancellationToken);
+                }, cancellationToken);
+                await OperationsAsync(source, options, tables, cancellationToken);
+            });
+        }
+        finally
+        {
+            if (dryRun is not null) await dryRun.RollbackAsync(cancellationToken);
+            db.ChangeTracker.Clear();
+        }
+        return new Report(options.Apply, tables);
+    }
+
+    /// <summary>Un lot : sa propre transaction validée en mode `apply` ; à blanc, il s'écrit dans la transaction annulée.</summary>
+    private async Task InBatchAsync(ImportOptions options, Func<Task> work, CancellationToken cancellationToken)
+    {
+        if (!options.Apply)
+        {
+            await work();
+            await db.SaveChangesAsync(cancellationToken);
+            return;
+        }
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        await work();
+        await db.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
         db.ChangeTracker.Clear();
-        return new Report(apply, tables);
     }
 
     private async Task<Dictionary<string, Zone>> ZonesAsync(Source source, List<TableReport> tables, CancellationToken cancellationToken)
@@ -434,6 +478,7 @@ public sealed class LaravelImporter(AppDbContext db)
             }
             account.BankId = bank.Id;
             account.Rib = Rib(V(row, "rib"), accounts, $"compte {id} {label}") ?? account.Rib;
+            bankAccounts[id] = account;
             accounts.Imported++;
         }
         await db.SaveChangesAsync(cancellationToken);
