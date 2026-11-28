@@ -1,21 +1,26 @@
-# Reprise de Wimo Laravel (référentiel et comptes)
+# Reprise de Wimo Laravel
 
-Source : dump MariaDB 10.4 de la production Wimo Laravel. Ni colis ni données financières (bons, circuits, boxes,
-factures, règlements, remboursements, recettes, suivi, `partner_outbox`).
+Source : dump MariaDB 10.4 de la production Wimo Laravel. Périmètre complet (référentiel, comptes, colis et historique,
+bons, circuits, factures, règlements, relevés et caisses des livreurs) ; correspondance table par table et statuts :
+`docs/migration/laravel-mapping.md`. Ce fichier garde les décisions du référentiel et des comptes.
 
 ## Chaîne
 
 ```bash
-# 1. Le dump en CSV, sans serveur MySQL (données réelles : dossier local, hors dépôt)
-python -I scripts/laravel-dump-to-csv.py <dump.sql.gz> <dossier-csv>
-# 2. À blanc (défaut) : transaction annulée, compte rendu par table (lus / importés / ignorés + raison)
-dotnet run --project api/src/Delivery.Api -- import-laravel <dossier-csv>
-# 3. Application, puis seed (statuts, permissions, société, réglages manquants)
-dotnet run --project api/src/Delivery.Api -- import-laravel <dossier-csv> --apply
+# 1. Le dump en CSV, sans serveur MySQL (données réelles : dossier .runtime/laravel-reprise, hors dépôt)
+python3 -I scripts/laravel-dump-to-csv.py <dump.sql.gz> <dossier-csv>
+# 2. Essai à blanc : une transaction annulée, compte rendu réel (lues / créées / mises à jour / identiques / rejetées)
+dotnet LegacyImport.dll <dossier-csv> --dry-run --report rapport-dry-run.md
+# 3. Application : une transaction par lot (--batch, 500 par défaut), reprise possible après une coupure
+dotnet LegacyImport.dll <dossier-csv> --apply --report rapport-apply.md
+# 4. Contrôles d'argent et par échantillon (zéro écart exigé)
+sh api/tools/LegacyImport/checks/money-check.sh <base> <dossier> && sh api/tools/LegacyImport/checks/samples.sh <base> <dossier>
 ```
 
-Idempotent (clés naturelles : nom de zone, code de ville, ville + quartier, nom d'agence, paire de villes, e-mail,
-compte du vendeur / du livreur). Un rejeu n'écrase jamais le mot de passe d'un compte existant.
+Relançable sans doublon : `legacy_mappings` (sorte, identifiant Laravel, identifiant .NET, empreinte) ; une relance ne
+réécrit que ce qui a changé côté Laravel. Les tables du référentiel sans identifiant propre se rapprochent par clé
+naturelle (nom de zone, code de ville, ville + quartier, nom d'agence, paire de villes, e-mail, compte du vendeur ou du
+livreur). Un rejeu n'écrase jamais le mot de passe d'un compte existant.
 
 ## Correspondance
 
@@ -41,7 +46,7 @@ compte du vendeur / du livreur). Un rejeu n'écrase jamais le mot de passe d'un 
 ## Décisions
 
 1. Statuts 15 « En agence destination », 30 « Au guichet Amana », 36 « 3eme appel Pas de réponse + SMS » : sans
-   équivalent .NET, ignorés et listés.
+   équivalent .NET, tranchés au plus proche (16, 7, 33) pour les colis et leur historique.
 2. Comptes du personnel : aucun droit ou tous les droits → SUPER_ADMIN ; droits partiels → STAFF de son agence.
    wimo@gmail.com : rapproché par e-mail, mot de passe jamais écrasé (règle générale : un compte existant garde son
    mot de passe et son profil).
@@ -61,3 +66,5 @@ compte du vendeur / du livreur). Un rejeu n'écrase jamais le mot de passe d'un 
 9. Comptes partenaires API (riyalto, amadex, boraq, trend, livre24, metalivraison, JmproMarrakech, IbexAgadir,
    SoanrpinTanger, Colivraison24) : listés, non importés.
 10. Réglages sans équivalent .NET : « afficher les colis à la préparation d'un circuit », « e-mail en copie ».
+11. Horodatages : Wimo Laravel tourne en `app.timezone = UTC` ; `created_at`, `updated_at`, `statut_date`… sont donc
+    repris comme de l'UTC. Les jours saisis (`date_report`, `date_sorti`, `date_paiement`) sont minuit à Casablanca.

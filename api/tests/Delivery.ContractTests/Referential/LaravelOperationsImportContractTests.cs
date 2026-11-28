@@ -50,7 +50,7 @@ public sealed class LaravelOperationsImportContractTests(ApiFactory factory)
         var (folder, tag, codes) = await LaravelImportContractTests.FixtureFor(factory);
         void W(string table, params string[][] rows) => File.WriteAllText(Path.Combine(folder, $"{table}.csv"), Csv(rows));
         // Livraison en ville 1 = codes[0] (Alpha, grille du livreur : 15) ; le code dit Alpha → Beta (compteur).
-        var code = $"{codes[0]}01{Random.Shared.Next(100, 999)}2610{codes[1]}";
+        var code = $"{codes[0]}01{Random.Shared.Next(100, 700)}2610{codes[1]}";
         W("colis", ColisHeader,
             Colis("100", code, "4", "250", "35", "1"),
             Colis("101", $"{code[..5]}9{code[6..]}", "6", "100", "35", "1", echoue: "20"),
@@ -94,7 +94,8 @@ public sealed class LaravelOperationsImportContractTests(ApiFactory factory)
         var report = await ImportAsync(folder, apply: true);
         report.Tables.Single(t => t.Table == "colis").Ignored.Keys.ShouldContain("colis supprimé dans Laravel");
 
-        var parcels = await factory.QueryDbAsync(db => db.Parcels.Where(p => p.Code.EndsWith(code[6..]) || p.Code == $"ECH-{code}")
+        var suffix = code[6..];
+        var parcels = await factory.QueryDbAsync(db => db.Parcels.Where(p => p.Code.EndsWith(suffix) || p.Code == $"ECH-{code}")
             .Select(p => new { p.Id, p.Code, p.StatusId, p.BillingState, p.FinancialStatus, p.ReimbursedByCourier, p.ReimbursedRemittanceId, p.CourierCommission, p.Kind,
                 Reference = p.ReferenceParcel!.Code, Events = p.Events.OrderBy(e => e.CreatedAt).Select(e => e.StatusId).ToList(), p.CreatedAt }).ToListAsync());
         parcels.Count.ShouldBe(4);

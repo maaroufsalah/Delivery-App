@@ -8,7 +8,7 @@
 set -eu
 DB=${1:?base PostgreSQL}
 OUT=${2:?dossier de sortie}
-MY() { docker exec -i wimo-wimo-db sh -c 'exec mysql -u root -p"$MYSQL_ROOT_PASSWORD" -N -B --default-character-set=utf8mb4 wimo'; }
+MY() { docker exec -i "${SRC_DB:-wimo-wimo-db}" sh -c 'exec mysql -u root -p"$MYSQL_ROOT_PASSWORD" -N -B --default-character-set=utf8mb4 wimo'; }
 PG() { docker exec -i wimo-delivery-dotnet-postgres-1 psql -q -U wimo -d "$DB" -v ON_ERROR_STOP=1 -At; }
 
 IDS=$(MY <<'SQL'
