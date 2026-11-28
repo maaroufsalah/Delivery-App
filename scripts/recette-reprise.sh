@@ -205,7 +205,7 @@ SQL
 )"
 # Une livraison peut avoir ouvert le brouillon du vendeur (409 + son code) : il sert alors, ses autres lignes ne comptent pas.
 call "facture brouillon" "201|409" POST /invoices "$ADMIN" "{\"clientId\":\"$CLIENT_ID\",\"agencyId\":\"$AGENCY\"}"
-INVOICE="$(json 'j.code || (j.details && j.details.invoiceCode)')"
+INVOICE="$(json '(j.details && j.details.invoiceCode) || j.code')"
 call "colis importés non facturés ajoutés" 201 POST "/invoices/$INVOICE/parcels" "$ADMIN" "{\"parcelIds\":[$PARCEL_IDS]}"
 call "brouillon $INVOICE" 200 GET "/invoices/$INVOICE" "$ADMIN"
 IDS_JS="[$PARCEL_IDS]"

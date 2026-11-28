@@ -156,7 +156,7 @@ call "confirmation de la caisse $REMITTANCE" 201 POST "/remittances/$REMITTANCE/
 # Frais de ramassage > 0 : la validation du bon a ouvert le brouillon (409 + son code) ; à 0 (réglage repris de Wimo
 # Laravel), aucun brouillon n'est ouvert et celui-ci se crée (201).
 call "facture brouillon (ouverte par les frais de ramassage, sinon créée)" "201|409" POST /invoices "$ADMIN" "{\"clientId\":\"$CLIENT_ID\",\"agencyId\":\"$AGENCY\"}"
-INVOICE="$(json 'j.code || (j.details && j.details.invoiceCode)')"
+INVOICE="$(json '(j.details && j.details.invoiceCode) || j.code')"
 call "colis facturé" 201 POST "/invoices/$INVOICE/parcels" "$ADMIN" "{\"parcelIds\":[\"$PARCEL_ID\"]}"
 call "émission de $INVOICE" 201 POST "/invoices/$INVOICE/issue" "$ADMIN" '{}' && check "facture émise" 'j.status === "issued"'
 file "PDF de la facture" "/invoices/$INVOICE/pdf" "$ADMIN" application/pdf
