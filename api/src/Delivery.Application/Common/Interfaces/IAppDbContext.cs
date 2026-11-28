@@ -48,6 +48,7 @@ public interface IAppDbContext
     DbSet<ReturnNote> ReturnNotes { get; }
     DbSet<ReturnNoteParcel> ReturnNoteParcels { get; }
     DbSet<DocumentSequence> DocumentSequences { get; }
+    DbSet<LegacyMapping> LegacyMappings { get; }
     DbSet<ReturnHandover> ReturnHandovers { get; }
     DbSet<ReturnHandoverEvent> ReturnHandoverEvents { get; }
     DbSet<ReturnHandoverItem> ReturnHandoverItems { get; }

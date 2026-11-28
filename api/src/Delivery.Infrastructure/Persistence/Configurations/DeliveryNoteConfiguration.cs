@@ -21,6 +21,7 @@ internal sealed class DeliveryNoteConfiguration : IEntityTypeConfiguration<Deliv
         builder.Property(e => e.ValidatedBy).HasColumnName("validatedBy");
         builder.Property(e => e.CreatedAt).HasColumnName("createdAt").HasColumnType("timestamptz(3)").IsRequired().HasAnnotation(PersistenceAnnotations.DefaultNow, true);
         builder.Property(e => e.UpdatedAt).HasColumnName("updatedAt").HasColumnType("timestamptz(3)").IsRequired().HasAnnotation(PersistenceAnnotations.UpdatedAt, true);
+        builder.Property(e => e.ImportedAt).HasColumnName("importedAt").HasColumnType("timestamptz(3)");
         builder.Property(e => e.PickedUpAt).HasColumnName("pickedUpAt").HasColumnType("timestamptz(3)");
         builder.Property(e => e.PickedUpBy).HasColumnName("pickedUpBy");
         builder.Property(e => e.PickupFeeApplied).HasColumnName("pickupFeeApplied").HasPrecision(12, 2);

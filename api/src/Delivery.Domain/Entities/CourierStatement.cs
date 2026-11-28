@@ -38,6 +38,9 @@ public partial class CourierStatement
     public string? CreatedById { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+
+    /// <summary>Repris de Wimo Laravel (`legacy_mappings`) : document historique, montants d'origine.</summary>
+    public DateTime? ImportedAt { get; set; }
     public Courier Courier { get; set; } = null!;
     public Agency Agency { get; set; } = null!;
     public User? ValidatedBy { get; set; }

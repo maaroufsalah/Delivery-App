@@ -33,8 +33,9 @@ internal sealed class DeletePaymentHandler(IAppDbContext db, ICurrentUser caller
 {
     public async Task<PaymentIdDto> Handle(DeletePaymentCommand request, CancellationToken cancellationToken)
     {
-        var payment = await InvoiceRows.Payments(db.Payments.AsNoTracking(), caller).Where(p => p.Id == request.Id).Select(p => new { p.Id, p.InvoiceId, p.AgencyId }).FirstOrDefaultAsync(cancellationToken)
+        var payment = await InvoiceRows.Payments(db.Payments.AsNoTracking(), caller).Where(p => p.Id == request.Id).Select(p => new { p.Id, p.InvoiceId, p.AgencyId, p.ImportedAt }).FirstOrDefaultAsync(cancellationToken)
                       ?? throw BusinessException.NotFound("Règlement introuvable.");
+        ImportedDocument.EnsureEditable(payment.ImportedAt, "Ce règlement");
         await ReturnRows.AssertAgencyReachableAsync(db, caller, payment.AgencyId, cancellationToken);
         await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
         await db.Payments.Where(p => p.Id == payment.Id).ExecuteDeleteAsync(cancellationToken);

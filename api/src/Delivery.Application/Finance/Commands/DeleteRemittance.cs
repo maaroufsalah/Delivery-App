@@ -30,8 +30,9 @@ internal sealed class DeleteRemittanceHandler(IAppDbContext db, ICurrentUser cal
 {
     public async Task<ReturnCodeDto> Handle(DeleteRemittanceCommand request, CancellationToken cancellationToken)
     {
-        var remittance = await Remittances.Scoped(db.CashRemittances.AsNoTracking(), caller).Where(r => r.Code == request.Code).Select(r => new { r.Id, r.Status }).FirstOrDefaultAsync(cancellationToken)
+        var remittance = await Remittances.Scoped(db.CashRemittances.AsNoTracking(), caller).Where(r => r.Code == request.Code).Select(r => new { r.Id, r.Status, r.ImportedAt }).FirstOrDefaultAsync(cancellationToken)
                          ?? throw BusinessException.NotFound($"Retour de fonds introuvable : {request.Code}");
+        ImportedDocument.EnsureEditable(remittance.ImportedAt, "Ce retour de fonds");
         if (remittance.Status == CashRemittanceStatus.CONFIRMED) throw BusinessException.Conflict("Un retour de fonds confirmé ne se supprime pas.", new { reason = "remittance-confirmed" });
         await db.CashRemittances.Where(r => r.Id == remittance.Id).ExecuteDeleteAsync(cancellationToken);
         return new ReturnCodeDto(request.Code);

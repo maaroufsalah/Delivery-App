@@ -47,6 +47,7 @@ public sealed partial class AppDbContext
     public DbSet<ReturnNote> ReturnNotes => Set<ReturnNote>();
     public DbSet<ReturnNoteParcel> ReturnNoteParcels => Set<ReturnNoteParcel>();
     public DbSet<DocumentSequence> DocumentSequences => Set<DocumentSequence>();
+    public DbSet<LegacyMapping> LegacyMappings => Set<LegacyMapping>();
     public DbSet<ReturnHandover> ReturnHandovers => Set<ReturnHandover>();
     public DbSet<ReturnHandoverEvent> ReturnHandoverEvents => Set<ReturnHandoverEvent>();
     public DbSet<ReturnHandoverItem> ReturnHandoverItems => Set<ReturnHandoverItem>();
