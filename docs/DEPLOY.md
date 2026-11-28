@@ -1,54 +1,76 @@
 # Déploiement — Wimo-Delivery (.NET)
 
-## État de la production
+## État de la recette
+
+new./api-new.wimodelivery.ma est la **recette (UAT) de Wimo** : données réelles reprises de Wimo Laravel le 2026-11-28.
+La production viendra plus tard sur un autre domaine, avec le même script de reprise.
 
 | | |
 | --- | --- |
-| Mise en ligne | 2026-11-24, bascule à 17h04 (environ 20 s d'interruption) ; redéploiement `240c4fd` à 17h42 ; `e692511` le 2026-11-25 à 19h35 |
+| Mise en ligne | 2026-11-24 (bascule depuis NestJS) ; `e692511` le 2026-11-25 ; `b80f0aa` le 2026-11-27 ; **`d762905` le 2026-11-28 à 01h20 UTC** |
 | Domaines | https://new.wimodelivery.ma (web), https://api-new.wimodelivery.ma (API) ; nginx inchangé |
-| Commit déployé | `e692511` (`main`, #19 : liste des OV, Espèces signées, lien OV ↔ factures, OV à net 0), checkout détaché dans `/opt/wimo-delivery/app-dotnet` ; précédent : `240c4fd` |
-| Images | `wimo-delivery-dotnet-api:e692511`, `wimo-delivery-dotnet-web:e692511` (construites sur le VPS) ; celles de `240c4fd` (rollback) et `127c914` sont gardées |
+| Commit déployé | images `d762905` (`main`, #24 : reprise complète de Wimo Laravel) ; checkout détaché dans `/opt/wimo-delivery/app-dotnet` sur la fusion de #25 (scripts de recette et documentation seulement, aucune reconstruction) ; précédent : `b80f0aa` |
+| Images | `wimo-delivery-dotnet-api:d762905` (contient l'outil `LegacyImport.dll`), `wimo-delivery-dotnet-web:d762905` ; celles de `b80f0aa` (rollback) et `e692511` sont gardées |
 | Pile Docker | projet `wimo-delivery-dotnet` : `deploy/docker-compose.prod.yml` + `/opt/wimo-delivery/app-dotnet.env` (600, hors Git) |
-| Ports | web `127.0.0.1:3102`, api `127.0.0.1:3103` (recette avant bascule : 3112 / 3113) |
-| Base | `wimo_dotnet` (conteneur `wimo-delivery-dotnet-postgres-1`, volume `wimo-delivery-dotnet-postgres-data`), **nouvelle base** ; pièces jointes : volume `wimo-delivery-dotnet-uploads-data` |
-| Migrations EF | `20261123223924_InitialSchema`, `20261124111629_RemittanceOneOpenPerCourier` (aucune nouvelle avec `e692511`) |
-| Recette | `scripts/recette.sh --cleanup` PASS **66/66** sur les URL publiques (`e692511`, 2026-11-25) ; tout ce qu'elle a créé est supprimé en base, compteurs restaurés, super-admin de recette supprimé, `SEED_ADMIN_*` vidés |
-| Base | **propre pour les tests** : aucun colis, facture, ordre de virement, réclamation, vendeur ni livreur ; compteurs de numérotation à zéro ; seul compte : `wimo@gmail.com` ; aucun compte de démo |
+| Ports | web `127.0.0.1:3102`, api `127.0.0.1:3103` |
+| Base | `wimo_dotnet` (conteneur `wimo-delivery-dotnet-postgres-1`, volume `wimo-delivery-dotnet-postgres-data`) ; pièces jointes : volume `wimo-delivery-dotnet-uploads-data` |
+| Migrations EF | `InitialSchema`, `RemittanceOneOpenPerCourier`, `CarryOverNegativeInvoices`, **`20261127235229_LegacyImport`** (additive : `legacy_mappings`, `importedAt` sur factures, règlements, caisses, relevés, circuits, bons) |
+| Recette | `scripts/recette.sh --cleanup` PASS **66/66** (`d762905`, 2026-11-28, après la reprise) ; `scripts/recette-reprise.sh` PASS **47/47** (comptes et données importés, voir ci-dessous) ; tout ce que les deux passages ont créé est supprimé, compteurs restaurés, empreintes d'origine des comptes importés remises, super-admin de recette supprimé, `SEED_ADMIN_*` vidés |
 | Sauvegarde | quotidienne 03h30 (root, `/etc/cron.d/wimo-delivery-backup` → `/opt/wimo-delivery/backup.sh` → `app-dotnet/deploy/backup.sh`), dumps `backups/wimo_dotnet_*.dump` vérifiés par `pg_restore -l`, rotation 14 jours |
 | Ancienne pile NestJS | **arrêtée** (`docker compose stop`), conteneurs, volumes et images conservés ; base intacte |
-| Dumps | avant bascule : `backups/wimo_avant-dotnet_20261124_163926.dump` (572 Ko, sha256 `32fd65a4…833f000e8b`) ; avant nettoyage : `backups/wimo_dotnet_avant-nettoyage_20261124_172239.dump` ; avant `240c4fd` : `backups/wimo_dotnet_avant-240c4fd_20261124_174200.dump` ; avant `e692511` : `backups/wimo_dotnet_avant-e692511_20261125_191631.dump` (sha256 `eb1740eb9f247995…`) |
-| Disque | 2026-11-25 : `docker builder prune -f` + `docker image prune -f` (aucun volume touché), 5,1 Go → 12 Go libres (85 %) |
+| Dumps | avant `d762905` : `backups/wimo_dotnet_avant-d762905_20261128_011819.dump` ; **avant la reprise** : `backups/wimo_dotnet_avant-reprise-laravel_20261128_013530.dump` (1,2 Mo, sha256 `7c5467c925b71f52…`) ; plus anciens : avant bascule `wimo_avant-dotnet_20261124_163926.dump`, avant `e692511` `wimo_dotnet_avant-e692511_20261125_191631.dump` |
+| Disque | 2026-11-28 : `docker builder prune -f` (deux fois, aucune image ni volume touché) ; 6 Go libres (92 %) après le déploiement — à surveiller avant le prochain build |
 
-### Données reprises
+### Reprise Wimo Laravel (2026-11-28, 01h35 UTC)
 
-Export : `deploy/export-referential.sh`. CSV dans `/opt/wimo-delivery/.runtime/export-referentiel/` (700, hors Git).
+Source : dump Laravel `wimo-laravel_20261128_013530.sql.gz` (mysqldump `--single-transaction`, lecture seule ; aucune
+écriture ni aucun redémarrage de `/opt/wimo-wimo`). Données personnelles : uniquement sous
+`/opt/wimo-delivery/.runtime/laravel-reprise/` (700) — dumps, CSV, rapports `rapport-dry-run.md` et `rapport-apply.md`,
+relevés de contrôle. Correspondance des tables et des 38 statuts : `docs/migration/laravel-mapping.md`.
 
-Import :
-1. `import-referential` (image API) pour le référentiel ;
-2. `deploy/import-company.sh` pour la société, ses paramètres, le compte et les tarifs de zone.
+| Entité | Laravel (lues) | Importées | Rejetées (raison) |
+| --- | ---: | ---: | --- |
+| Colis | 2 193 | 2 029 | 164 supprimés dans Laravel |
+| Historique des statuts | 10 274 | 9 969 | 305 de colis supprimés |
+| Bons de ramassage et de dépôt | 492 | 488 | 4 de vendeurs supprimés |
+| Circuits | 634 | 634 | — (48 gardés ouverts, colis encore en cours ; les autres clos) |
+| Factures clients | 184 | 184 | — |
+| Règlements | 181 | 176 | 5 de factures supprimées dans Laravel (ids 1 à 5) |
+| Factures livreurs (relevés) | 1 | 1 | — |
+| Recettes (caisses) | 276 | 276 | — (2 brouillons plus anciens d'un même livreur → « Annulé ») |
+| Échanges ECH- | 10 | 7 | 3 dont le colis ou l'origine est supprimé |
+| Comptes | 83 | 59 | 11 supprimés, 10 partenaires API, 2 e-mails en double, 1 vendeur sans fiche |
+| Vendeurs / livreurs | 40 / 26 | 34 / 20 | supprimés ou sans compte |
+| Villes / quartiers | 464 / 10 164 | 455 / 9 540 | 9 villes supprimées ; quartiers de villes supprimées, doublons fusionnés |
+| Remises / grilles livreur / tarifs | 184 / 345 / 5 711 | 162 / 320 / 443 | sans prix, doublons, villes supprimées |
+| Compteurs de colis (jour, départ, arrivée) | — | 1 257 | factures, circuits, bons, recettes : codes Laravel aléatoires, aucun compteur à repositionner |
 
-| Repris | Nombre |
-| --- | --- |
-| Zones | 5 |
-| Villes (nom arabe compris, 199 sans nom arabe) | 396 |
-| Quartiers | 9 540 |
-| Agences | 1 (Wimo Casablanca) |
-| Règles tarifaires (trois modes, départ CAS) | 396 |
-| Tarifs de zone à zone | 5 |
-| Paramètres société (étiquettes, thèmes, finance, tarifs…) | 28 |
-| Comptes | `wimo@gmail.com` (super-admin, empreinte argon2id identique à l'ancienne base) |
-| Banques (reprises de l'ancienne base) | 12 |
-| Types de réclamation (repris de l'ancienne base) | 6 |
+- **Contrôles d'argent : zéro écart** (133 lignes) contre une copie MariaDB isolée du même dump : par client, nombre,
+  COD, frais et net des factures, règlements, COD et frais des colis ; par livreur, encaissé, commissions et net des
+  recettes, factures livreur ; colis par statut. Rejoués après les tests fonctionnels : toujours zéro écart.
+- **Échantillons : 26/26 identiques** champ par champ (10 colis dont 2 échanges et 2 retours, 5 clients, 5 livreurs,
+  3 factures, 3 circuits).
+- **Statuts tranchés au plus proche** : 36 « 3eme appel + SMS » → 33 (4 colis) ; 15 → 16 et 30 → 7 (aucun colis).
+- **Mots de passe** : empreintes bcrypt `$2y$` copiées telles quelles, vérifiées puis refaites en argon2id à la première
+  connexion ; `wimo@gmail.com` reste l'administrateur principal (mot de passe inchangé).
+- **Réglages repris de Laravel** : frais de ramassage et frais d'échec à 0 (comme Wimo Laravel) ; la validation d'un bon
+  n'ouvre donc plus de facture brouillon avec des frais de ramassage.
+- **Documents importés** : factures validées ou payées, règlements, caisses reçues, relevé livreur validé, circuits et
+  bons clos portent `importedAt` et ne se modifient pas ; les brouillons Laravel restent vivants dans .NET.
 
-- **Statuts** : identiques à l'ancienne base (35).
-- **Transitions** : 158 au lieu de 140. Les 18 de plus sont les transitions `RETURN_RECEPTION` (→ « récupéré par le livreur ») du flux de retours, absentes de l'ancienne version.
-- **Société** : « Wimo Delivery », logo `/brands/wimo.png` (ajouté au web), coordonnées de production.
-- **Palette** : « Bleu Wimo » `#0F62FE` / `#0A1F44`. La production affichait l'ambre `#C98A1B`.
+**Relancer la reprise** (rafraîchir la recette, ou la future production) : sur le VPS, depuis `/opt/wimo-delivery`,
 
-**Non repris** (intacts dans le dump d'avant bascule) :
-- les données de l'ancienne base : 7 colis, 2 vendeurs, 4 livreurs, 5 autres comptes, 1 facture, 5 circuits.
+```bash
+sh app-dotnet/deploy/reprise-laravel.sh               # dump frais, copie isolée, sauvegarde, essai, application, contrôles
+sh app-dotnet/deploy/reprise-laravel.sh --dry-run-only # essai à blanc seul
+```
 
-**Données de recette** : celles des deux premiers passages (colis, factures FA-2611-0001/0002, réclamations RCL-2611-0001/0002, comptes et super-admin de recette) ont été supprimées le 2026-11-24, et les compteurs remis à zéro. Depuis `240c4fd`, `recette.sh --cleanup` (par défaut) efface lui-même ce qu'il crée.
+Relançable sans doublon (`legacy_mappings`) : une relance ne réécrit que ce qui a changé côté Laravel. Un écart d'argent
+restaure la sauvegarde prise juste avant et arrête le script. Puis rejouer la recette des données importées :
+
+```bash
+PSQL="docker exec -i wimo-delivery-dotnet-postgres-1 psql -U wimo -d wimo_dotnet" API=https://api-new.wimodelivery.ma/api   ADMIN_EMAIL=… ADMIN_PASSWORD=… bash app-dotnet/scripts/recette-reprise.sh
+```
 
 ### Rollback (exact)
 
