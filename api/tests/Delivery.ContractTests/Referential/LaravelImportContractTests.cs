@@ -24,6 +24,9 @@ public sealed class LaravelImportContractTests(ApiFactory factory)
 
     private static string Csv(params string[][] rows) => string.Join('\n', rows.Select(r => string.Join(',', r.Select(c => c.Contains(',') ? $"\"{c}\"" : c)))) + "\n";
 
+    /// <summary>Le jeu du référentiel et des comptes, repris par le test de l'opérationnel.</summary>
+    internal static Task<(string Folder, string Tag, string[] Codes)> FixtureFor(ApiFactory factory) => new LaravelImportContractTests(factory).FixtureAsync();
+
     private async Task<(string Folder, string Tag, string[] Codes)> FixtureAsync()
     {
         var tag = Guid.NewGuid().ToString("N")[..6];
@@ -87,6 +90,8 @@ public sealed class LaravelImportContractTests(ApiFactory factory)
     [Fact]
     public async Task Imports_the_Laravel_referential_and_accounts_dry_run_first_then_idempotently()
     {
+        // Les identifiants Laravel du jeu reviennent d'un test à l'autre : chaque test part d'une correspondance vide.
+        await factory.ExecuteDbAsync(db => db.LegacyMappings.ExecuteDeleteAsync());
         var (folder, tag, codes) = await FixtureAsync();
 
         var dry = await ImportAsync(folder, apply: false);

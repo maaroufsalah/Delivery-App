@@ -158,9 +158,6 @@ public sealed partial class LaravelImporter
 
     private static bool Is(string? value) => value is not null && value != "0";
 
-    /// <summary>SQL `col != 1` : NULL est exclu (comparaison inconnue).</summary>
-    private static bool NotOne(string? value) => value is not null && value != "1";
-
     /// <summary>Le colis Laravel lu une fois : statut tranché, montants, et ce que ses formules en tirent.</summary>
     private sealed record Colis(Dictionary<string, string?> Row)
     {
@@ -174,33 +171,16 @@ public sealed partial class LaravelImporter
         public bool Delivered => LegacyStatus == DeliveredStatus;
 
         /// <summary>`Colis::montantAEncaisser`.</summary>
-        public decimal MontantAEncaisser
-        {
-            get
-            {
-                var dejaPaye = Is(V(Row, "deja_paye"));
-                if (Is(V(Row, "frais_inclus"))) return Prix != 0 && !dejaPaye ? Prix : 0m;
-                if (Frais != 0) return Prix != 0 && !dejaPaye ? Prix + Frais : Frais;
-                return 0m;
-            }
-        }
+        public decimal MontantAEncaisser => LaravelFormulas.ToCollect(Prix, Frais, Is(V(Row, "frais_inclus")), Is(V(Row, "deja_paye")));
     }
 
     /// <summary>Une ligne de facture client, par les relations de `App\Facture` (`FactureResource`).</summary>
-    private static (decimal Cod, decimal Fee, decimal Failure, decimal Net) InvoiceLineOf(Colis colis)
-    {
-        var echoue = colis.FraisEchoue;
-        decimal cod = 0m, fee = 0m, failure = 0m, cash = 0m;
-        if (colis.Delivered && echoue is null)
-        {
-            if (NotOne(V(colis.Row, "deja_paye"))) cod += colis.Prix;              // colisLivres
-            if (NotOne(V(colis.Row, "frais_inclus"))) cod += colis.Frais;          // colisLivresFraisNonInclu
-            fee = colis.Frais;                                                     // colisSumFrais
-        }
-        if (echoue is not null) failure = echoue.Value;                            // colisSumFraisEchoue
-        if (colis.Delivered && Is(V(colis.Row, "frais_deja_paye"))) cash = colis.Frais; // colisSumFraisPayeEspece
-        return (cod, fee - cash, failure, cod - fee - failure + cash);
-    }
+    private static (decimal Cod, decimal Fee, decimal Failure, decimal Net) InvoiceLineOf(Colis colis) =>
+        LaravelFormulas.InvoiceLine(colis.Delivered, colis.Prix, colis.Frais, colis.FraisEchoue, Flag(V(colis.Row, "deja_paye")), Flag(V(colis.Row, "frais_inclus")),
+            Is(V(colis.Row, "frais_deja_paye")));
+
+    /// <summary>Booléen MySQL : NULL reste NULL.</summary>
+    private static bool? Flag(string? value) => value is null ? null : value != "0";
 
     // ------------------------------------------------------------------ orchestration
 
