@@ -9,7 +9,7 @@ La production viendra plus tard sur un autre domaine, avec le même script de re
 | --- | --- |
 | Mise en ligne | 2026-11-24 (bascule depuis NestJS) ; `e692511` le 2026-11-25 ; `b80f0aa` le 2026-11-27 ; **`d762905` le 2026-11-28 à 01h20 UTC** |
 | Domaines | https://new.wimodelivery.ma (web), https://api-new.wimodelivery.ma (API) ; nginx inchangé |
-| Commit déployé | `d762905` (`main`, #24 : reprise complète de Wimo Laravel), checkout détaché dans `/opt/wimo-delivery/app-dotnet` ; précédent : `b80f0aa` |
+| Commit déployé | images `d762905` (`main`, #24 : reprise complète de Wimo Laravel) ; checkout détaché dans `/opt/wimo-delivery/app-dotnet` sur la fusion de #25 (scripts de recette et documentation seulement, aucune reconstruction) ; précédent : `b80f0aa` |
 | Images | `wimo-delivery-dotnet-api:d762905` (contient l'outil `LegacyImport.dll`), `wimo-delivery-dotnet-web:d762905` ; celles de `b80f0aa` (rollback) et `e692511` sont gardées |
 | Pile Docker | projet `wimo-delivery-dotnet` : `deploy/docker-compose.prod.yml` + `/opt/wimo-delivery/app-dotnet.env` (600, hors Git) |
 | Ports | web `127.0.0.1:3102`, api `127.0.0.1:3103` |
