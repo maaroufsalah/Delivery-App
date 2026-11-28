@@ -86,17 +86,21 @@ public sealed partial class LaravelImporter
 
     private async Task MapReferentialAsync(Source source, Dictionary<string, Zone> zones, Dictionary<string, City> cities, Dictionary<string, District> districts,
         Dictionary<string, Agency> agencies, Dictionary<string, Bank> banks, Dictionary<string, LegacyUser> users, Dictionary<string, Client> clients,
-        Dictionary<string, Courier> couriers, CancellationToken cancellationToken)
+        Dictionary<string, Courier> couriers, List<TableReport> tables, CancellationToken cancellationToken)
     {
         await db.SaveChangesAsync(cancellationToken);
         mappings = await db.LegacyMappings.AsNoTracking().ToDictionaryAsync(m => (m.Entity, m.LegacyId), cancellationToken);
+        // Ces tables se rapprochent par clé naturelle ; leur ligne `legacy_mappings` dit si la ligne est neuve, changée ou identique.
         void Map<T>(string entity, string table, Dictionary<string, T> map, Func<T, string> id)
         {
             var rows = source.Rows(table).Where(r => V(r, "id") is not null).ToDictionary(r => V(r, "id")!);
+            var report = tables.FirstOrDefault(t => t.Table == table);
+            if (report is not null) report.Imported = 0;
             foreach (var (legacyId, target) in map)
             {
                 if (!rows.TryGetValue(legacyId, out var row)) continue;
-                Track(entity, legacyId, id(target), RowHash(row));
+                var outcome = Track(entity, legacyId, id(target), RowHash(row));
+                if (report is not null) Count(report, outcome);
             }
         }
         Map("zone", "zones", zones, z => z.Id);
@@ -443,7 +447,7 @@ public sealed partial class LaravelImporter
             parcel.OpenOnDelivery = Is(V(row, "ouverture_colis"));
             parcel.Fragile = Is(V(row, "colis_fragile"));
             parcel.Quantity = 1;
-            parcel.ScheduledAt = At(V(row, "date_report"));
+            parcel.ScheduledAt = Day(V(row, "date_report"));
             parcel.Latitude = Coordinate(V(row, "latitude"), 90m);
             parcel.Longitude = Coordinate(V(row, "longitude"), 180m);
             parcel.CreatedAt = createdAt;
@@ -515,7 +519,7 @@ public sealed partial class LaravelImporter
             item.AuthorId = authorId;
             item.AuthorName = UserName(context, V(row, "user_id"));
             item.AttachmentName = V(row, "file");
-            item.ScheduledDate = V(row, "date_report") is { } day ? At($"{day} 00:00:00") : null;
+            item.ScheduledDate = Day(V(row, "date_report"));
             item.CreatedAt = At(V(row, "created_at")) ?? DateTime.UtcNow;
             Count(report, Track("parcel_event", legacyId, item.Id, hash));
         }, cancellationToken);
@@ -654,7 +658,7 @@ public sealed partial class LaravelImporter
             route.CityId = NewId("city", V(row, "ville_id"))!;
             route.OriginCityId = NewId("city", V(row, "depart_id")) ?? route.CityId;
             route.CourierId = plan.CourierId;
-            route.ExitDate = V(row, "date_sorti") is { } day ? At($"{day} 00:00:00") : null;
+            route.ExitDate = Day(V(row, "date_sorti"));
             route.CreatedAt = createdAt;
             route.UpdatedAt = At(V(row, "updated_at")) ?? createdAt;
             route.ImportedAt = plan.Status == RouteStatus.CLOSED ? DateTime.UtcNow : null;
@@ -707,7 +711,7 @@ public sealed partial class LaravelImporter
             var legacyId = V(row, "id")!;
             var status = V(row, "statut_id") switch { "3" => InvoiceStatus.PAID, "2" => InvoiceStatus.ISSUED, _ => InvoiceStatus.DRAFT };
             var amounts = plan.Lines.Select(l => (l.Colis, l.ParcelId, Amount: InvoiceLineOf(l.Colis))).ToList();
-            var paidAt = payments.GetValueOrDefault(legacyId, []).Select(p => At($"{V(p, "date_paiement")} 00:00:00") ?? At(V(p, "created_at"))).Max();
+            var paidAt = payments.GetValueOrDefault(legacyId, []).Select(p => Day(V(p, "date_paiement")) ?? At(V(p, "created_at"))).Max();
             var hash = Hash(RowHash(row), plan.ClientId, paidAt,
                 string.Join(';', amounts.Select(a => $"{a.ParcelId}|{a.Colis.Status}|{a.Amount.Cod}|{a.Amount.Fee}|{a.Amount.Failure}|{a.Amount.Net}")));
             var existingId = NewId("invoice", legacyId);
@@ -802,7 +806,7 @@ public sealed partial class LaravelImporter
             payment.BankAccountId = NewId("bank_account", V(row, "compte_id"));
             payment.Reference = V(row, "reference");
             payment.Note = V(row, "commentaire") is { } comment && comment != "null" ? comment : ImportNote;
-            payment.PaidAt = At($"{V(row, "date_paiement")} 00:00:00") ?? createdAt;
+            payment.PaidAt = Day(V(row, "date_paiement")) ?? createdAt;
             payment.ProofName = V(row, "file");
             payment.CreatedAt = createdAt;
             payment.UpdatedAt = At(V(row, "updated_at")) ?? createdAt;

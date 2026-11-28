@@ -85,11 +85,21 @@ public sealed partial class LaravelImporter(AppDbContext db)
     private static decimal? Mad(string? value) =>
         value is not null && decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out var d) ? Math.Round(d, 2) : null;
 
-    /// <summary>Les horodatages Laravel sont l'heure locale de Casablanca, sans fuseau.</summary>
+    /// <summary>
+    /// Horodatage Laravel (`created_at`, `updated_at`, `statut_date`, `confirmation_date`…) : Wimo Laravel tourne avec
+    /// `app.timezone = UTC` (config/app.php de la production), Carbon écrit donc de l'UTC sans fuseau.
+    /// </summary>
     private static DateTime? At(string? value)
     {
-        if (value is null || !DateTime.TryParseExact(value, "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out var local)) return null;
-        return TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(local, DateTimeKind.Unspecified), ClockDays.Zone);
+        if (value is null || !DateTime.TryParseExact(value, "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out var utc)) return null;
+        return DateTime.SpecifyKind(utc, DateTimeKind.Utc);
+    }
+
+    /// <summary>Un jour saisi par un utilisateur (`date_report`, `date_sorti`, `date_paiement`) : minuit à Casablanca.</summary>
+    private static DateTime? Day(string? value)
+    {
+        if (value is null || value.Length < 10 || !DateTime.TryParseExact(value[..10], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var day)) return null;
+        return TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(day, DateTimeKind.Unspecified), ClockDays.Zone);
     }
 
     public Task<Report> ImportAsync(string folder, bool apply, CancellationToken cancellationToken = default) =>
@@ -127,7 +137,7 @@ public sealed partial class LaravelImporter(AppDbContext db)
                     var couriers = await CouriersAsync(source, users, cities, agencies, banks, tables, cancellationToken);
                     await CourierCitiesAsync(source, couriers, cities, tables, cancellationToken);
                     await ClaimTypesAsync(source, tables, cancellationToken);
-                    await MapReferentialAsync(source, zones, cities, districts, agencies, banks, users, clients, couriers, cancellationToken);
+                    await MapReferentialAsync(source, zones, cities, districts, agencies, banks, users, clients, couriers, tables, cancellationToken);
                 }, cancellationToken);
                 await OperationsAsync(source, options, tables, cancellationToken);
             });

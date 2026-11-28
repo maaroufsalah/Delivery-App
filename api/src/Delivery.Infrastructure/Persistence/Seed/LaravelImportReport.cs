@@ -18,6 +18,9 @@ public static class LaravelImportReport
         {
             text.AppendLine($"| {table.Table} | {table.Read} | {table.Imported} | {table.Updated} | {table.Unchanged} | {table.IgnoredCount} |");
         }
+        text.AppendLine();
+        text.AppendLine("Tables sans ligne `legacy_mappings` (tarifs, remises, adresses de ramassage, grilles livreur, réglages, types de réclamation) : "
+                        + "rapprochées par clé naturelle, « créées » compte les lignes créées OU rapprochées (un rejeu ne duplique rien).");
         foreach (var table in report.Tables.Where(t => t.IgnoredCount > 0 || t.Notes.Count > 0))
         {
             text.AppendLine();
