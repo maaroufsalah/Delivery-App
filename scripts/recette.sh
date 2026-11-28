@@ -70,7 +70,8 @@ call() {
   if [ -n "$data" ]; then printf '%s' "$data" >"$TMP/data"; args+=(-H 'content-type: application/json' --data-binary "@$TMP/data"); fi
   STATUS="$(curl "${args[@]}" "$API$path")"
   BODY="$(cat "$TMP/body")"
-  if [ "$STATUS" = "$expect" ]; then ok "$label ($method $path → $STATUS)"; return 0; fi
+  # Statut attendu : un code, ou plusieurs séparés par « | » (« 201|409 »).
+  if [[ "|$expect|" == *"|$STATUS|"* ]]; then ok "$label ($method $path → $STATUS)"; return 0; fi
   ko "$label ($method $path → $STATUS, attendu $expect)" "$BODY"
   return 1
 }
@@ -152,8 +153,10 @@ check "COD attendu de 250 MAD" 'j.remittance && j.remittance.expectedCod === 250
 step "Admin : caisse, facture, tableau de bord"
 call "confirmation de la caisse $REMITTANCE" 201 POST "/remittances/$REMITTANCE/confirm" "$ADMIN"
 # Le frais du bon de ramassage a déjà ouvert le brouillon du vendeur : on le reprend.
-call "facture brouillon déjà ouverte" 409 POST /invoices "$ADMIN" "{\"clientId\":\"$CLIENT_ID\",\"agencyId\":\"$AGENCY\"}"
-INVOICE="$(json 'j.details && j.details.invoiceCode')"
+# Frais de ramassage > 0 : la validation du bon a ouvert le brouillon (409 + son code) ; à 0 (réglage repris de Wimo
+# Laravel), aucun brouillon n'est ouvert et celui-ci se crée (201).
+call "facture brouillon (ouverte par les frais de ramassage, sinon créée)" "201|409" POST /invoices "$ADMIN" "{\"clientId\":\"$CLIENT_ID\",\"agencyId\":\"$AGENCY\"}"
+INVOICE="$(json 'j.code || (j.details && j.details.invoiceCode)')"
 call "colis facturé" 201 POST "/invoices/$INVOICE/parcels" "$ADMIN" "{\"parcelIds\":[\"$PARCEL_ID\"]}"
 call "émission de $INVOICE" 201 POST "/invoices/$INVOICE/issue" "$ADMIN" '{}' && check "facture émise" 'j.status === "issued"'
 file "PDF de la facture" "/invoices/$INVOICE/pdf" "$ADMIN" application/pdf
@@ -202,9 +205,10 @@ if [ "$CLEANUP" = 0 ]; then
   echo "Données gardées : vendeur « Boutique $RUN », colis ${PARCEL:-}, facture ${INVOICE:-}, réclamation ${CLAIM:-}."
 elif [ -n "$CLEANUP_PSQL" ]; then
   step "Nettoyage : tout ce que la recette a créé est supprimé en base"
-  out="$($CLEANUP_PSQL -qAt -F' | ' -v client="${CLIENT_ID:-}" -v courier="${COURIER_ID:-}" -v merchant_user="${MERCHANT_USER:-}" \
-    -v courier_user="${COURIER_USER:-}" -v claim_type="${CLAIM_TYPE:-}" -v since="$SINCE" -v doc_seq="$DOC_SEQ" -v parcel_seq="$PARCEL_SEQ" \
-    <"$HERE/recette-cleanup.sql" 2>&1)" && ok "suppression en base ($(printf '%s' "$out" | tail -1))" || ko "suppression en base" "$out"
+  # Instantanés des compteurs par l'entrée standard : des milliers de lignes après une reprise, trop longs pour la ligne de commande.
+  out="$({ echo "\\set doc_seq '$(printf %s "$DOC_SEQ" | tr -d '\n')'"; echo "\\set parcel_seq '$(printf %s "$PARCEL_SEQ" | tr -d '\n')'"; cat "$HERE/recette-cleanup.sql"; } | \
+    $CLEANUP_PSQL -qAt -F' | ' -v client="${CLIENT_ID:-}" -v courier="${COURIER_ID:-}" -v merchant_user="${MERCHANT_USER:-}" \
+    -v courier_user="${COURIER_USER:-}" -v claim_type="${CLAIM_TYPE:-}" -v since="$SINCE" 2>&1)" && ok "suppression en base ($(printf '%s' "$out" | tail -1))" || ko "suppression en base" "$out"
   [ -n "${PARCEL:-}" ] && call "le colis de recette n'existe plus" 404 GET "/parcels/$PARCEL" "$ADMIN"
   [ -n "${INVOICE:-}" ] && call "la facture de recette n'existe plus" 404 GET "/invoices/$INVOICE" "$ADMIN"
   [ -n "${CLAIM:-}" ] && call "la réclamation de recette n'existe plus" 404 GET "/claims/$CLAIM" "$ADMIN"

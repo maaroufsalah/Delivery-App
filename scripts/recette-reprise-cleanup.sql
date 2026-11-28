@@ -42,7 +42,6 @@ delete from parcel_events where "parcelId" in (select id from rr_parcels);
 delete from parcel_notes where "parcelId" in (select id from rr_parcels);
 delete from parcel_fee_changes where "parcelId" in (select id from rr_parcels);
 delete from parcel_items where "parcelId" in (select id from rr_parcels);
-delete from label_jobs where "createdAt" >= :'since'::timestamptz and "userId" in (:'client_user', :'courier_user');
 delete from parcels where id in (select id from rr_parcels);
 
 delete from notifications where "createdAt" >= :'since'::timestamptz and "userId" in (:'client_user', :'courier_user');

@@ -83,7 +83,18 @@ SQL
 )"
 [ -n "${CLIENT_ID:-}" ] && ok "vendeur importé : Laravel $CLIENT_LEGACY" || { ko "aucun vendeur importé qui convienne"; exit 1; }
 CITY_LEGACY="$(PG <<<"select min(\"legacyId\") from legacy_mappings where \"entity\" = 'city' and \"newId\" = '$CLIENT_CITY'")"
-# Destination : une ville tarifée au départ de la ville du vendeur, dans la zone d'une remise active s'il en a une.
+# Villes que dessert un livreur importé utilisable : compte actif, ville tarifée à sa grille, aucune caisse ouverte (la
+# caisse RF- du passage est donc la sienne, supprimée à la fin sans toucher une caisse importée).
+SERVED="$(PG <<'SQL' | paste -sd, -
+select distinct mc."legacyId" from couriers k join legacy_mappings mk on mk."entity" = 'courier' and mk."newId" = k.id
+join users u on u.id = k."userId" and u."isActive" and u."deletedAt" is null
+join courier_cities cc on cc."courierId" = k.id and cc."deliveryFee" is not null
+join legacy_mappings mc on mc."entity" = 'city' and mc."newId" = cc."cityId"
+where k."isActive" and not exists (select 1 from cash_remittances r where r."courierId" = k.id and r.status = 'DRAFT')
+SQL
+)"
+[ -n "$SERVED" ] || { ko "aucun livreur importé sans caisse ouverte"; exit 1; }
+# Destination : une ville tarifée au départ de la ville du vendeur et desservie, dans la zone d'une remise active s'il en a une.
 read -r DEST_LEGACY EXPECTED_FEE <<<"$(MY <<SQL
 SET SESSION TRANSACTION READ ONLY;
 SELECT t.destination_id,
@@ -95,7 +106,7 @@ FROM tarifs t
 JOIN villes v ON v.id = t.destination_id AND v.deleted_at IS NULL
 LEFT JOIN client_remises r ON r.id = (SELECT MIN(x.id) FROM client_remises x JOIN zones z ON z.id = x.zone_id
   WHERE x.client_id = $CLIENT_LEGACY AND x.enabled = 1 AND FIND_IN_SET(t.destination_id, REPLACE(z.villes, ' ', '')))
-WHERE t.depart_id = $CITY_LEGACY AND t.prix_quartier IS NOT NULL
+WHERE t.depart_id = $CITY_LEGACY AND t.prix_quartier IS NOT NULL AND t.destination_id IN ($SERVED)
   AND t.id = (SELECT MAX(x.id) FROM tarifs x WHERE x.depart_id = t.depart_id AND x.destination_id = t.destination_id)
 ORDER BY r.id IS NULL, t.destination_id = t.depart_id, t.id
 LIMIT 1;
@@ -147,7 +158,7 @@ FROM factures f LEFT JOIN facture_colis fc ON fc.facture_id = f.id LEFT JOIN col
 WHERE f.client_id = $CLIENT_LEGACY;
 SQL
 )"
-call "mes factures" 200 GET "/invoices?pageSize=500" "$SELLER"
+call "mes factures" 200 GET "/invoices?pageSize=200" "$SELLER"
 same "nombre de factures = Laravel" "$(json 'j.total')" "$EXPECTED_INVOICES"
 same "net de toutes ses factures = Laravel (centimes)" "$(json 'j.items.reduce((s, i) => s + i.totalDue, 0)')" "${EXPECTED_NET:-0}"
 IMPORTED_INVOICE="$(json '(j.items.find(i => i.status === "paid") || j.items.find(i => i.status === "issued") || {}).code')"
@@ -178,7 +189,7 @@ same "frais du livreur = sa grille importée (centimes)" "$(json 'j.remittance &
 PG <<SQL >"$TMP/billable"
 select mp."legacyId" || '|' || p.id from parcels p join legacy_mappings mp on mp."entity" = 'parcel' and mp."newId" = p.id
 where p."clientId" = '$CLIENT_ID' and p."statusId" in (4, 5, 6) and p."billingState" = 'TO_INVOICE' and not exists (select 1 from invoice_lines l where l."parcelId" = p.id)
-order by p."createdAt" limit 5
+order by p."statusId" = 4 desc, p."createdAt" limit 5
 SQL
 LEGACY_IDS="$(cut -d'|' -f1 "$TMP/billable" | paste -sd, -)"
 PARCEL_IDS="$(cut -d'|' -f2 "$TMP/billable" | sed 's/.*/"&"/' | paste -sd, -)"
@@ -216,9 +227,15 @@ IMPORTED_REMITTANCE="$(PG <<<"select r.code from cash_remittances r join legacy_
 call "suppression d'une caisse importée" 409 DELETE "/remittances/$IMPORTED_REMITTANCE" "$ADMIN"
 
 step "Nettoyage : ce que le passage a créé est supprimé, empreintes d'origine remises"
-out="$($PSQL -qAt -F' | ' -v parcel="${PARCEL_ID:-}" -v client_user="$CLIENT_USER" -v courier_user="$COURIER_USER" -v since="$SINCE" \
-  -v hashes="$(sed 's/.*/"&"/' "$TMP/hashes" | paste -sd, - | sed 's/^/[/; s/$/]/')" -v doc_seq="$DOC_SEQ" -v parcel_seq="$PARCEL_SEQ" \
-  <"$HERE/recette-reprise-cleanup.sql" 2>&1)" && ok "suppression en base ($(printf '%s' "$out" | tail -1))" || ko "suppression en base" "$out"
+# Instantanés et empreintes par l'entrée standard : trop longs pour la ligne de commande, jamais dans la liste des processus.
+HASHES_JSON="$(sed 's/.*/"&"/' "$TMP/hashes" | paste -sd, - | sed 's/^/[/; s/$/]/')"
+# D'abord, seules et dans leur propre transaction : les empreintes d'origine (une erreur de nettoyage ne laisse jamais
+# un mot de passe de test en place).
+restored="$({ echo "\\set hashes '$HASHES_JSON'"; echo "update users u set \"passwordHash\" = split_part(h, '|', 2), \"mustChangePassword\" = split_part(h, '|', 3)::boolean,"
+  echo "  \"tokensValidFrom\" = split_part(h, '|', 4)::timestamptz from json_array_elements_text(:'hashes'::json) h where u.id = split_part(h, '|', 1);"; } | $PSQL -qAt -v ON_ERROR_STOP=1 2>&1)" \
+  && ok "empreintes d'origine remises en premier" || ko "empreintes d'origine non remises — à remettre depuis legacy_mappings et users.csv" "$restored"
+out="$({ echo "\\set doc_seq '$(printf %s "$DOC_SEQ" | tr -d '\n')'"; echo "\\set parcel_seq '$(printf %s "$PARCEL_SEQ" | tr -d '\n')'"; echo "\\set hashes '$HASHES_JSON'"; cat "$HERE/recette-reprise-cleanup.sql"; } | \
+  $PSQL -qAt -F' | ' -v parcel="${PARCEL_ID:-}" -v client_user="$CLIENT_USER" -v courier_user="$COURIER_USER" -v since="$SINCE" 2>&1)" && ok "suppression en base ($(printf '%s' "$out" | tail -1))" || ko "suppression en base" "$out"
 [ -n "${PARCEL:-}" ] && call "le colis de recette n'existe plus" 404 GET "/parcels/$PARCEL" "$ADMIN"
 [ -n "${ROUTE:-}" ] && call "le circuit de recette n'existe plus" 404 GET "/routes/$ROUTE" "$ADMIN"
 [ -n "${REMITTANCE:-}" ] && call "la caisse de recette n'existe plus" 404 GET "/remittances/$REMITTANCE" "$ADMIN"
